@@ -9,16 +9,30 @@
 ros::ServiceClient diffDrive;
 create_fundamentals::DiffDrive srv;
 
+void stop() {
+	srv.request.left = 0;
+	srv.request.right = 0;
+	diffDrive.call(srv);
+}
+
+void turnAround() {
+	stop();
+	srv.request.left = 7;
+	srv.request.right = -7;
+	diffDrive.call(srv);
+	ros::Duration(2.0).sleep();
+	stop();
+}
 void laserSensObstacle(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 //TODO: implement function that sets some variable/does some thing when an obstacle is detected
-	srv.request.left = 7;
-	srv.request.right = 7;
-	diffDrive.call(srv);
+
 	ROS_INFO("Distance: %f", msg->ranges[msg->ranges.size()/2]);
 	if (msg->ranges[msg->ranges.size()/2] < 0.2 && !isnan(msg->ranges[msg->ranges.size()/2])) {
-		srv.request.left = 0;
-		srv.request.right = 0;
+		turnAround();
+	} else {
+		srv.request.left = 7;
+		srv.request.right = 7;
 		diffDrive.call(srv);
 	}
 	/*
@@ -39,20 +53,6 @@ int main(int argc, char **argv)
 	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
 	ros::Subscriber sub = n.subscribe("scan_filtered", 1, laserSensObstacle);
 	ROS_INFO("Starting wanderer mode");
-	/*
-	srv.request.left = 7;
-	srv.request.right = 7;
-	diffDrive.call(srv);
-	for (int i = 0; i < 10; i++) {
-		diffDrive.call(srv);
-		ros::spinOnce();
-		ros::Duration(0.5).sleep();
-	}
-	
-	srv.request.left = 0;
-	srv.request.right = 0;
-	diffDrive.call(srv);
-	*/
 	ros::spin();
 	return 0;
 }
