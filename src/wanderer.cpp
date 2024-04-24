@@ -4,19 +4,19 @@
 #include "create_fundamentals/SensorPacket.h"
 #include "sensor_msgs/LaserScan.h"
 #include "create_fundamentals/DiffDrive.h"
+#include <math.h>
 
-ros::NodeHandle n;
-ros::ServiceClient diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
+ros::ServiceClient diffDrive;
 create_fundamentals::DiffDrive srv;
-srv.request.left = 7;
-srv.request.right = 7;
 
 void laserSensObstacle(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 //TODO: implement function that sets some variable/does some thing when an obstacle is detected
+	srv.request.left = 7;
+	srv.request.right = 7;
 	diffDrive.call(srv);
 	ROS_INFO("Distance: %f", msg->ranges[msg->ranges.size()/2]);
-	if (msg->ranges[msg->ranges.size()/2] < 0.2 && msg->ranges[msg->ranges.size()/2] != nan) {
+	if (msg->ranges[msg->ranges.size()/2] < 0.2 && !isnan(msg->ranges[msg->ranges.size()/2])) {
 		srv.request.left = 0;
 		srv.request.right = 0;
 		diffDrive.call(srv);
@@ -34,7 +34,9 @@ void laserSensObstacle(const sensor_msgs::LaserScan::ConstPtr& msg)
 
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv, "wanderer"); 
+	ros::init(argc, argv, "wanderer");
+	ros::NodeHandle n; 
+	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
 	ros::Subscriber sub = n.subscribe("scan_filtered", 1, laserSensObstacle);
 	ROS_INFO("Starting wanderer mode");
 	/*
@@ -51,5 +53,6 @@ int main(int argc, char **argv)
 	srv.request.right = 0;
 	diffDrive.call(srv);
 	*/
+	ros::spin();
 	return 0;
 }
