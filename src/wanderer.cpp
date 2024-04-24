@@ -20,7 +20,7 @@ void turnAround() {
 	srv.request.left = 7;
 	srv.request.right = -7;
 	diffDrive.call(srv);
-	ros::Duration(1.7).sleep();
+	ros::Duration(1.8).sleep();
 	stop();
 }
 void laserSensObstacle(const sensor_msgs::LaserScan::ConstPtr& msg)
@@ -40,14 +40,6 @@ void laserSensObstacle(const sensor_msgs::LaserScan::ConstPtr& msg)
 		srv.request.right = 7;
 		diffDrive.call(srv);
 	}
-	/*
-	for (int i = 0; i < 90; i++){
-		//ROS_INFO("%f", msg->ranges[135+1]);
-		if (msg->ranges[135+i] < 0.2) {
-			//ROS_INFO("Obstacle detected!");
-		}
-	}
-	*/
 }
 
 
