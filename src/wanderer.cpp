@@ -20,15 +20,20 @@ void turnAround() {
 	srv.request.left = 7;
 	srv.request.right = -7;
 	diffDrive.call(srv);
-	ros::Duration(2.0).sleep();
+	ros::Duration(1.7).sleep();
 	stop();
 }
 void laserSensObstacle(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 //TODO: implement function that sets some variable/does some thing when an obstacle is detected
-
-	ROS_INFO("Distance: %f", msg->ranges[msg->ranges.size()/2]);
-	if (msg->ranges[msg->ranges.size()/2] < 0.2 && !isnan(msg->ranges[msg->ranges.size()/2])) {
+	double minDist = 1;
+	for (int i = msg->ranges.size()/4; i < (msg->ranges.size()/4)*3; i++) {
+		if (msg->ranges[i] < minDist) {
+			minDist = msg->ranges[i];
+		}
+	}
+	ROS_INFO("Distance: %f", minDist);
+	if (minDist < 0.2 && !isnan(msg->ranges[msg->ranges.size()/2])) {
 		turnAround();
 	} else {
 		srv.request.left = 7;
