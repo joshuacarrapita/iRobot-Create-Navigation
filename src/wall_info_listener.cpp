@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "wall_info_listener");
   ros::NodeHandle n;
-  ros::Subscriber sub = n.subscribe("wall_info", 1, winfoCallback);
+  ros::Subscriber sub = n.subscribe("wall_info_topic", 100, winfoCallback);
   ros::spin();
   return 0;
 }
