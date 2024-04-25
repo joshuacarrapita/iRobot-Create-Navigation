@@ -26,7 +26,7 @@
   <run_depend>rospy</run_depend>
   <run_depend>sensor_msgs</run_depend>
   <run_depend>create_fundamentals</run_depend>
-  <!--run_depend>message_runtime</run_depend-->
+  <run_depend>message_runtime</run_depend>
 
   <!-- Dependencies needed only for running tests. -->
   <!-- <test_depend>roscpp</test_depend> -->
@@ -34,8 +34,6 @@
   <!-- <test_depend>geometry_msgs</test_depend> -->
   <!-- <test_depend>tf</test_depend> -->
   <!-- <test_depend>nav_msgs</test_depend> -->
-
-  <exec_depend>message_runtime</exec_depend>
 
 <export>
     <cpp cflags="-I${prefix}/msg/cpp"/>
