@@ -31,7 +31,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 #uncomment if you have defined messages
 add_message_files(FILES
-	wall_info.msg
+	WallInfo.msg
 )
 #uncomment if you have defined services
 #add_service_files(FILES
@@ -71,3 +71,11 @@ add_dependencies(example_laser create_fundamentals_generate_messages_cpp)
 add_executable(example_moving src/example_moving.cpp)
 target_link_libraries(example_moving ${catkin_LIBRARIES})
 add_dependencies(example_moving create_fundamentals_generate_messages_cpp)
+
+add_executable(wall_info src/wall_info.cpp)
+target_link_libraries(wall_info ${catkin_LIBRARIES})
+add_dependencies(wall_info create_fundamentals_generate_messages_cpp)
+
+add_executable(wall_info_listener src/wall_info_listener.cpp)
+target_link_libraries(wall_info_listener ${catkin_LIBRARIES})
+add_dependencies(wall_info_listener create_fundamentals_generate_messages_cpp)
