@@ -25,9 +25,8 @@ void turnAround() {
 }
 void laserSensObstacle(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
-//TODO: implement function that sets some variable/does some thing when an obstacle is detected
 	double minDist = 1;
-	for (int i = msg->ranges.size()/4; i < (msg->ranges.size()/4)*3; i++) {
+	for (int i = msg->ranges.size()/3; i < (msg->ranges.size()/3)*2; i++) {
 		if (msg->ranges[i] < minDist) {
 			minDist = msg->ranges[i];
 		}
