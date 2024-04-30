@@ -8,8 +8,9 @@
 
 ros::ServiceClient diffDrive;
 create_fundamentals::DiffDrive srv;
-double speed;
-double turnaroundDist;
+double speed = 7;		//default: 7
+double turnaroundDist = 0.2;	//default: 0.2
+double turningTime = 1.8;	//default: 1.8
 
 void stop() {
 	srv.request.left = 0;
@@ -22,9 +23,10 @@ void turnAround() {
 	srv.request.left = 7;
 	srv.request.right = -7;
 	diffDrive.call(srv);
-	ros::Duration(1.8).sleep();
+	ros::Duration(turningTime).sleep();
 	stop();
 }
+//WARNING:As soon as the odometer value overflows (>2^15) the driver will crash and need to be restarted
 void laserSensObstacle(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	double minDist = 1;
@@ -46,11 +48,15 @@ void laserSensObstacle(const sensor_msgs::LaserScan::ConstPtr& msg)
 
 int main(int argc, char **argv)
 {
-	if (argc != 3) {
-		ROS_ERROR("Usage: wanderer speed turnaroundDist");
+	ROS_ERROR("As soon as the odometer value reaches 32768 the driver will crash and need to be restarted!");
+	if (argc != 4) {
+		ROS_ERROR("Usage: wanderer <speed> <turnaroundDist> <turningTime>");
+		ROS_INFO("Setting default values...");
+	} else {
+		speed = atof(argv[1]);
+		turnaroundDist = atof(argv[2]);
+		turningTime = atof(argv[3]);
 	}
-	speed = argv[1];
-	turnaroundDist = argv[2];
 	ros::init(argc, argv, "wanderer");
 	ros::NodeHandle n; 
 	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
