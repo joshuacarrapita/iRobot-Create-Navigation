@@ -8,9 +8,9 @@
 
 ros::ServiceClient diffDrive;
 create_fundamentals::DiffDrive srv;
-double speed = 7;		//default: 7
+double speed = 5;		//default: 5
 double turnaroundDist = 0.2;	//default: 0.2
-double turningTime = 1.8;	//default: 1.8
+double turningTime = 1;	//default: 1
 
 void stop() {
 	srv.request.left = 0;
