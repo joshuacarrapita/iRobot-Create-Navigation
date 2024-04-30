@@ -8,6 +8,8 @@
 
 ros::ServiceClient diffDrive;
 create_fundamentals::DiffDrive srv;
+double speed;
+double turnaroundDist;
 
 void stop() {
 	srv.request.left = 0;
@@ -32,11 +34,11 @@ void laserSensObstacle(const sensor_msgs::LaserScan::ConstPtr& msg)
 		}
 	}
 	ROS_INFO("Distance: %f", minDist);
-	if (minDist < 0.2 && !isnan(msg->ranges[msg->ranges.size()/2])) {
+	if (minDist < turnaroundDist && !isnan(msg->ranges[msg->ranges.size()/2])) {
 		turnAround();
 	} else {
-		srv.request.left = 7;
-		srv.request.right = 7;
+		srv.request.left = speed;
+		srv.request.right = speed;
 		diffDrive.call(srv);
 	}
 }
@@ -44,6 +46,11 @@ void laserSensObstacle(const sensor_msgs::LaserScan::ConstPtr& msg)
 
 int main(int argc, char **argv)
 {
+	if (argc != 3) {
+		ROS_ERROR("Usage: wanderer speed turnaroundDist");
+	}
+	speed = argv[1];
+	turnaroundDist = argv[2];
 	ros::init(argc, argv, "wanderer");
 	ros::NodeHandle n; 
 	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
