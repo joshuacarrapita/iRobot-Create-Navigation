@@ -26,17 +26,15 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_msg) {
 
 	for (int i = 0; i < laser_msg_size; i++) {
 
-		int dist = msg->ranges[i+msg_offset];
+		int dist = laser_msg->ranges[i+laser_msg_offset];
 		int i_angle_offset = i - laser_msg_center; // i = 0 -> ang = -120 deg
 		int angle = i_angle_offset*angle_step;
 
 		coordinates[i] = polarToCartesian(dist, angle);
-		//coordinates[i] = {std::cos(i*angle_step)*msg->ranges[i+44],
-		//std::sin(i*angle_step)*msg->ranges[i+44]};
+		//coordinates[i] = {std::cos(i*angle_step)*laser_msg->ranges[i+44],
+		//std::sin(i*angle_step)*laser_msg->ranges[i+44]};
 		
-		ROS_INFO("Converted polar (r,a) -> cartesian (x,y): (%f,%f) 
-				-> (%f,%f)\n", dist, angle, std::get<0>(coordinates[i]), 
-				std::get<1>(coordinates[i]));
+		ROS_INFO("Converted polar (r,a) -> cartesian (x,y): (%f,%f) -> (%f,%f)\n", dist, angle, std::get<0>(coordinates[i]), std::get<1>(coordinates[i]));
 
 		i++;
 	}
