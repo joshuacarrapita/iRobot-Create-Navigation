@@ -107,6 +107,9 @@ void correctDist(red_fundamentals::WallInfo::ConstPtr& msg)
 		return;
 	} else {
 		distCorrect = 1;
+		if (centeringPhase == 1) {
+			centeringPhase = 2;	//finished centering
+		}
 	}
 	return;
 }
@@ -121,6 +124,12 @@ void center(const red_fundamentals::WallInfo::ConstPtr& msg)
 	 *(optionally: track how many cells you moved from initial point and retrace)
 	 *->robot should be centered now
 	 */
+
+	//finished centering
+	if (centeringPhase == 2) {
+		return;
+	}
+
 	//check if wall in sight else move until it is
 	if (!wall) {
 		if (!findWall(msg) && turnCtr < 4) {
