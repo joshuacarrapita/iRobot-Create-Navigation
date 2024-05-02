@@ -4,6 +4,7 @@
 #include "red_fundamentals/WallInfo.h"
 
 using namespace std;
+char** args;
 
 red_fundamentals::WallInfo winfo_msg;
 const float angle_step = 0.3515669;
@@ -32,13 +33,13 @@ float tuple_norm(tuple<float,float> x){
 }
 
 tuple<float,float> project_x_onto_param_form(tuple<float,float> x,
-											vector<tuple<float,float>> model){
+		vector<tuple<float,float>> model){
 	tuple<float,float> start_vec = model[0];
 	tuple<float,float> dir_vec = model[1];
 
 	float lambda = (tuple_dot_prod(x,dir_vec)-
-					tuple_dot_prod(start_vec,dir_vec))/
-					tuple_dot_prod(dir_vec,dir_vec);
+			tuple_dot_prod(start_vec,dir_vec))/
+		tuple_dot_prod(dir_vec,dir_vec);
 
 	return tuple_add(start_vec, tuple_mul_scalar(dir_vec,lambda));
 }
@@ -59,7 +60,7 @@ tuple<float,float> ransac(
 	float best_angle = 999;
 
 	vector<tuple<float,float>> zero_deg_model = {{0,0},{1,0}}; // TODO: Check if coordinate system makes problems
-	
+
 	for (int i = 0; i < epochs; i++){
 
 		// get amt_points unique random inlier candidates from cartesian points
@@ -82,10 +83,6 @@ tuple<float,float> ransac(
 		// TODO: Implement matmul and gauss to make it work with any polynomial
 		tuple<float,float> u = tuple_sub(inlier_candidates[1],inlier_candidates[0]);
 
-		// for coordinate form m x + b = y
-		//candidate_model.push_back((y_2 - y_1) / (x_2 - x_1)); // push m
-		//candidate_model.push_back(((y_1 * x_2) - (y_2 * x_1))/(x_2 - x_1)); // push b
-		
 		// create a linear model in parameter form
 		candidate_model.push_back(inlier_candidates[0]); // index 0 is starting point
 		candidate_model.push_back(u); // index 1 is direction vector
@@ -97,10 +94,11 @@ tuple<float,float> ransac(
 			// find orthogonal projection x_p of x onto model
 			tuple<float,float> x = coordinates[i];
 			tuple<float,float> x_p = project_x_onto_param_form(x, candidate_model);
-			
+
 			// if distance to x is less than margin add to confirmed inliers
 			float x_dist = tuple_norm(tuple_sub(x,x_p));
-			
+			ROS_INFO("Dist of x to model: %f\n", x_dist);
+
 			if (x_dist < margin) inliers_confirmed.push_back(x);
 
 		}
@@ -135,6 +133,12 @@ tuple<float,float> polarToCartesian(float radius, float angle) {
 
 void findWall(const sensor_msgs::LaserScan::ConstPtr& laser_msg) {
 
+	// parse arguments for ransac
+	unsigned int epochs = (unsigned int) abs(atoi(args[1]));
+	unsigned int margin = (unsigned int) abs(atoi(args[2]));
+	unsigned int success = (unsigned int) abs(atoi(args[3]));
+	unsigned int angle_tolerance = (unsigned int) abs(atoi(args[4]));
+
 	// set up a coordinate array and fill it with cartesian points
 	vector<tuple<float,float>> coordinates;
 
@@ -142,24 +146,28 @@ void findWall(const sensor_msgs::LaserScan::ConstPtr& laser_msg) {
 	for (int i = 0; i < laser_msg_size; i++) {
 
 		float dist = laser_msg->ranges[i+laser_msg_offset]; // read distance from laser messages and skip first unusable entries
-		if (dist == dist){ // do not push if NaN
+
+		if (dist == dist){ // do not continue if NaN
+
 			int i_angle_offset = i - laser_msg_center; // i = 0 -> angle = -120 deg
 			float angle = i_angle_offset*angle_step; // compute angle for laser message
 
 			tuple<float,float> point = polarToCartesian(dist, angle); // get caresian point
-			// add it to coordinates vector
-			coordinates.push_back(point); 
+
+			coordinates.push_back(point); // add it to coordinates vector
+
 			ROS_INFO("Converted polar (r,a) -> cartesian (x,y): (%f,%f) -> (%f,%f)\n", dist, angle, get<0>(coordinates[j]), get<1>(coordinates[j]));
+
 			j++;
 		}
 	}
 
 	// find a wall in that array
-	tuple<float,float> wall = ransac(coordinates);
+	tuple<float,float> wall = ransac(coordinates, 1, epochs, margin, success, angle_tolerance);
 
 	winfo_msg.dist = get<0>(wall);
 	winfo_msg.angle = get<1>(wall);
-	
+
 	ROS_INFO("WallInfo msg: dist: %f, angle: %f\n", winfo_msg.dist, winfo_msg.angle);
 
 }
@@ -170,6 +178,11 @@ int main(int argc, char **argv)
 	ros::NodeHandle n;
 	ros::Publisher pub = n.advertise<red_fundamentals::WallInfo>("wall_info_topic", 100);
 	ros::Subscriber sub = n.subscribe("scan_filtered", 100, findWall);
+
+	if (argc != 5) {
+		ROS_INFO("usage: epochs margin success angle_tolerance");
+	}
+	args = argv;
 
 	ros::Rate loop_rate(0.1);
 	while (ros::ok()){
