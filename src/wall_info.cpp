@@ -55,10 +55,10 @@ tuple<float,float> ransac(
 	int amt_points = poly_deg+1; // the amount of points needed to model the polynomial
 
 	vector<tuple<float,float>> best_model_param_form;
-	tuple<float,float> best_model_polar_form;
-	float best_angle;
+	tuple<float,float> best_model_polar_form = {-1,0};
+	float best_angle = 999;
 
-	vector<tuple<float,float>> zero_deg_model = {{0,0},{1,0}};
+	vector<tuple<float,float>> zero_deg_model = {{0,0},{1,0}}; // TODO: Check if coordinate system makes problems
 	
 	for (int i = 0; i < epochs; i++){
 
@@ -80,12 +80,7 @@ tuple<float,float> ransac(
 		// model parameters to candidates
 		vector<tuple<float,float>> candidate_model;
 		// TODO: Implement matmul and gauss to make it work with any polynomial
-		float x_1 = get<0>(inlier_candidates[0]);
-		float x_2 = get<1>(inlier_candidates[0]);
-		float y_1 = get<0>(inlier_candidates[1]);
-		float y_2 = get<1>(inlier_candidates[1]);
-		float u_1 = x_1 - y_1;
-		float u_2 = x_2 - y_2;
+		tuple<float,float> u = tuple_sub(inlier_candidates[1],inlier_candidates[0]);
 
 		// for coordinate form m x + b = y
 		//candidate_model.push_back((y_2 - y_1) / (x_2 - x_1)); // push m
@@ -93,7 +88,7 @@ tuple<float,float> ransac(
 		
 		// create a linear model in parameter form
 		candidate_model.push_back(inlier_candidates[0]); // index 0 is starting point
-		candidate_model.push_back({u_1,u_2}); // index 1 is direction vector
+		candidate_model.push_back(u); // index 1 is direction vector
 
 		vector<tuple<float,float>> inliers_confirmed;
 
@@ -128,7 +123,6 @@ tuple<float,float> ransac(
 			}
 		}
 	}
-
 	return best_model_polar_form;
 }
 
@@ -148,13 +142,12 @@ void findWall(const sensor_msgs::LaserScan::ConstPtr& laser_msg) {
 	for (int i = 0; i < laser_msg_size; i++) {
 
 		float dist = laser_msg->ranges[i+laser_msg_offset]; // read distance from laser messages and skip first unusable entries
-		int i_angle_offset = i - laser_msg_center; // i = 0 -> angle = -120 deg
-		float angle = i_angle_offset*angle_step; // compute angle for laser message
+		if (dist == dist){ // do not push if NaN
+			int i_angle_offset = i - laser_msg_center; // i = 0 -> angle = -120 deg
+			float angle = i_angle_offset*angle_step; // compute angle for laser message
 
-		tuple<float,float> point = polarToCartesian(dist, angle); // get caresian point
-
-		// add it to coordinates vector
-		if (get<0>(point) == get<0>(point)){ // do not push if NaN
+			tuple<float,float> point = polarToCartesian(dist, angle); // get caresian point
+			// add it to coordinates vector
 			coordinates.push_back(point); 
 			ROS_INFO("Converted polar (r,a) -> cartesian (x,y): (%f,%f) -> (%f,%f)\n", dist, angle, get<0>(coordinates[j]), get<1>(coordinates[j]));
 			j++;
