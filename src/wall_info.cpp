@@ -8,7 +8,7 @@ using namespace std;
 red_fundamentals::WallInfo winfo_msg;
 const float angle_step = 0.3515669;
 const int laser_msg_offset = 44;
-const int laser_msg_size = 681;
+const int laser_msg_size = 682;
 const int laser_msg_center = 341;
 
 float tuple_dot_prod(tuple<float,float> x, tuple<float,float> y){
@@ -144,10 +144,10 @@ void findWall(const sensor_msgs::LaserScan::ConstPtr& laser_msg) {
 	// set up a coordinate array and fill it with cartesian points
 	vector<tuple<float,float>> coordinates;
 
+	int j = 0; // count the entries in coordinates array
 	for (int i = 0; i < laser_msg_size; i++) {
 
-		int j = i+laser_msg_offset; // skip the first unusable entries
-		int dist = laser_msg->ranges[j]; // read distance from laser messages
+		int dist = laser_msg->ranges[i+laser_msg_offset]; // read distance from laser messages and skip first unusable entries
 		int i_angle_offset = i - laser_msg_center; // i = 0 -> angle = -120 deg
 		int angle = i_angle_offset*angle_step; // compute angle for laser message
 
@@ -156,11 +156,9 @@ void findWall(const sensor_msgs::LaserScan::ConstPtr& laser_msg) {
 		// add it to coordinates vector
 		if (get<0>(point) == get<0>(point)){ // do not push if NaN
 			coordinates.push_back(point); 
+			ROS_INFO("Converted polar (r,a) -> cartesian (x,y): (%f,%f) -> (%f,%f)\n", dist, angle, get<0>(coordinates[j]), get<1>(coordinates[j]));
+			j++;
 		}
-		
-		ROS_INFO("Converted polar (r,a) -> cartesian (x,y): (%f,%f) -> (%f,%f)\n", dist, angle, get<0>(coordinates[i]), get<1>(coordinates[i]));
-
-		i++;
 	}
 
 	// find a wall in that array
