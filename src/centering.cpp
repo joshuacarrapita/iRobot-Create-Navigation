@@ -176,7 +176,7 @@ void center(const red_fundamentals::WallInfo::ConstPtr& msg)
 			turnRightAngle(1)
 			heading = 1;
 			//if found move on to phase 2
-			if (findWall(msg) == 1) {
+			if (msg->wall) {
 				isPerpendicular == 0;
 				distCorrect == 0;
 				centeringPhase == 1;
@@ -188,7 +188,7 @@ void center(const red_fundamentals::WallInfo::ConstPtr& msg)
 			turnRightAngle(1);
 			heading = 3;
 			//if found move on to phase 2
-			if (findWall(msg) == 1) {
+			if (msg->wall) {
 				isPerpendicular == 0;
 				distCorrect == 0;
 				centeringPhase == 1;
@@ -202,7 +202,7 @@ void center(const red_fundamentals::WallInfo::ConstPtr& msg)
 		ros::Duration(moveIncrement).sleep();
 		stop();
 		//if found move on to phase 2
-		if (findWall(msg) == 1)
+		if (msg->wall)
 			isPerpendicular == 0;
 			distCorrect == 0;
 			centeringPhase == 1;
