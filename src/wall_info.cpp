@@ -147,9 +147,9 @@ void findWall(const sensor_msgs::LaserScan::ConstPtr& laser_msg) {
 	int j = 0; // count the entries in coordinates array
 	for (int i = 0; i < laser_msg_size; i++) {
 
-		int dist = laser_msg->ranges[i+laser_msg_offset]; // read distance from laser messages and skip first unusable entries
+		float dist = laser_msg->ranges[i+laser_msg_offset]; // read distance from laser messages and skip first unusable entries
 		int i_angle_offset = i - laser_msg_center; // i = 0 -> angle = -120 deg
-		int angle = i_angle_offset*angle_step; // compute angle for laser message
+		float angle = i_angle_offset*angle_step; // compute angle for laser message
 
 		tuple<float,float> point = polarToCartesian(dist, angle); // get caresian point
 
