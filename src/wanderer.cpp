@@ -27,16 +27,16 @@ void turnAround() {
 	stop();
 }
 //WARNING:As soon as the odometer value overflows (>2^15) the driver will crash and need to be restarted
-void laserSensObstacle(const sensor_msgs::LaserScan::ConstPtr& msg)
+void wander(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	double minDist = 1;
-	for (int i = msg->ranges.size()/3; i < (msg->ranges.size()/3)*2; i++) {
+	for (int i = msg->ranges.size()/4; i < (msg->ranges.size()/4)*3; i++) {
 		if (msg->ranges[i] < minDist) {
 			minDist = msg->ranges[i];
 		}
 	}
-	ROS_INFO("Distance: %f", minDist);
-	if (minDist < turnaroundDist && !isnan(msg->ranges[msg->ranges.size()/2])) {
+	//ROS_INFO("Distance: %f", minDist);
+	if (minDist < turnaroundDist) {
 		turnAround();
 	} else {
 		srv.request.left = speed;
@@ -58,9 +58,9 @@ int main(int argc, char **argv)
 		turningTime = atof(argv[3]);
 	}
 	ros::init(argc, argv, "wanderer");
-	ros::NodeHandle n; 
+	ros::NodeHandle n;
 	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
-	ros::Subscriber sub = n.subscribe("scan_filtered", 1, laserSensObstacle);
+	ros::Subscriber sub = n.subscribe("scan_filtered", 1, wander);
 	ROS_INFO("Starting wanderer mode");
 	ros::spin();
 	return 0;
