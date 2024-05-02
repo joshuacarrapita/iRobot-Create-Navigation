@@ -4,13 +4,15 @@
 #include "red_fundamentals/WallInfo.h"
 
 using namespace std;
-char** args;
+char** args = NULL;
 
 red_fundamentals::WallInfo winfo_msg;
 const float angle_step = 0.3515669;
 const int laser_msg_offset = 44;
 const int laser_msg_size = 682;
 const int laser_msg_center = 341;
+int amt_coordinates = 0;
+int amt_inliers = 0;
 
 float tuple_dot_prod(tuple<float,float> x, tuple<float,float> y){
 	return get<0>(x)*get<0>(y)+get<1>(x)*get<1>(y);
@@ -48,15 +50,17 @@ tuple<float,float> ransac(
 		vector<tuple<float,float>> coordinates, // points we use to model the wall
 		int poly_deg = 1, // the shape of wall to look for
 		int epochs = 200, // the amount of rounds to try finding the best wall
-		int margin = 10, // for which distance points are still considered part of the wall
+		float margin = 0.2, // for which distance points are still considered part of the wall
 		int success = 10, // amt of model-fitting points needed to consider it a wall
 		int angle_tolerance = 0 // how much bigger of an angle a better wall may have
 		){
 
 	int amt_points = poly_deg+1; // the amount of points needed to model the polynomial
+	amt_inliers = 0;
+	amt_coordinates = coordinates.size();
 
 	vector<tuple<float,float>> best_model_param_form;
-	tuple<float,float> best_model_polar_form = {-1,0};
+	tuple<float,float> best_model_polar_form = {-2,0};
 	float best_angle = 999;
 
 	vector<tuple<float,float>> zero_deg_model = {{0,0},{1,0}}; // TODO: Check if coordinate system makes problems
@@ -66,26 +70,30 @@ tuple<float,float> ransac(
 		// get amt_points unique random inlier candidates from cartesian points
 		srand(time(NULL));
 		tuple<float,float> inlier_candidates[amt_points];
-		bool used[coordinates.size()] = {0};
+		tuple<float,float> u = {0,0};
 
-		for (int j = 0; j < amt_points; j++){
-			int k;
-			do k = rand()%coordinates.size();
-			while (used[k] == true);
+		while(tuple_norm(u) < 0.5){
+			bool used[coordinates.size()] = {0};
 
-			inlier_candidates[j] = coordinates[k];
+			for (int j = 0; j < amt_points; j++){
+				int k;
+				do k = rand()%coordinates.size();
+				while (used[k] == true);
 
-			used[k] = true;
+				inlier_candidates[j] = coordinates[k];
+
+				used[k] = true;
+			}
+			u = tuple_sub(inlier_candidates[1],inlier_candidates[0]);
 		}
 
 		// model parameters to candidates
 		vector<tuple<float,float>> candidate_model;
 		// TODO: Implement matmul and gauss to make it work with any polynomial
-		tuple<float,float> u = tuple_sub(inlier_candidates[1],inlier_candidates[0]);
 
 		// create a linear model in parameter form
 		candidate_model.push_back(inlier_candidates[0]); // index 0 is starting point
-		candidate_model.push_back(u); // index 1 is direction vector
+		candidate_model.push_back(u); // u is direction vector
 
 		vector<tuple<float,float>> inliers_confirmed;
 
@@ -97,9 +105,11 @@ tuple<float,float> ransac(
 
 			// if distance to x is less than margin add to confirmed inliers
 			float x_dist = tuple_norm(tuple_sub(x,x_p));
-			ROS_INFO("Dist of x to model: %f\n", x_dist);
 
-			if (x_dist < margin) inliers_confirmed.push_back(x);
+			if (x_dist < margin) {
+				inliers_confirmed.push_back(x);
+				//ROS_INFO("Dist of x to model: %f\n", x_dist);
+			}
 
 		}
 
@@ -121,6 +131,7 @@ tuple<float,float> ransac(
 			}
 		}
 	}
+	amt_inliers = success;
 	return best_model_polar_form;
 }
 
@@ -134,10 +145,10 @@ tuple<float,float> polarToCartesian(float radius, float angle) {
 void findWall(const sensor_msgs::LaserScan::ConstPtr& laser_msg) {
 
 	// parse arguments for ransac
-	unsigned int epochs = (unsigned int) abs(atoi(args[1]));
-	unsigned int margin = (unsigned int) abs(atoi(args[2]));
-	unsigned int success = (unsigned int) abs(atoi(args[3]));
-	unsigned int angle_tolerance = (unsigned int) abs(atoi(args[4]));
+	unsigned int epochs = (unsigned int) abs(atoi(args[2]));
+	float margin = (float) atof(args[3]);
+	unsigned int success = (unsigned int) abs(atoi(args[4]));
+	unsigned int angle_tolerance = (unsigned int) abs(atoi(args[5]));
 
 	// set up a coordinate array and fill it with cartesian points
 	vector<tuple<float,float>> coordinates;
@@ -156,20 +167,22 @@ void findWall(const sensor_msgs::LaserScan::ConstPtr& laser_msg) {
 
 			coordinates.push_back(point); // add it to coordinates vector
 
-			ROS_INFO("Converted polar (r,a) -> cartesian (x,y): (%f,%f) -> (%f,%f)\n", dist, angle, get<0>(coordinates[j]), get<1>(coordinates[j]));
+			//ROS_INFO("Converted polar (r,a) -> cartesian (x,y): (%f,%f) -> (%f,%f)\n", dist, angle, get<0>(coordinates[j]), get<1>(coordinates[j]));
 
 			j++;
 		}
 	}
 
 	// find a wall in that array
-	tuple<float,float> wall = ransac(coordinates, 1, epochs, margin, success, angle_tolerance);
+	tuple<float,float> wall = {-1,0};
+	if (args) {
+	    wall = ransac(coordinates, 1, epochs, margin, success, angle_tolerance);
+	} else {
+	    wall = ransac(coordinates);
+	}
 
 	winfo_msg.dist = get<0>(wall);
-	winfo_msg.angle = get<1>(wall);
-
-	ROS_INFO("WallInfo msg: dist: %f, angle: %f\n", winfo_msg.dist, winfo_msg.angle);
-
+	winfo_msg.angle = get<1>(wall) * (180.0/3.14159265358979323);
 }
 
 int main(int argc, char **argv)
@@ -179,16 +192,20 @@ int main(int argc, char **argv)
 	ros::Publisher pub = n.advertise<red_fundamentals::WallInfo>("wall_info_topic", 100);
 	ros::Subscriber sub = n.subscribe("scan_filtered", 100, findWall);
 
-	if (argc != 5) {
-		ROS_INFO("usage: epochs margin success angle_tolerance");
+	if (argc != 6) {
+            ROS_INFO("usage: loop_rate epochs margin success angle_tolerance");
+	} else {
+	    args = argv;
 	}
-	args = argv;
 
-	ros::Rate loop_rate(0.1);
+	float l_r = atof(argv[1]);
+
+	ros::Rate loop_rate(l_r);
 	while (ros::ok()){
 		ros::spinOnce();
 
 		pub.publish(winfo_msg);
+		ROS_INFO("WallInfo msg: dist: %f, angle: %f, inliers: %d, of total points: %d\n", winfo_msg.dist, winfo_msg.angle, amt_inliers, amt_coordinates);
 
 		loop_rate.sleep();
 	}
