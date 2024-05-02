@@ -73,7 +73,7 @@ int findWall(red_fundamentals::WallInfo::ConstPtr& msg)
 }*/
 
 //turns robot until it is roughly perpendicular to found wall
-void perpendicularise(red_fundamentals::WallInfo::ConstPtr& msg)
+void perpendicularise(const red_fundamentals::WallInfo::ConstPtr& msg)
 {
 	//double angles[4] = (msg + sizeof(double) * 4); //need to add sizeof(header) to addr
 	//turn right if wall right of robot
@@ -101,7 +101,7 @@ void perpendicularise(red_fundamentals::WallInfo::ConstPtr& msg)
 }
 
 //moves robot until distance to wall is half cell width/length
-void correctDist(red_fundamentals::WallInfo::ConstPtr& msg)
+void correctDist(const red_fundamentals::WallInfo::ConstPtr& msg)
 {
 	//double walls[4] = msg; //need to add sizeof(header) to addr
 	//if too far away move forward
