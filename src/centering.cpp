@@ -216,13 +216,13 @@ int main(int argc, char **argv)
 		ROS_ERROR("Usage: centering <tolerance> <speed> <moveIncrement>");
 		return 0;
 	}
-	tolerance = argv[0];
-	speed = argv[1];
-	moveIncrement = argv[2];
+	tolerance = atof(argv[1]);
+	speed = atof(argv[2]);
+	moveIncrement = atof(argv[3]);
 	ros::init(argc, argv, "centering");
 	ros::NodeHandle n;
-	ros::Subscriber sub = n.subscribe("wall_info", 1, center);
 	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
+	ros::Subscriber sub = n.subscribe("wall_info", 1, center);
 	//spin until centered
 	while (centeringPhase != 2) {
 		ros::spinOnce();
