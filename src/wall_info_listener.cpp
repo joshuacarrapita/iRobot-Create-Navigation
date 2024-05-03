@@ -4,7 +4,7 @@
 
 void winfoCallback(const red_fundamentals::WallInfo::ConstPtr& msg)
 {
-	ROS_INFO("I HEARD: %f, %f\n", msg->dist, msg->angle);
+	ROS_INFO("I HEARD: %f, %f, %f, %f\n", msg->x_move, msg->y_move, msg->x_dir_prll, msg->y_dir_prll);
 }
 
 int main(int argc, char **argv)
