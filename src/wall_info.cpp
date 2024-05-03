@@ -16,39 +16,38 @@ const float wall_length = 0.4;
 int amt_coordinates = 0;
 int amt_inliers = 0;
 
-float tuple_dot_prod(tuple<float,float> x, tuple<float,float> y){
+float tuple_dot_prod(tuple<float,float> x, tuple<float,float> y) {
 
 	return get<0>(x)*get<0>(y)+get<1>(x)*get<1>(y);
 
 }
 
-tuple<float,float> tuple_add(tuple<float,float> x, tuple<float,float> y){
+tuple<float,float> tuple_add(tuple<float,float> x, tuple<float,float> y) {
 
 	return {get<0>(x)+get<0>(y),get<1>(x)+get<1>(y)};
 
 }
 
-tuple<float,float> tuple_sub(tuple<float,float> x, tuple<float,float> y){
+tuple<float,float> tuple_sub(tuple<float,float> x, tuple<float,float> y) {
 
 	return {get<0>(x)-get<0>(y),get<1>(x)-get<1>(y)};
 
 }
 
-tuple<float,float> tuple_mul_scalar(tuple<float,float> x, float y){
+tuple<float,float> tuple_mul_scalar(tuple<float,float> x, float y) {
 
 	return {get<0>(x)*y,get<1>(x)*y};
 
 }
 
-float tuple_norm(tuple<float,float> x){
+float tuple_norm(tuple<float,float> x) {
 
 	return sqrt(tuple_dot_prod(x,x));
 
 }
 
-tuple<float,float> project_x_onto_param_form(tuple<float,float> x,
+tuple<float,float> project_x_onto_param_form(tuple<float,float> x, vector<tuple<float,float>> model) {
 
-		vector<tuple<float,float>> model){
 	tuple<float,float> start_vec = model[0];
 	tuple<float,float> dir_vec = model[1];
 
@@ -60,31 +59,31 @@ tuple<float,float> project_x_onto_param_form(tuple<float,float> x,
 
 }
 
-tuple<float,float> tuple_rotate_clockwise_90(tuple<float,float> x){
+tuple<float,float> tuple_rotate_counter_clockwise_90(tuple<float,float> x) {
 
 	return {-1*get<1>(x),get<0>(x)};
 
 }
 
-tuple<float,float> calc_move_point(vector<tuple<float,float>> model_param_form){
+tuple<float,float> calc_move_point(vector<tuple<float,float>> model_param_form) {
 
 	tuple<float,float> start = model_param_form[0];
 	tuple<float,float> dir_vec = model_param_form[1];
 	tuple<float,float> mid = tuple_add(start,tuple_mul_scalar(dir_vec,0.5));
 	tuple<float,float> dir_vec_norm = tuple_mul_scalar(dir_vec,1/tuple_norm(dir_vec));
-	tuple<float,float> dir_vec_norm_rot = tuple_rotate_clockwise_90(dir_vec_norm);
+	tuple<float,float> dir_vec_norm_rot = tuple_rotate_counter_clockwise_90(dir_vec_norm);
 
 	return {tuple_add(mid, tuple_mul_scalar(dir_vec_norm_rot,wall_length))};
 	
 }
 
 
-vector<float> ransac(
+vector<float> ransac (
 
 		vector<tuple<float,float>> coordinates, // points we use to model the wall
 		int poly_deg = 1, // the shape of wall to look for
 		int epochs = 300, // the amount of rounds to try finding the best wall
-		float margin = 0.2, // for which distance points are still considered part of the wall
+		float margin = 0.05, // for which distance points are still considered part of the wall
 		int success = 30, // amt of model-fitting points needed to consider it a wall
 		int angle_tolerance = 0 // how much bigger of an angle a better wall may have
 		){
@@ -239,8 +238,7 @@ void findWall(const sensor_msgs::LaserScan::ConstPtr& laser_msg) {
 
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 
 	ros::init(argc, argv, "wall_info_talker");
 	ros::NodeHandle n;
@@ -248,15 +246,20 @@ int main(int argc, char **argv)
 	ros::Subscriber sub = n.subscribe("scan_filtered", 100, findWall);
 
 	if (argc != 6) {
+
 		ROS_INFO("usage: loop_rate epochs margin success angle_tolerance");
+
 	} else {
+
 		args = argv;
+
 	}
 
 	float l_r = (float) atof(argv[1]);
 
 	ros::Rate loop_rate(l_r);
 	while (ros::ok()){
+
 		ros::spinOnce();
 
 		pub.publish(winfo_msg);
@@ -264,6 +267,7 @@ int main(int argc, char **argv)
 		ROS_INFO("WallInfo msg: Move Point: (%f,%f), Parallel Dir Vec: (%f,%f), inliers: %d, of total points: %d\n", winfo_msg.x_move, winfo_msg.y_move, winfo_msg.x_dir_prll, winfo_msg.y_dir_prll, amt_inliers, amt_coordinates);
 
 		loop_rate.sleep();
+
 	}
 
 	return 0;
