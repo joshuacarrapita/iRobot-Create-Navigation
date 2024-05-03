@@ -65,15 +65,31 @@ tuple<float,float> tuple_rotate_counter_clockwise_90(tuple<float,float> x) {
 
 }
 
-tuple<float,float> calc_move_point(vector<tuple<float,float>> model_param_form) {
+tuple<float,float> tuple_rotate_clockwise_90(tuple<float,float> x) {
+
+	return {get<1>(x),-1*get<0>(x)};
+
+}
+
+tuple<float,float> calc_move_point(vector<tuple<float,float>> model_param_form, bool neg = false) {
 
 	tuple<float,float> start = model_param_form[0];
 	tuple<float,float> dir_vec = model_param_form[1];
 	tuple<float,float> mid = tuple_add(start,tuple_mul_scalar(dir_vec,0.5));
 	tuple<float,float> dir_vec_norm = tuple_mul_scalar(dir_vec,1/tuple_norm(dir_vec));
-	tuple<float,float> dir_vec_norm_rot = tuple_rotate_counter_clockwise_90(dir_vec_norm);
+	tuple<float,float> dir_vec_norm_rot;
 
-	return {tuple_add(mid, tuple_mul_scalar(dir_vec_norm_rot,wall_length))};
+	if (neg) {
+
+		dir_vec_norm_rot = tuple_rotate_clockwise_90(dir_vec_norm);
+
+	} else {
+		
+		dir_vec_norm_rot = tuple_rotate_counter_clockwise_90(dir_vec_norm);
+
+	}
+
+	return {tuple_add(mid, tuple_mul_scalar(dir_vec_norm_rot,sqrt(wall_length)))};
 	
 }
 
@@ -163,6 +179,12 @@ vector<float> ransac (
 	if (get<0>(best_model_param_form[0]) != -98){
 
 		tuple<float,float> move_point = calc_move_point(best_model_param_form);
+		tuple<float,float> move_point_2 = calc_move_point(best_model_param_form,true);
+
+		if (tuple_norm(move_point_2) < tuple_norm(move_point)) {
+			move_point = move_point_2;
+		}
+
 		tuple<float,float> dir_vec = best_model_param_form[1];
 		tuple<float,float> dir_vec_norm = tuple_mul_scalar(dir_vec,1/tuple_norm(dir_vec));
 
