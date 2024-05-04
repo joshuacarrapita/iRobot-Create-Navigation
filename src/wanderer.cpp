@@ -18,10 +18,14 @@ void stop() {
 	diffDrive.call(srv);
 }
 
-void turnAround() {
+void turnAround(int direction) {
+	int turnspeed = 7;
+	if (!direction) {
+		turnspeed = -turnspeed;
+	}
 	stop();
-	srv.request.left = 7;
-	srv.request.right = -7;
+	srv.request.left = turnspeed;
+	srv.request.right = -turnspeed;
 	diffDrive.call(srv);
 	ros::Duration(turningTime).sleep();
 	stop();
@@ -29,15 +33,20 @@ void turnAround() {
 //WARNING:As soon as the odometer value overflows (>2^15) the driver will crash and need to be restarted
 void wander(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
+	int minDistIndex;
+	int turnDirection = 1;
 	double minDist = 1;
 	for (int i = msg->ranges.size()/4; i < (msg->ranges.size()/4)*3; i++) {
 		if (msg->ranges[i] < minDist) {
 			minDist = msg->ranges[i];
+			minDistIndex = i;
 		}
 	}
-	//ROS_INFO("Distance: %f", minDist);
+	if (minDistIndex < msg->ranges.size()/2) {
+		turnDirection = 0;
+	}
 	if (minDist < turnaroundDist) {
-		turnAround();
+		turnAround(turnDirection);
 	} else {
 		srv.request.left = speed;
 		srv.request.right = speed;
