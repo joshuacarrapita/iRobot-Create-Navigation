@@ -3,6 +3,8 @@
 #include "red_fundamentals/Walls.h"
 #include <cstdlib>
 
+using namespace std;
+
 #define LARRSIZE 726
 #define LARROFFSET 44
 #define LARRACTSIZE 682
@@ -16,34 +18,40 @@ red_fundamentals::Walls wall;
 
 struct coords
 {
-	float x;	//for polar = r
-	float y;	//for polar = angle
+	double x;	//for polar = r
+	double y;	//for polar = angle
 } myCoords;
 
 
 //converts polar to cart coordinates
-struct coords polToCart(coords polar)
+struct coords polToCart(struct coords polar)
 {
+	//ROS_INFO("Converting polar coordinate with r = %f and angle = %f", polar.x, polar.y);
 	struct coords cart;
 	cart.x = polar.x * cos(polar.y);
 	cart.y = polar.x * sin(polar.y);
+	//ROS_INFO("To cartesian coordinate with (%f , %f)", cart.x, cart.y);
 	return cart;
 }
 
 float calcAngle(int index)
 {
-	return index * ANGLESTEPUSED;
+	return((index * ANGLESTEPUSED/180)* ((double) M_PI));
 }
 
 void sransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	struct coords coordinates[LARRUSED];
 	struct coords pol;
-	for (int i = (TOTALOFFSET-1); i < LARRSIZE - LARRUSEDOFFSET; i++) {
+	struct coords cartesian;
+	for (int i = (TOTALOFFSET-1); i < LARRSIZE - (LARRUSEDOFFSET+1); i++) {
+		//if (isnan(msg->ranges[i])) {
+		//	continue;
+		//}
 		pol.x = msg->ranges[i];
 		pol.y = calcAngle(i - (TOTALOFFSET-1));
-		coordinates[i] = polToCart(pol);
-		ROS_INFO("Generated cartesian coordinate with (%f , %f)", coordinates[i].x, coordinates[i].y);
+		coordinates[i - (TOTALOFFSET-1)] = polToCart(pol);
+		ROS_INFO("Generated cartesian coordinate %i with (%f , %f)", i-(TOTALOFFSET-1), coordinates[i-(TOTALOFFSET-1)].x, coordinates[i-(TOTALOFFSET-1)].y);
 	}
 }
 
@@ -58,7 +66,7 @@ int main(int argc, char **argv)
 
 	while(ros::ok()) {
 		ros::spinOnce();
-		pub.publish(wall);
+		//pub.publish(wall);
 		ros::Duration(3).sleep();
 	}
 	return 0;
