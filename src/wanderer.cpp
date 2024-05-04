@@ -8,16 +8,18 @@
 
 ros::ServiceClient diffDrive;
 create_fundamentals::DiffDrive srv;
-double speed = 5;		//default: 5
-double turnaroundDist = 0.2;	//default: 0.2
-double turningTime = 1;	//default: 1
+double speed = 7;		//default: 7
+double turnaroundDist = 0.15;	//default: 0.15
+double turningTime = 0.9;	//default: 0.9
 
+//stop robot
 void stop() {
 	srv.request.left = 0;
 	srv.request.right = 0;
 	diffDrive.call(srv);
 }
 
+//turn left or right depending on direction value
 void turnAround(int direction) {
 	int turnspeed = 7;
 	if (!direction) {
@@ -30,7 +32,8 @@ void turnAround(int direction) {
 	ros::Duration(turningTime).sleep();
 	stop();
 }
-//WARNING:As soon as the odometer value overflows (>2^15) the driver will crash and need to be restarted
+
+//Drive forward until obstacle detected then turn and keep driving
 void wander(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	int minDistIndex;
@@ -57,7 +60,6 @@ void wander(const sensor_msgs::LaserScan::ConstPtr& msg)
 
 int main(int argc, char **argv)
 {
-	ROS_ERROR("As soon as the odometer value reaches 32768 the driver will crash and need to be restarted!");
 	if (argc != 4) {
 		ROS_ERROR("Usage: wanderer <speed> <turnaroundDist> <turningTime>");
 		ROS_INFO("Setting default values...");
