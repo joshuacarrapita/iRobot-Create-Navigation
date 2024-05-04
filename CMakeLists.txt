@@ -31,7 +31,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 #uncomment if you have defined messages
 add_message_files(FILES
-	wall_info.msg
+	Walls.msg
 )
 #uncomment if you have defined services
 #add_service_files(FILES
@@ -75,3 +75,7 @@ add_dependencies(example_moving create_fundamentals_generate_messages_cpp)
 add_executable(centering src/centering.cpp)
 target_link_libraries(centering ${catkin_LIBRARIES})
 add_dependencies(centering create_fundamentals_generate_messages_cpp)
+
+add_executable(walls src/walls.cpp)
+target_link_libraries(walls ${catkin_LIBRARIES})
+add_dependencies(walls create_fundamentals_generate_messages_cpp)

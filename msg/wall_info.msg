@@ -1,9 +1,0 @@
-Header header
-float64 dist_wall_front
-float64 dist_wall_right
-float64 dist_wall_back
-float64 dist_wall_left
-float64 angle_wall_front
-float64 angle_wall_right
-float64 angle_wall_back
-float64 angle_wall_left
