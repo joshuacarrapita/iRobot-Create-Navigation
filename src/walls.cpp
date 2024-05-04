@@ -43,6 +43,7 @@ void sransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 		pol.x = msg->ranges[i];
 		pol.y = calcAngle(i - (TOTALOFFSET-1));
 		coordinates[i] = polToCart(pol);
+		ROS_INFO("Generated cartesian coordinate with (%f , %f)", coordinates[i].x, coordinates[i].y);
 	}
 }
 
