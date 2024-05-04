@@ -54,8 +54,15 @@ void sransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 		//ROS_INFO("Generated cartesian coordinate %i with (%f , %f)", j, coordinates[j].x, coordinates[j].y);
 		//j++;
 	}
-	for (int i = 0; i < coordinates.size(); i++) {
-	
+	for (int i = 0; i < coordinates.size()-10; i++) {
+		struct coords candidate_a = coordinates[i];
+		struct coords candidate_b = coordinates[i+10];
+		struct coords direction;
+		direction.x = candidate_b.x - candidate_a.x;
+		direction.y = candidate_b.y - candidate_a.y;
+		for (int i = 0; i < coordinates.size()-10; i++) {
+			
+		}
 	}
 }
 
