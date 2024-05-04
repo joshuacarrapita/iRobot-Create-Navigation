@@ -16,8 +16,8 @@ red_fundamentals::Walls wall;
 
 struct
 {
-	float x		//for polar = r
-	float y		//for polar = angle
+	float x;	//for polar = r
+	float y;	//for polar = angle
 } coords;
 
 
