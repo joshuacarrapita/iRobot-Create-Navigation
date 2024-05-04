@@ -14,17 +14,17 @@
 
 red_fundamentals::Walls wall;
 
-struct
+struct coords
 {
 	float x;	//for polar = r
 	float y;	//for polar = angle
-} coords;
+} myCoords;
 
 
 //converts polar to cart coordinates
-coords polToCart(coords polar)
+struct coords polToCart(coords polar)
 {
-	coords cart;
+	struct coords cart;
 	cart.x = polar.x * cos(polar.y);
 	cart.y = polar.x * sin(polar.y);
 	return cart;
@@ -37,8 +37,8 @@ float calcAngle(int index)
 
 void sransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
-	coords coordinates[LARRUSED];
-	coords pol;
+	struct coords coordinates[LARRUSED];
+	struct coords pol;
 	for (int i = (TOTALOFFSET-1); i < LARRSIZE - LARRUSEDOFFSET; i++) {
 		pol.x = msg->ranges[i];
 		pol.y = calcAngle(i - (TOTALOFFSET-1));
