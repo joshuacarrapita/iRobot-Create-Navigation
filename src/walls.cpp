@@ -3,8 +3,6 @@
 #include "red_fundamentals/Walls.h"
 #include <cstdlib>
 
-using namespace std;
-
 #define LARRSIZE 726
 #define LARROFFSET 44
 #define LARRACTSIZE 682
@@ -13,6 +11,8 @@ using namespace std;
 #define LARRUSEDOFFSET 85
 #define ANGLESTEPUSED 0.351563
 #define TOTALOFFSET 129
+
+using namespace std;
 
 red_fundamentals::Walls wall;
 
@@ -41,17 +41,21 @@ float calcAngle(int index)
 
 void sransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
-	struct coords coordinates[LARRUSED];
+	vector<coords> coordinates;
 	struct coords pol;
-	struct coords cartesian;
+	//int j = 0;
 	for (int i = (TOTALOFFSET-1); i < LARRSIZE - (LARRUSEDOFFSET+1); i++) {
-		//if (isnan(msg->ranges[i])) {
-		//	continue;
-		//}
+		if (isnan(msg->ranges[i])) {
+			continue;
+		}
 		pol.x = msg->ranges[i];
 		pol.y = calcAngle(i - (TOTALOFFSET-1));
-		coordinates[i - (TOTALOFFSET-1)] = polToCart(pol);
-		ROS_INFO("Generated cartesian coordinate %i with (%f , %f)", i-(TOTALOFFSET-1), coordinates[i-(TOTALOFFSET-1)].x, coordinates[i-(TOTALOFFSET-1)].y);
+		coordinates.push_back(polToCart(pol));
+		//ROS_INFO("Generated cartesian coordinate %i with (%f , %f)", j, coordinates[j].x, coordinates[j].y);
+		//j++;
+	}
+	for (int i = 0; i < coordinates.size(); i++) {
+	
 	}
 }
 
