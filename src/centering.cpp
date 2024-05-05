@@ -2,7 +2,7 @@
 #include "sensor_msgs/LaserScan.h"
 #include <cstdlib>
 #include "create_fundamentals/DiffDrive.h"
-#include "sensor_msgs/LaserScan.h"
+#include "red_fundamentals/Walls.h"
 
 ros::ServiceClient diffDrive;
 create_fundamentals::DiffDrive srv;

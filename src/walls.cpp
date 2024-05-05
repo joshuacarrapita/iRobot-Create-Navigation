@@ -48,12 +48,15 @@ double calcDist(coords pt_a, coords pt_b, coords pt_0)
 	return (abs((pt_b.x-pt_a.x)*(pt_0.y-pt_a.y)-(pt_0.x-pt_a.x)*(pt_b.y-pt_a.y))/sqrt((pt_b.x-pt_a.x)*(pt_b.x-pt_a.x) + (pt_b.y-pt_a.y)*(pt_b.y-pt_a.y)));
 }
 
+//calculates slope and y-axis intercept point of line given 2 points
 coords calcLineEquation(coords pt_a, coords pt_b)
 {
 	double slope = (pt_b.y - pt_a.y)/(pt_b.x-pt_a.x);
-	return robotpos;
+	double y_inter = slope * pt_a.x - pt_a.y;
+	return {.x = slope, .y = y_inter};
 }
 
+//simplified RANSAC making use of environment constraints
 void sransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	vector<coords> coordinates;
