@@ -112,19 +112,29 @@ void perpendicularise(const red_fundamentals::Walls::ConstPtr& msg)
 		return;
 	//turn right if wall right of robot
 	} else if (msg->angle > 85 + tolerance*15) {
+		/*
 		srv.request.left = speed;
 		srv.request.right = -speed;
 		diffDrive.call(srv);
 		ros::Duration(moveIncrement).sleep();
 		stop();
+		*/
+		turnAngle(1, msg->angle - 86);
+		isPerpendicular = 1;
+		heading = 0;
 		return;
 	//turn left if wall left of robot
 	} else if (msg->angle < 88 - tolerance*15) {
+		/*
 		srv.request.left = -speed;
 		srv.request.right = speed;
 		diffDrive.call(srv);
 		ros::Duration(moveIncrement).sleep();
 		stop();
+		*/
+		turnAngle(0, 88 - msg->angle);
+		isPerpendicular = 1;
+		heading = 0;
 		return;
 	}
 	return;
@@ -270,12 +280,10 @@ int main(int argc, char **argv)
 	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
 	ros::Subscriber sub = n.subscribe("walls_topic", 1, center);
 	//spin until centered
-	/*
+
 	while (ros::ok() && centeringPhase != 2) {
 		ros::spinOnce();
 	}
-	*/
-	turnAngle(1, 90);
 	ROS_INFO("centering finished");
 	return 0;
 
