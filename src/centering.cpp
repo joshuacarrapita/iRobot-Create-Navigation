@@ -199,7 +199,7 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 			return;
 		}
 		//if found move on to phase 2
-		if (heading == 1 && msg->dist && msg->angle > 45) {
+		if (heading == 1 && msg->dist && msg->angle > 45 && heading != 3) {
 			ROS_INFO("second wall found at heading 1");
 			isPerpendicular == 0;
 			distCorrect == 0;
@@ -207,7 +207,7 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 			return;
 		//if right of first wall no wall turn right by 180° and look for wall in front
 		} else {
-			ROS_INFO("turning 180° more to find second wall left of origin");
+			ROS_INFO("turning 180 deg more to find second wall left of origin");
 			turnRightAngle(1);
 			turnRightAngle(1);
 			heading = 3;
