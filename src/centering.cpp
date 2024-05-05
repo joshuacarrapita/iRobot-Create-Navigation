@@ -11,6 +11,7 @@ create_fundamentals::DiffDrive srv;
 int isPerpendicular;
 int distCorrect;
 int turnCtr;
+int noPerp;
 int centeringPhase;		//0 if still orienting to first wall; 1 if orienting to second wall; 2 if centered
 int heading;			//current heading of robot; 0 = north, 1 = east, 2 = south, 3 = west
 
@@ -121,20 +122,34 @@ void correctDist(const red_fundamentals::Walls::ConstPtr& msg)
 	//if too far away move forward
 	if (msg->dist > 0.25 + tolerance) {
 		ROS_INFO("moving forward to correct distance");
+		/*
 		srv.request.left = speed;
 		srv.request.right = speed;
 		diffDrive.call(srv);
 		ros::Duration(moveIncrement).sleep();
 		stop();
+		*/
+		moveDist(1, msg->dist - 25);
+		distCorrect = 1;
+		if (centeringPhase == 1) {
+			centeringPhase = 2;
+		}
 		return;
 	//if too close move back
 	} else if (msg->dist < 0.25 - tolerance) {
 		ROS_INFO("moving backwards to correct distance");
+		/*
 		srv.request.left = -speed;
 		srv.request.right = -speed;
 		diffDrive.call(srv);
 		ros::Duration(moveIncrement).sleep();
 		stop();
+		*/
+		moveDist(-1, 25 - msg->dist);
+		distCorrect = 1;
+		if (centeringPhase == 1) {
+			centeringPhase = 2;
+		}
 		return;
 	//if correct distance, set variables
 	} else {
@@ -187,14 +202,14 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 	//find second wall and move to phase 2
 	if (distCorrect) {
 		//after finished adjusting robot to firs wall
-		if (centeringPhase == 0 && heading == 0) {
+		if (heading == 0) {
 			//turn right by 90° and look for wall in front
 			turnRightAngle(1);
 			heading = 1;
 			return;
 		}
 		//if found move on to phase 2
-		if (heading == 1 && msg->dist) {
+		if (heading == 1 && msg->dist && msg->angle > 45) {
 			isPerpendicular == 0;
 			distCorrect == 0;
 			centeringPhase == 1;
@@ -207,18 +222,20 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 			return;
 		}
 		//if found move on to phase 2
-		if (msg->dist && heading == 3) {
+		if (msg->dist && heading == 3 && msg->angle < 135) {
 			isPerpendicular == 0;
 			distCorrect == 0;
 			centeringPhase == 1;
 			return;
+		} else {
+			//if no suitable walls found directly connected to first wall, move forward with first wall left of robot and look for wall in front
+			srv.request.left = 5;
+			srv.request.right = 5;
+			diffDrive.call(srv);
+			ros::Duration(moveIncrement).sleep();
+			stop();
+			return;
 		}
-		//if no suitable walls found directly connected to first wall, move forward with first wall left of robot and look for wall in front
-		srv.request.left = 5;
-		srv.request.right = 5;
-		diffDrive.call(srv);
-		ros::Duration(moveIncrement).sleep();
-		stop();
 		//if found move on to phase 2
 		if (msg->dist)
 			isPerpendicular == 0;
