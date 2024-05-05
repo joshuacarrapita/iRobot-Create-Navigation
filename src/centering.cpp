@@ -44,29 +44,20 @@ void moveDist(int direction, float distance)
 
 //placeholder function to turn left/right by 90°
 //set direction to 1 if right, 0 if left
-//TODO: replace with exact turning function from square task
 void turnRightAngle(int direction)
 {
 	stop();
-	//turn right
-	if (direction > 0) {
-		srv.request.left = 6.3;
-		srv.request.right = -6.3;
-		diffDrive.call(srv);
-		ros::Duration(1.0).sleep();
-		stop();
-		return;
-	//turn left
-	} else if (direction < 0) {
-		srv.request.left = -6.3;
-		srv.request.right = 6.3;
-		ros::Duration(1.0).sleep();
-		stop();
-		return;
-	}
+	float ra_speed = 6.3;
+	if (!direction) { ra_speed = -ra_speed; }
+	srv.request.left = ra_speed;
+	srv.request.right = -ra_speed;
+	diffDrive.call(srv);
+	ros::Duration(1.0).sleep();
+	stop();
 	return;
 }
 
+//turns specific angle between -90 and 90 degrees
 void turnAngle(int direction, double angle)
 {
 	stop();
@@ -81,27 +72,6 @@ void turnAngle(int direction, double angle)
 	return;
 }
 
-
-/*returns integer depending on which wall is detected first
- * 0 = no wall
- * 1 = front
- * 2 = right
- * 3 = back
- * 4 = left
- */
-/* probably deprecated since msg redesign
-int findWall(red_fundamentals::WallInfo::ConstPtr& msg)
-{
-	double walls[4] = msg; //need to add sizeof(header) to addr
-
-	for (int i = ; i < 4; i++) {
-		if (walls[i] > 0) {
-			wall = i + 1;
-		} 
-	}
-	return wall;
-}*/
-
 //turns robot until it is roughly perpendicular to found wall
 void perpendicularise(const red_fundamentals::Walls::ConstPtr& msg)
 {
@@ -112,26 +82,12 @@ void perpendicularise(const red_fundamentals::Walls::ConstPtr& msg)
 		return;
 	//turn right if wall right of robot
 	} else if (msg->angle > 85 + tolerance*15) {
-		/*
-		srv.request.left = speed;
-		srv.request.right = -speed;
-		diffDrive.call(srv);
-		ros::Duration(moveIncrement).sleep();
-		stop();
-		*/
 		turnAngle(1, msg->angle - 86);
 		isPerpendicular = 1;
 		heading = 0;
 		return;
 	//turn left if wall left of robot
 	} else if (msg->angle < 88 - tolerance*15) {
-		/*
-		srv.request.left = -speed;
-		srv.request.right = speed;
-		diffDrive.call(srv);
-		ros::Duration(moveIncrement).sleep();
-		stop();
-		*/
 		turnAngle(0, 88 - msg->angle);
 		isPerpendicular = 1;
 		heading = 0;
@@ -171,17 +127,9 @@ void correctDist(const red_fundamentals::Walls::ConstPtr& msg)
 	return;
 }
 
+//centers the robot in first available cell ends perpendicular to last found wall
 void center(const red_fundamentals::Walls::ConstPtr& msg)
 {
-	//TODO: implement function that uses data from the wall detection service to center the robot within a cell
-	/*idea: find wall -> adjust robot to be perpendicular to wall
-         *-> adjust distance so robot is 25cm away from wall (laser sensor is 15cm from center of robot)
-	 *->turn right/left by 90° -> drive forward until you find other wall ahead
-	 *->adjust so robot is 25cm away from new wall
-	 *(optionally: track how many cells you moved from initial point and retrace)
-	 *->robot should be centered now
-	 */
-
 	//check if wall in sight else move until it is
 	if (!msg->dist) {
 		//if no wall in sight turn right until full 360° rotation
@@ -214,10 +162,9 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 	}
 	//find second wall and move to phase 2
 	if (distCorrect) {
-		//after finished adjusting robot to firs wall
+		//after finished adjusting robot to first wall turn right by 90° and look for wall in front
 		if (heading == 0) {
 			ROS_INFO("turning right to find second wall");
-			//turn right by 90° and look for wall in front
 			turnRightAngle(1);
 			heading = 1;
 			return;
@@ -245,8 +192,8 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 			centeringPhase = 1;
 			return;
 		} else {
-			ROS_INFO("moving to find second wall");
 			//if no suitable walls found directly connected to first wall, move forward with first wall left of robot and look for wall in front
+			ROS_INFO("moving to find second wall");
 			srv.request.left = 5;
 			srv.request.right = 5;
 			diffDrive.call(srv);
