@@ -34,18 +34,24 @@ coords polToCart(coords polar)
 	return cart;
 }
 
-float calcAngle(int index)
+//calculates angle of distance measurement in radians
+double calcAngle(int index)
 {
 	return((index * ANGLESTEPUSED/180)* ((double) M_PI));
 }
 
-float calcDist(struct coords pt_a, struct coords pt_b, struct 
+//calculates distance between point and line given through 2 points
+double calcDist(coords pt_a, coords pt_b, coords pt_0)
+{
+	return (abs((pt_b.x-pt_a.x)*(pt_0.y-pt_a.y)-(pt_0.x-pt_a.x)*(pt_b.y-pt_a.y))/sqrt((pt_b.x-pt_a.x)*(pt_b.x-pt_a.x) + (pt_b.y-pt_a.y)*(pt_b.y-pt_a.y)));
+}
 
 void sransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	vector<coords> coordinates;
-	struct coords pol;
+	coords pol;
 	//int j = 0;
+	//get all valid measurements and convert to cartesian
 	for (int i = (TOTALOFFSET-1); i < LARRSIZE - (LARRUSEDOFFSET+1); i++) {
 		if (isnan(msg->ranges[i])) {
 			continue;
@@ -56,16 +62,29 @@ void sransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 		//ROS_INFO("Generated cartesian coordinate %i with (%f , %f)", j, coordinates[j].x, coordinates[j].y);
 		//j++;
 	}
+	//actual SRANSAC start
+	int maxInliers;
+	coords winner_a;
+	coords winner_b;
+	//take candidates with fixed interval instead of random
 	for (int i = 0; i < coordinates.size()-10; i++) {
-		struct coords candidate_a = coordinates[i];
-		struct coords candidate_b = coordinates[i+10];
-		struct coords direction;
-		direction.x = candidate_b.x - candidate_a.x;
-		direction.y = candidate_b.y - candidate_a.y;
-		for (int i = 0; i < coordinates.size()-10; i++) {
-			
+		int curInliers;
+		coords candidate_a = coordinates[i];
+		coords candidate_b = coordinates[i+10];
+		//count number of inliers
+		for (int j = 0; j < coordinates.size(); j++) {
+			if (calcDist(candidate_a, candidate_b, coordinates[j]) < 0.05) {
+				curInliers++;
+			}
+		}
+		//update winner if current candidates have more inliers than previous best
+		if (curInliers > maxInliers) {
+			maxInliers = curInliers;
+			winner_a = candidate_a;
+			winner_b = candidate_b;
 		}
 	}
+	
 }
 
 
