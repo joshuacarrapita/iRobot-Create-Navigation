@@ -259,6 +259,7 @@ int main(int argc, char **argv)
 	while (ros::ok() && centeringPhase != 2) {
 		ros::spinOnce();
 	}
+	ROS_INFO("centering finished");
 	return 0;
 
 }
