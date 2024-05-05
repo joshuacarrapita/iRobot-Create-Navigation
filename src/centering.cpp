@@ -67,6 +67,20 @@ void turnRightAngle(int direction)
 	return;
 }
 
+void turnAngle(int direction, double angle)
+{
+	stop();
+	float a_speed = 3.2;
+	double anglemapped = (angle*2.0)/90;
+	if (!direction) { a_speed = -a_speed; }
+	srv.request.left =  a_speed;
+	srv.request.right = -a_speed;
+	diffDrive.call(srv);
+	ros::Duration(anglemapped).sleep();
+	stop();
+	return;
+}
+
 
 /*returns integer depending on which wall is detected first
  * 0 = no wall
@@ -199,7 +213,7 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 			return;
 		}
 		//if found move on to phase 2
-		if (heading == 1 && msg->dist && msg->angle > 45) {
+		if (heading == 1 && msg->dist && msg->angle > 75 && msg->angle < 105) {
 			ROS_INFO("second wall found at heading 1");
 			isPerpendicular = 0;
 			distCorrect = 0;
@@ -214,8 +228,8 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 			return;
 		}
 		//if found move on to phase 2
-		if (msg->dist && heading == 3 && msg->angle < 135) {
-			ROS_INFO("second wall found at heading 3");
+		if (msg->dist < 0.8 && heading == 3 && msg->angle < 105 && msg->angle > 75) {
+			ROS_INFO("second wall found at heading 3 with dist: %f and angle %f", msg->dist, msg->angle);
 			isPerpendicular = 0;
 			distCorrect = 0;
 			centeringPhase = 1;
@@ -256,9 +270,12 @@ int main(int argc, char **argv)
 	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
 	ros::Subscriber sub = n.subscribe("walls_topic", 1, center);
 	//spin until centered
+	/*
 	while (ros::ok() && centeringPhase != 2) {
 		ros::spinOnce();
 	}
+	*/
+	turnAngle(1, 90);
 	ROS_INFO("centering finished");
 	return 0;
 
