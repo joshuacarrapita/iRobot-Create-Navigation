@@ -129,7 +129,7 @@ void correctDist(const red_fundamentals::Walls::ConstPtr& msg)
 		ros::Duration(moveIncrement).sleep();
 		stop();
 		*/
-		moveDist(1, msg->dist - 25);
+		moveDist(1, msg->dist - 0.25);
 		distCorrect = 1;
 		if (centeringPhase == 1) {
 			centeringPhase = 2;
@@ -145,7 +145,7 @@ void correctDist(const red_fundamentals::Walls::ConstPtr& msg)
 		ros::Duration(moveIncrement).sleep();
 		stop();
 		*/
-		moveDist(-1, 25 - msg->dist);
+		moveDist(-1, 0.25 - msg->dist);
 		distCorrect = 1;
 		if (centeringPhase == 1) {
 			centeringPhase = 2;
