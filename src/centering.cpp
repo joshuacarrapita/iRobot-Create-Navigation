@@ -206,7 +206,7 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 			centeringPhase = 1;
 			return;
 		//if right of first wall no wall turn right by 180° and look for wall in front
-		} else {
+		} else if (heading != 3) {
 			ROS_INFO("turning 180 deg more to find second wall left of origin");
 			turnRightAngle(1);
 			turnRightAngle(1);

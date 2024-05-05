@@ -138,7 +138,7 @@ int main(int argc, char **argv)
 	while(ros::ok()) {
 		ros::spinOnce();
 		pub.publish(wall);
-		ros::Duration(1).sleep();
+		ros::Duration(0.3).sleep();
 	}
 	return 0;
 }
