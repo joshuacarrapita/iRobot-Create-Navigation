@@ -22,6 +22,8 @@ typedef struct Coords
 	double y;	//for polar = angle
 } coords;
 
+const coords robotpos = {.x = 0, .y = 0};
+
 
 //converts polar to cart coordinates
 coords polToCart(coords polar)
@@ -46,6 +48,12 @@ double calcDist(coords pt_a, coords pt_b, coords pt_0)
 	return (abs((pt_b.x-pt_a.x)*(pt_0.y-pt_a.y)-(pt_0.x-pt_a.x)*(pt_b.y-pt_a.y))/sqrt((pt_b.x-pt_a.x)*(pt_b.x-pt_a.x) + (pt_b.y-pt_a.y)*(pt_b.y-pt_a.y)));
 }
 
+coords calcLineEquation(coords pt_a, coords pt_b)
+{
+	double slope = (pt_b.y - pt_a.y)/(pt_b.x-pt_a.x);
+	return robotpos;
+}
+
 void sransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	vector<coords> coordinates;
@@ -63,12 +71,12 @@ void sransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 		//j++;
 	}
 	//actual SRANSAC start
-	int maxInliers;
+	int maxInliers = 0;
 	coords winner_a;
 	coords winner_b;
 	//take candidates with fixed interval instead of random
 	for (int i = 0; i < coordinates.size()-10; i++) {
-		int curInliers;
+		int curInliers = 0;
 		coords candidate_a = coordinates[i];
 		coords candidate_b = coordinates[i+10];
 		//count number of inliers
@@ -82,9 +90,12 @@ void sransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			maxInliers = curInliers;
 			winner_a = candidate_a;
 			winner_b = candidate_b;
+			ROS_INFO("winner found with %i inliers", curInliers);
 		}
 	}
-	
+	wall.dist = calcDist(winner_a, winner_b, robotpos);
+	//wall.angle = 
+	ROS_INFO("Dist to best wall: %.7lf with %i inliers", wall.dist, maxInliers);
 }
 
 
