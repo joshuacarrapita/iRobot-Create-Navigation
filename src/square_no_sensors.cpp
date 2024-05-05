@@ -16,10 +16,10 @@ void stop(){
 }
 
 void move1m(){
-		srv.request.left = M_PI;
-		srv.request.right = M_PI;
-		diffDrive.call(srv);
-		ros::Duration(1/(M_PI*r)).sleep();
+	srv.request.left = M_PI;
+	srv.request.right = M_PI;
+	diffDrive.call(srv);
+	ros::Duration(1/(M_PI*r)).sleep();
 	stop();
 }
 
@@ -35,14 +35,14 @@ int main(int argc, char **argv){
 	ros::init(argc, argv, "example");
 	ros::NodeHandle n;
 	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
+
 	for(int j=0; j<5; j++){                 
-	for(int i=0; i<4; i++){
-		move1m();
-		rotate90();
-	}
+		for(int i=0; i<4; i++){
+			move1m();
+			rotate90();
+		}
 	}  
 
 	ros::spin();
 	return 0;
 }
-

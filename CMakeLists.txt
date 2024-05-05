@@ -79,3 +79,6 @@ add_executable(square_with_encoders src/square_with_encoders.cpp)
 target_link_libraries(square_with_encoders ${catkin_LIBRARIES})
 add_dependencies(square_with_encoders create_fundamentals_generate_messages_cpp)
 
+add_executable(wanderer src/wanderer.cpp)
+target_link_libraries(wanderer ${catkin_LIBRARIES})
+add_dependencies(wanderer create_fundamentals_generate_messages_cpp)
