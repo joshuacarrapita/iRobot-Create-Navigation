@@ -31,7 +31,7 @@ void stop()
 void moveDist(int direction, float distance)
 {
 	double md_speed = 6.4;
-	if (distance < 0) {
+	if (direction < 0) {
 		md_speed = -md_speed;
 	}
 	srv.request.left = md_speed;
@@ -237,10 +237,11 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 			return;
 		}
 		//if found move on to phase 2
-		if (msg->dist)
+		if (msg->dist && msg->angle <135) {
 			isPerpendicular == 0;
 			distCorrect == 0;
 			centeringPhase == 1;
+		}
 	}
 	return;
 }
