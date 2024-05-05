@@ -16,18 +16,18 @@ using namespace std;
 
 red_fundamentals::Walls wall;
 
-struct coords
+typedef struct Coords
 {
 	double x;	//for polar = r
 	double y;	//for polar = angle
-} myCoords;
+} coords;
 
 
 //converts polar to cart coordinates
-struct coords polToCart(struct coords polar)
+coords polToCart(coords polar)
 {
 	//ROS_INFO("Converting polar coordinate with r = %f and angle = %f", polar.x, polar.y);
-	struct coords cart;
+	coords cart;
 	cart.x = polar.x * cos(polar.y);
 	cart.y = polar.x * sin(polar.y);
 	//ROS_INFO("To cartesian coordinate with (%f , %f)", cart.x, cart.y);
@@ -38,6 +38,8 @@ float calcAngle(int index)
 {
 	return((index * ANGLESTEPUSED/180)* ((double) M_PI));
 }
+
+float calcDist(struct coords pt_a, struct coords pt_b, struct 
 
 void sransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
