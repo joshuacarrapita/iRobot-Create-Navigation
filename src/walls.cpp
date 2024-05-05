@@ -116,7 +116,7 @@ void sransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 	wall.dist = calcDist(winner_a, winner_b, robotpos);
 	wall.angle = calcAngle(winner_a, winner_b);
 	//wall.angle = calcAngleAlt(calcLineEquation(winner_a, winner_b).x);
-	//ROS_INFO("Best wall with %i inliers has dist: %.7lf angle: %.7lf", maxInliers, wall.dist, wall.angle);
+	ROS_INFO("Best wall with %i inliers has dist: %.7lf angle: %.7lf", maxInliers, wall.dist, wall.angle);
 }
 
 

@@ -14,9 +14,9 @@ int turnCtr;
 int centeringPhase;		//0 if still orienting to first wall; 1 if orienting to second wall; 2 if centered
 int heading;			//current heading of robot; 0 = north, 1 = east, 2 = south, 3 = west
 
-double tolerance = 3;		//tolerance value for angle to wall
-double speed = 5;		//motor speed
-double moveIncrement = 0.3;	//time to move each increment
+double tolerance = 0.03;	//tolerance value for angle to wall
+double speed = 4;		//motor speed
+double moveIncrement = 0.1;	//time to move each increment
 
 //stop robot
 void stop()
@@ -29,6 +29,15 @@ void stop()
 
 void moveDist(int direction, float distance)
 {
+	double md_speed = 6.4;
+	if (distance < 0) {
+		md_speed = -md_speed;
+	}
+	srv.request.left = md_speed;
+	srv.request.right = md_speed;
+	diffDrive.call(srv);
+	ros::Duration(distance*5).sleep();
+	stop();
 	return;
 }
 
@@ -39,19 +48,20 @@ void turnRightAngle(int direction)
 {
 	stop();
 	//turn right
-	if (direction) {
-		srv.request.left = 6;
-		srv.request.right = -6;
+	if (direction > 0) {
+		srv.request.left = 6.3;
+		srv.request.right = -6.3;
 		diffDrive.call(srv);
-		ros::Duration(0.9).sleep();
+		ros::Duration(1.0).sleep();
 		stop();
 		return;
 	//turn left
-	} else {
-		srv.request.left = -6;
-		srv.request.right = 6;
-		ros::Duration(0.9).sleep();
+	} else if (direction < 0) {
+		srv.request.left = -6.3;
+		srv.request.right = 6.3;
+		ros::Duration(1.0).sleep();
 		stop();
+		return;
 	}
 	return;
 }
@@ -80,8 +90,13 @@ int findWall(red_fundamentals::WallInfo::ConstPtr& msg)
 //turns robot until it is roughly perpendicular to found wall
 void perpendicularise(const red_fundamentals::Walls::ConstPtr& msg)
 {
+	//set variables if perpendicular
+	if (msg->angle < 85 + tolerance*20 && msg->angle > 85 - tolerance*20) {
+		isPerpendicular = 1;
+		heading = 0;
+		return;
 	//turn right if wall right of robot
-	if (msg->angle > 85 + tolerance) {
+	} else if (msg->angle > 85 + tolerance*15) {
 		srv.request.left = speed;
 		srv.request.right = -speed;
 		diffDrive.call(srv);
@@ -89,17 +104,13 @@ void perpendicularise(const red_fundamentals::Walls::ConstPtr& msg)
 		stop();
 		return;
 	//turn left if wall left of robot
-	} else if (msg->angle < 90 - tolerance) {
+	} else if (msg->angle < 88 - tolerance*15) {
 		srv.request.left = -speed;
 		srv.request.right = speed;
 		diffDrive.call(srv);
 		ros::Duration(moveIncrement).sleep();
 		stop();
 		return;
-	//set variables if perpendicular
-	} else {
-		isPerpendicular = 1;
-		heading = 0;
 	}
 	return;
 }
@@ -108,7 +119,8 @@ void perpendicularise(const red_fundamentals::Walls::ConstPtr& msg)
 void correctDist(const red_fundamentals::Walls::ConstPtr& msg)
 {
 	//if too far away move forward
-	if (msg->dist > 25 + tolerance) {
+	if (msg->dist > 0.25 + tolerance) {
+		ROS_INFO("moving forward to correct distance");
 		srv.request.left = speed;
 		srv.request.right = speed;
 		diffDrive.call(srv);
@@ -116,7 +128,8 @@ void correctDist(const red_fundamentals::Walls::ConstPtr& msg)
 		stop();
 		return;
 	//if too close move back
-	} else if (msg->dist < 25 - tolerance) {
+	} else if (msg->dist < 0.25 - tolerance) {
+		ROS_INFO("moving backwards to correct distance");
 		srv.request.left = -speed;
 		srv.request.right = -speed;
 		diffDrive.call(srv);
@@ -178,24 +191,26 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 			//turn right by 90° and look for wall in front
 			turnRightAngle(1);
 			heading = 1;
-			//if found move on to phase 2
-			if (msg->dist) {
-				isPerpendicular == 0;
-				distCorrect == 0;
-				centeringPhase == 1;
-			}
+			return;
+		}
+		//if found move on to phase 2
+		if (heading == 1 && msg->dist) {
+			isPerpendicular == 0;
+			distCorrect == 0;
+			centeringPhase == 1;
 			return;
 		//if right of first wall no wall turn right by 180° and look for wall in front
-		} else if (heading == 1) {
+		} else {
 			turnRightAngle(1);
 			turnRightAngle(1);
 			heading = 3;
-			//if found move on to phase 2
-			if (msg->dist) {
-				isPerpendicular == 0;
-				distCorrect == 0;
-				centeringPhase == 1;
-			}
+			return;
+		}
+		//if found move on to phase 2
+		if (msg->dist && heading == 3) {
+			isPerpendicular == 0;
+			distCorrect == 0;
+			centeringPhase == 1;
 			return;
 		}
 		//if no suitable walls found directly connected to first wall, move forward with first wall left of robot and look for wall in front
@@ -217,11 +232,12 @@ int main(int argc, char **argv)
 {
 	if (argc != 4) {
 		ROS_ERROR("Usage: centering <tolerance> <speed> <moveIncrement>");
-		return 0;
+		ROS_INFO("Loading default values...");
+	} else {
+		tolerance = atof(argv[1]);
+		speed = atof(argv[2]);
+		moveIncrement = atof(argv[3]);
 	}
-	tolerance = atof(argv[1]);
-	speed = atof(argv[2]);
-	moveIncrement = atof(argv[3]);
 	ros::init(argc, argv, "centering");
 	ros::NodeHandle n;
 	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
