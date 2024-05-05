@@ -27,6 +27,11 @@ void stop()
 	return;
 }
 
+void moveDist(int direction, float distance)
+{
+	return;
+}
+
 //placeholder function to turn left/right by 90°
 //set direction to 1 if right, 0 if left
 //TODO: replace with exact turning function from square task
@@ -73,11 +78,10 @@ int findWall(red_fundamentals::WallInfo::ConstPtr& msg)
 }*/
 
 //turns robot until it is roughly perpendicular to found wall
-void perpendicularise(const red_fundamentals::WallInfo::ConstPtr& msg)
+void perpendicularise(const red_fundamentals::Walls::ConstPtr& msg)
 {
-	//double angles[4] = (msg + sizeof(double) * 4); //need to add sizeof(header) to addr
 	//turn right if wall right of robot
-	if (msg->angle > 0 + tolerance) {
+	if (msg->angle > 85 + tolerance) {
 		srv.request.left = speed;
 		srv.request.right = -speed;
 		diffDrive.call(srv);
@@ -85,7 +89,7 @@ void perpendicularise(const red_fundamentals::WallInfo::ConstPtr& msg)
 		stop();
 		return;
 	//turn left if wall left of robot
-	} else if (msg->angle < 0 - tolerance) {
+	} else if (msg->angle < 90 - tolerance) {
 		srv.request.left = -speed;
 		srv.request.right = speed;
 		diffDrive.call(srv);
@@ -101,11 +105,10 @@ void perpendicularise(const red_fundamentals::WallInfo::ConstPtr& msg)
 }
 
 //moves robot until distance to wall is half cell width/length
-void correctDist(const red_fundamentals::WallInfo::ConstPtr& msg)
+void correctDist(const red_fundamentals::Walls::ConstPtr& msg)
 {
-	//double walls[4] = msg; //need to add sizeof(header) to addr
 	//if too far away move forward
-	if (msg->wall > 25 + tolerance) {
+	if (msg->dist > 25 + tolerance) {
 		srv.request.left = speed;
 		srv.request.right = speed;
 		diffDrive.call(srv);
@@ -113,7 +116,7 @@ void correctDist(const red_fundamentals::WallInfo::ConstPtr& msg)
 		stop();
 		return;
 	//if too close move back
-	} else if (msg->wall < 25 - tolerance) {
+	} else if (msg->dist < 25 - tolerance) {
 		srv.request.left = -speed;
 		srv.request.right = -speed;
 		diffDrive.call(srv);
@@ -130,7 +133,7 @@ void correctDist(const red_fundamentals::WallInfo::ConstPtr& msg)
 	return;
 }
 
-void center(const red_fundamentals::WallInfo::ConstPtr& msg)
+void center(const red_fundamentals::Walls::ConstPtr& msg)
 {
 	//TODO: implement function that uses data from the wall detection service to center the robot within a cell
 	/*idea: find wall -> adjust robot to be perpendicular to wall
@@ -142,9 +145,9 @@ void center(const red_fundamentals::WallInfo::ConstPtr& msg)
 	 */
 
 	//check if wall in sight else move until it is
-	if (!msg->wall) {
+	if (!msg->dist) {
 		//if no wall in sight turn right until full 360° rotation
-		if (!msg->wall && turnCtr < 4) {
+		if (turnCtr < 4) {
 			turnRightAngle(1);
 			turnCtr++;
 			return;
@@ -159,7 +162,7 @@ void center(const red_fundamentals::WallInfo::ConstPtr& msg)
 		}
 	}
 	//turn robot to be perpendicular to detected wall
-	if (wall && !isPerpendicular) {
+	if (msg->dist && !isPerpendicular) {
 		perpendicularise(msg);
 		return;
 	}
@@ -173,10 +176,10 @@ void center(const red_fundamentals::WallInfo::ConstPtr& msg)
 		//after finished adjusting robot to firs wall
 		if (centeringPhase == 0 && heading == 0) {
 			//turn right by 90° and look for wall in front
-			turnRightAngle(1)
+			turnRightAngle(1);
 			heading = 1;
 			//if found move on to phase 2
-			if (msg->wall) {
+			if (msg->dist) {
 				isPerpendicular == 0;
 				distCorrect == 0;
 				centeringPhase == 1;
@@ -188,7 +191,7 @@ void center(const red_fundamentals::WallInfo::ConstPtr& msg)
 			turnRightAngle(1);
 			heading = 3;
 			//if found move on to phase 2
-			if (msg->wall) {
+			if (msg->dist) {
 				isPerpendicular == 0;
 				distCorrect == 0;
 				centeringPhase == 1;
@@ -202,7 +205,7 @@ void center(const red_fundamentals::WallInfo::ConstPtr& msg)
 		ros::Duration(moveIncrement).sleep();
 		stop();
 		//if found move on to phase 2
-		if (msg->wall)
+		if (msg->dist)
 			isPerpendicular == 0;
 			distCorrect == 0;
 			centeringPhase == 1;
@@ -222,9 +225,9 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "centering");
 	ros::NodeHandle n;
 	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
-	ros::Subscriber sub = n.subscribe("wall_info", 1, center);
+	ros::Subscriber sub = n.subscribe("walls_topic", 1, center);
 	//spin until centered
-	while (centeringPhase != 2) {
+	while (ros::ok() && centeringPhase != 2) {
 		ros::spinOnce();
 	}
 	return 0;
