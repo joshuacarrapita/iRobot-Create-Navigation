@@ -12,7 +12,7 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "example");
   ros::NodeHandle n;
-  ros::Subscriber sub = n.subscribe("sensor_packet", 1, sensorCallback);
+  ros::Subscriber sub = n.subscribe("sensorPacket", 1, sensorCallback);
   ros::ServiceClient diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
   
   create_fundamentals::DiffDrive srv;
