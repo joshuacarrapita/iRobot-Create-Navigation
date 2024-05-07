@@ -48,7 +48,7 @@ void turnRightAngle(int direction)
 {
 	stop();
 	float ra_speed = 6.5;
-	if (!direction) { ra_speed = -ra_speed-0.1; }
+	if (!direction) { ra_speed = -ra_speed; }
 	srv.request.left = ra_speed;
 	srv.request.right = -ra_speed;
 	diffDrive.call(srv);
@@ -102,7 +102,7 @@ void correctDist(const red_fundamentals::Walls::ConstPtr& msg)
 	//if too far away move forward
 	if (msg->dist > 0.25 + tolerance) {
 		ROS_INFO("moving forward to correct distance");
-		moveDist(1, (msg->dist+tolerance) - 0.25);
+		moveDist(1, msg->dist - 0.25);
 		distCorrect = 1;
 		if (centeringPhase == 1) {
 			centeringPhase = 2;
@@ -111,7 +111,7 @@ void correctDist(const red_fundamentals::Walls::ConstPtr& msg)
 	//if too close move back
 	} else if (msg->dist < 0.25 - tolerance) {
 		ROS_INFO("moving backwards to correct distance");
-		moveDist(-1, (0.25-tolerance) - msg->dist);
+		moveDist(-1, 0.25 - msg->dist);
 		distCorrect = 1;
 		if (centeringPhase == 1) {
 			centeringPhase = 2;
