@@ -72,9 +72,9 @@ add_executable(example_moving src/example_moving.cpp)
 target_link_libraries(example_moving ${catkin_LIBRARIES})
 add_dependencies(example_moving create_fundamentals_generate_messages_cpp)
 
-#add_executable(centering src/centering.cpp)
-#target_link_libraries(centering ${catkin_LIBRARIES})
-#add_dependencies(centering create_fundamentals_generate_messages_cpp)
+add_executable(centering src/centering.cpp)
+target_link_libraries(centering ${catkin_LIBRARIES})
+add_dependencies(centering create_fundamentals_generate_messages_cpp)
 
 add_executable(walls src/walls.cpp)
 target_link_libraries(walls ${catkin_LIBRARIES})
