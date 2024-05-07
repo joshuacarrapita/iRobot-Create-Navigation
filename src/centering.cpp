@@ -102,7 +102,7 @@ void correctDist(const red_fundamentals::Walls::ConstPtr& msg)
 	//if too far away move forward
 	if (msg->dist > 0.25 + tolerance) {
 		ROS_INFO("moving forward to correct distance");
-		moveDist(1, msg->dist - 0.25);
+		moveDist(1, (msg->dist+tolerance) - 0.25);
 		distCorrect = 1;
 		if (centeringPhase == 1) {
 			centeringPhase = 2;
@@ -111,7 +111,7 @@ void correctDist(const red_fundamentals::Walls::ConstPtr& msg)
 	//if too close move back
 	} else if (msg->dist < 0.25 - tolerance) {
 		ROS_INFO("moving backwards to correct distance");
-		moveDist(-1, 0.25 - msg->dist);
+		moveDist(-1, (0.25-tolerance) - msg->dist);
 		distCorrect = 1;
 		if (centeringPhase == 1) {
 			centeringPhase = 2;
@@ -169,8 +169,9 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 			heading = 1;
 			return;
 		}
+		ROS_INFO("urrent dist: %f | current angle: %f", msg->dist, msg->angle);
 		//if found move on to phase 2
-		if (heading == 1 && msg->dist && msg->angle > 75 && msg->angle < 105) {
+		if (heading == 1 && msg->dist < 0.8 && msg->angle > 75 && msg->angle < 105) {
 			ROS_INFO("second wall found at heading 1");
 			isPerpendicular = 0;
 			distCorrect = 0;
@@ -185,7 +186,7 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 			return;
 		}
 		//if found move on to phase 2
-		if (msg->dist < 0.8 && heading == 3 && msg->angle < 105 && msg->angle > 75) {
+		if (msg->dist < 0.8 && heading == 3 && msg->angle > 75 && msg->angle < 105) {
 			ROS_INFO("second wall found at heading 3 with dist: %f and angle %f", msg->dist, msg->angle);
 			isPerpendicular = 0;
 			distCorrect = 0;
@@ -202,7 +203,7 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 			return;
 		}
 		//if found move on to phase 2
-		if (msg->dist && msg->angle <135) {
+		if (msg->dist < 0.8 && msg->angle > 75 && msg->angle < 105) {
 			ROS_INFO("moving on to phase 2");
 			isPerpendicular = 0;
 			distCorrect = 0;
