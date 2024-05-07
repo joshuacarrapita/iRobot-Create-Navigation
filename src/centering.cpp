@@ -77,17 +77,20 @@ void perpendicularise(const red_fundamentals::Walls::ConstPtr& msg)
 {
 	//set variables if perpendicular
 	if (msg->angle < 85 + tolerance*20 && msg->angle > 85 - tolerance*20) {
+		ROS_INFO("already perpendicular...");
 		isPerpendicular = 1;
 		heading = 0;
 		return;
 	//turn right if wall right of robot
 	} else if (msg->angle > 85 + tolerance*15) {
+		ROS_INFO("turning right by %f degrees", (msg->angle - 86));
 		turnAngle(1, msg->angle - 86);
 		isPerpendicular = 1;
 		heading = 0;
 		return;
 	//turn left if wall left of robot
 	} else if (msg->angle < 88 - tolerance*15) {
+		ROS_INFO("turning left by %f degrees", (88-msg->angle));
 		turnAngle(0, 88 - msg->angle);
 		isPerpendicular = 1;
 		heading = 0;
@@ -100,18 +103,18 @@ void perpendicularise(const red_fundamentals::Walls::ConstPtr& msg)
 void correctDist(const red_fundamentals::Walls::ConstPtr& msg)
 {
 	//if too far away move forward
-	if (msg->dist > 0.25 + tolerance) {
+	if (msg->dist > 0.24 + tolerance) {
 		ROS_INFO("moving forward to correct distance");
-		moveDist(1, msg->dist - 0.25);
+		moveDist(1, msg->dist - 0.24);
 		distCorrect = 1;
 		if (centeringPhase == 1) {
 			centeringPhase = 2;
 		}
 		return;
 	//if too close move back
-	} else if (msg->dist < 0.25 - tolerance) {
+	} else if (msg->dist < 0.24 - tolerance) {
 		ROS_INFO("moving backwards to correct distance");
-		moveDist(-1, 0.25 - msg->dist);
+		moveDist(-1, 0.24 - msg->dist);
 		distCorrect = 1;
 		if (centeringPhase == 1) {
 			centeringPhase = 2;
