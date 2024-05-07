@@ -47,8 +47,8 @@ void moveDist(int direction, float distance)
 void turnRightAngle(int direction)
 {
 	stop();
-	float ra_speed = 6.3;
-	if (!direction) { ra_speed = -ra_speed; }
+	float ra_speed = 6.5;
+	if (!direction) { ra_speed = -ra_speed-0.1; }
 	srv.request.left = ra_speed;
 	srv.request.right = -ra_speed;
 	diffDrive.call(srv);
@@ -167,9 +167,9 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 			ROS_INFO("turning right to find second wall");
 			turnRightAngle(1);
 			heading = 1;
+			ros::Duration(0.3).sleep();
 			return;
 		}
-		ROS_INFO("urrent dist: %f | current angle: %f", msg->dist, msg->angle);
 		//if found move on to phase 2
 		if (heading == 1 && msg->dist < 0.8 && msg->angle > 75 && msg->angle < 105) {
 			ROS_INFO("second wall found at heading 1");
@@ -180,14 +180,16 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 		//if right of first wall no wall turn right by 180° and look for wall in front
 		} else if (heading != 3) {
 			ROS_INFO("turning 180 deg more to find second wall left of origin");
-			turnRightAngle(1);
-			turnRightAngle(1);
+			turnRightAngle(0);
+			turnRightAngle(0);
 			heading = 3;
+			ros::Duration(0.3).sleep();
 			return;
 		}
 		//if found move on to phase 2
 		if (msg->dist < 0.8 && heading == 3 && msg->angle > 75 && msg->angle < 105) {
 			ROS_INFO("second wall found at heading 3 with dist: %f and angle %f", msg->dist, msg->angle);
+			stop();
 			isPerpendicular = 0;
 			distCorrect = 0;
 			centeringPhase = 1;
@@ -198,8 +200,8 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 			srv.request.left = 5;
 			srv.request.right = 5;
 			diffDrive.call(srv);
-			ros::Duration(moveIncrement).sleep();
-			stop();
+			//ros::Duration(moveIncrement).sleep();
+			//stop();
 			return;
 		}
 		//if found move on to phase 2
