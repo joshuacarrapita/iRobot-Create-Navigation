@@ -34,8 +34,8 @@ add_message_files(FILES
 	Walls.msg
 )
 #uncomment if you have defined services
-#add_service_files(FILES
-#)
+add_service_files(FILES
+	ExecutePlan.srv)
 
 #common commands for building c++ executables and libraries
 #add_library(${PROJECT_NAME} src/example.cpp)
@@ -91,3 +91,12 @@ add_dependencies(centering create_fundamentals_generate_messages_cpp)
 add_executable(walls src/walls.cpp)
 target_link_libraries(walls ${catkin_LIBRARIES})
 add_dependencies(walls create_fundamentals_generate_messages_cpp)
+
+add_executable(execute_plan_server src/execute_plan_server.cpp)
+target_link_libraries(execute_plan_server ${catkin_LIBRARIES})
+add_dependencies(execute_plan_server create_fundamentals_generate_messages_cpp)
+
+add_executable(execute_plan_client src/execute_plan_client.cpp)
+target_link_libraries(execute_plan_client ${catkin_LIBRARIES})
+add_dependencies(execute_plan_client create_fundamentals_generate_messages_cpp)
+
