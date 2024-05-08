@@ -39,13 +39,13 @@ void wander(const sensor_msgs::LaserScan::ConstPtr& msg)
 	int minDistIndex;
 	int turnDirection = 1;
 	double minDist = 1;
-	for (int i = msg->ranges.size()/4; i < (msg->ranges.size()/4)*3; i++) {
-		if (msg->ranges[i] < minDist) {
+	for (int i = msg->ranges.size()/4+43; i < (msg->ranges.size()/4)*3+43; i++) {
+		if (msg->ranges[i] < minDist && msg->ranges[i] > msg->range_min) {
 			minDist = msg->ranges[i];
 			minDistIndex = i;
 		}
 	}
-	if (minDistIndex < msg->ranges.size()/2) {
+	if (minDistIndex < msg->ranges.size()/2+43) {
 		turnDirection = 0;
 	}
 	if (minDist < turnaroundDist) {
