@@ -93,9 +93,6 @@ target_link_libraries(walls ${catkin_LIBRARIES})
 add_dependencies(walls create_fundamentals_generate_messages_cpp)
 
 add_executable(execute_plan_server src/execute_plan_server.cpp)
-target_link_libraries(execute_plan_server ${catkin_LIBRARIES})
+add_library(moving src/moving.cpp)
+target_link_libraries(execute_plan_server moving ${catkin_LIBRARIES})
 add_dependencies(execute_plan_server create_fundamentals_generate_messages_cpp)
-
-add_executable(moving src/moving.cpp)
-target_link_libraries(moving ${catkin_LIBRARIES})
-add_dependencies(moving create_fundamentals_generate_messages_cpp)

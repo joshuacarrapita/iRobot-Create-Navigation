@@ -9,8 +9,9 @@
 #define RASPEED 3.2
 #define TASPEED 3.15
 
-ros::ServiceClient diffDrive;
-create_fundamentals::DiffDrive ddsrv;
+Moving::Moving() {
+	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
+}
 
 void Moving::stop()
 {
@@ -72,19 +73,16 @@ void Moving::moveDist(double dist)
 	return;
 }
 
-int main(int argc, char **argv)
+/*int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "moving");
 	ros::NodeHandle n;
-	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
 	Moving mover;
-	/*
-	for (int i = 0; i < 16; i++) {
-		mover.moveDist(1.0);
-		mover.turnRA(1);
-		//ros::Duration(0.2).sleep();
-	}
-	*/
+	//for (int i = 0; i < 16; i++) {
+	//	mover.moveDist(1.0);
+	//	mover.turnRA(1);
+	//	//ros::Duration(0.2).sleep();
+	//}
 	mover.turnAround();
 	mover.moveDist(0.8);
 	mover.turnRA(0);
@@ -100,4 +98,4 @@ int main(int argc, char **argv)
 	mover.turnRA(1);
 	mover.moveDist(0.8);
 	return 0;
-}
+}*/
