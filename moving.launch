@@ -1,6 +1,6 @@
 <launch>
-	<node pkg="walls" type="walls" name="walls" args="5 0.03" >
+	<node pkg="red_fundamentals" type="walls" name="walls" args="5 0.03" >
 	</node>
-	<node pkg="centering" type="centering" name="centering" >
+	<node pkg="red_fundamentals" type="centering" name="centering" >
 	</node>
 </launch>
