@@ -91,3 +91,7 @@ add_dependencies(centering create_fundamentals_generate_messages_cpp)
 add_executable(walls src/walls.cpp)
 target_link_libraries(walls ${catkin_LIBRARIES})
 add_dependencies(walls create_fundamentals_generate_messages_cpp)
+
+add_executable(moving src/moving.cpp)
+target_link_libraries(moving ${catkin_LIBRARIES})
+add_dependencies(moving create_fundamentals_generate_messages_cpp)
