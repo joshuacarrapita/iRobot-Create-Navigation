@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cmath>
 #include "create_fundamentals/DiffDrive.h"
+#include "moving.hpp"
 
 using namespace std;
 
@@ -20,6 +21,8 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &exec_plan,
 	res.success = false;
 	if (exec_plan[0] == 1) return true; // maybe this needs to be false?
 
+	Moving mover;
+
 	for (int i = 0; i < exec_plan.size(); i++){
 
 		int next_action = exec_plan[i];
@@ -29,12 +32,15 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &exec_plan,
 
 			case (LEFT_TURN || ALSO_LEFT_TURN):
 				// do left 90° turn
+				mover.turnRA(0);
 			
 			case (RIGHT_TURN || ALSO_RIGHT_TURN):
-				// do left 90° turn
+				// do right 90° turn
+				mover.turnRA(1);
 			
 			case (BACK_TURN || ALSO_BACK_TURN):
-				// do left 90° turn
+				// do right 180° turn
+				mover.turnAround();
 		
 		}
 		
@@ -54,8 +60,7 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &exec_plan,
 
 		if (minDist < safe_wall_dist) return true; // maybe this needs to be false?
 
-
-		// move(0.8);
+		mover.move(0.8);
 	}
 
 	res.success = true;
@@ -68,6 +73,8 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
   
   ros::ServiceServer service = n.advertiseService("execute_plan", execute_plan);
+
+  diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
 
   ROS_INFO("Ready to run execute plan");
 
