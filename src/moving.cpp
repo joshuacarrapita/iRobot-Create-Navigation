@@ -5,21 +5,17 @@
 #include <cstdlib>
 
 #define TURNSPEED 3.2
-#define DRIVESPEED 6.4
-#define RASPEED 3.25
-#define TASPEED 3.25
+#define DRIVESPEED 6.35
+#define RASPEED 3.2
+#define TASPEED 3.15
 
-ros::ServiceClient::diffDrive;
+ros::ServiceClient diffDrive;
 create_fundamentals::DiffDrive ddsrv;
-
-Moving::Moving()
-{
-}
 
 void Moving::stop()
 {
 	ddsrv.request.left = 0;
-	ddsrv.request.left = 0;
+	ddsrv.request.right = 0;
 	diffDrive.call(ddsrv);
 	return;
 }
@@ -35,7 +31,7 @@ void Moving::move(double lspeed, double rspeed)
 void Moving::turn(double angle)
 {
 	stop();
-	double anglemapped (abs(angle)*4.0)/180;
+	double anglemapped = (abs(angle)*4.0)/180;
 	if (angle > 0) {
 		move(TURNSPEED, -TURNSPEED);
 	} else {
@@ -54,7 +50,7 @@ void Moving::turnRA(int direction)
 	} else {
 		move(-RASPEED, RASPEED);
 	}
-	ros::Duration(2.0).sleep();
+	ros::Duration(2.06).sleep();
 	stop();
 	return;
 }
@@ -63,7 +59,8 @@ void Moving::turnAround()
 {
 	stop();
 	move(TASPEED, -TASPEED);
-	ros::Duration(4.0).sleep();
+	ros::Duration(4.21).sleep();
+	stop();
 	return;
 }
 
@@ -77,10 +74,30 @@ void Moving::moveDist(double dist)
 
 int main(int argc, char **argv)
 {
+	ros::init(argc, argv, "moving");
+	ros::NodeHandle n;
+	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
 	Moving mover;
-	mover.moveDist(1);
+	/*
+	for (int i = 0; i < 16; i++) {
+		mover.moveDist(1.0);
+		mover.turnRA(1);
+		//ros::Duration(0.2).sleep();
+	}
+	*/
 	mover.turnAround();
-	mover.moveDist(1);
+	mover.moveDist(0.8);
+	mover.turnRA(0);
+	mover.moveDist(0.8);
+	mover.turnRA(1);
+	mover.moveDist(0.8);
 	mover.turnAround();
+	mover.moveDist(0.8);
+	mover.turnRA(0);
+	mover.moveDist(0.8);
+	mover.turnRA(0);
+	mover.moveDist(0.8);
+	mover.turnRA(1);
+	mover.moveDist(0.8);
 	return 0;
 }
