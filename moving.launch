@@ -1,0 +1,8 @@
+<launch>
+	<node pkg="red_fundamentals" type="walls" name="walls" args="5 0.03" >
+	</node>
+	<node pkg="red_fundamentals" type="centering" name="centering" >
+	</node>
+	<node pkg="red_fundamentals" type="execute_plan_server" name="execute_plan_server" >
+	</node>
+</launch>
