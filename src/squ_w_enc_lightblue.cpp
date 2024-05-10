@@ -4,7 +4,7 @@
 #include "create_fundamentals/SensorPacket.h"
 #include "sensor_msgs/LaserScan.h"
 #include <math.h>
-#include <lightblue_fundamentals/PDController.h>
+#include <red_fundamentals/PDController.h>
 
 
 //create_fundamentals::ResetEncoders srv_reset;
@@ -27,13 +27,10 @@ const float SETPOINT = 90;
 float t = 0.1;
 
 ros::Publisher pd_controller_pub;
-lightblue_fundamentals::PDController msg;
-
+red_fundamentals::PDController msg;
 
 create_fundamentals::DiffDrive srv_drive;
 ros::ServiceClient diffDrive;
-
-
 
 
 void moveCallback(const create_fundamentals::SensorPacket::ConstPtr& msg)
@@ -80,7 +77,7 @@ void pd_control(){
     float prev_error_l = 0.0;
     float prev_error_r = 0.0;
 
-    float max_deg_error=3;
+    float max_deg_error = 3;
 
 
     while (abs(error_l) >= max_deg_error || abs(error_r) >= max_deg_error){
@@ -134,11 +131,9 @@ void pd_control(){
 
             diffDrive.call(srv_drive);
             ROS_INFO("Moving %f degrees right.", (new_angle));
-            //ROS_INFO("duration %f", deg_to_rad((new_angle)));
             ros::Duration(deg_to_rad(abs(new_angle))/speed).sleep();
             prev_error_r = error_r;
         }
-        //loop_rate.sleep();
 
         pd_controller_pub.publish(msg);
         ros::spinOnce();
@@ -181,12 +176,12 @@ void pd_control(){
 
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "square_with_encoders");
+    ros::init(argc, argv, "squ_w_enc_lightblue");
     ros::NodeHandle n;
 
     diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
     ros::Subscriber sub_move = n.subscribe("sensorPacket", 1, moveCallback);
-    pd_controller_pub = n.advertise<lightblue_fundamentals::PDController>("pd_controller", 10);
+    pd_controller_pub = n.advertise<red_fundamentals::PDController>("pd_controller", 10);
 /*
     srv_reset.response.success = true;
     reset.call(srv_reset);
@@ -292,7 +287,6 @@ int main(int argc, char **argv) {
 
         ROS_INFO("left: %f", left);
         ROS_INFO("right: %f", right);
-        
 
         //Stoppen
         pd_control();

@@ -32,6 +32,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined messages
 add_message_files(FILES
 	Walls.msg
+    PDController.msg
 )
 #uncomment if you have defined services
 #add_service_files(FILES
@@ -91,3 +92,14 @@ add_dependencies(centering create_fundamentals_generate_messages_cpp)
 add_executable(walls src/walls.cpp)
 target_link_libraries(walls ${catkin_LIBRARIES})
 add_dependencies(walls create_fundamentals_generate_messages_cpp)
+
+add_executable(squ_w_enc_lightblue src/squ_w_enc_lightblue.cpp)
+target_link_libraries(squ_w_enc_lightblue ${catkin_LIBRARIES})
+#add_dependencies(squ_w_enc_lightblue create_fundamentals_generate_messages_cpp)
+
+add_executable(squ_w_enc_v2_lightblue src/squ_w_enc_lightblue.cpp)
+target_link_libraries(squ_w_enc_v2_lightblue ${catkin_LIBRARIES})
+#add_dependencies(squ_w_enc_v2_lightblue create_fundamentals_generate_messages_cpp)
+
+add_library(moving src/moving.cpp)
+target_link_libraries(square_with_encoders moving ${catkin_LIBRARIES})
