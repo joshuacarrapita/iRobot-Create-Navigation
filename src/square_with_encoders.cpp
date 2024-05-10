@@ -6,10 +6,22 @@
 #include "red_fundamentals/PDController.h"
 #include "moving.hpp"
 
+
+bool correction = true;
+
 float curr_left = 0.0;
 float curr_right = 0.0;
 
-//float time_step = 0;
+float prev_error_l = 0.0;
+float prev_error_r = 0.0;
+
+float error_l = 4;
+float error_r = 4;
+
+float offset_left = 0.0;
+float offset_right = 0.0;
+
+float time_step = 0.1;
 
 float Kp = 1.0;
 float Ki = 0.1;
@@ -34,12 +46,6 @@ float rad_to_deg(float rad) {
     return rad*180/M_PI;
 }
 
-void moveCallback(const create_fundamentals::SensorPacket::ConstPtr& msg)
-{
-  curr_left = msg->encoderLeft;
-  curr_right = msg->encoderRight;
-}
-
 float calculate_step(float error, float prev_error, float time_step) {
 	
 	// Proportional term
@@ -53,13 +59,84 @@ float calculate_step(float error, float prev_error, float time_step) {
 	float derivative = (error - prev_error) / time_step;
 	float D = Kd * derivative;
 
-	// Update previous error for next iteration
-	prev_error = error;
-
 	// Calculate control signal
 	float controlSignal = P + I + D;
 
 	return controlSignal;
+}
+
+void moveCallback(const create_fundamentals::SensorPacket::ConstPtr& msg){
+
+	float max_deg_error = 3;
+
+	curr_left = msg->encoderLeft * time_step;
+	curr_right = msg->encoderRight * time_step;
+
+	float error_l = SETPOINT - rad_to_deg(curr_left);
+	float error_r = - SETPOINT - rad_to_deg(curr_right);
+
+	ROS_INFO("curr_left: %f", curr_left);
+    ROS_INFO("curr_right: %f", curr_right);
+
+	ROS_INFO("Error left %f", error_l);
+    ROS_INFO("Error right %f", error_r);
+
+	if(!(abs(error_l) >= max_deg_error || abs(error_r) >= max_deg_error)){
+		correction = false;
+		return;
+	}
+
+	float speed = 1;
+
+	float new_angle = 90.0;
+    int direction = speed;
+
+	// Links korrigieren
+	if (abs(error_l) >= max_deg_error) {
+		
+		new_angle = calculate_step(error_l, prev_error_l, time_step);
+
+		if (new_angle > 0) {
+			direction = speed;
+		} else {
+			direction = -speed;
+		}
+		
+		srv_drive.request.left = direction;
+		srv_drive.request.right = 0;
+
+		diffDrive.call(srv_drive);
+		ROS_INFO("Moving %f degrees left.", (new_angle));
+		ros::Duration(deg_to_rad(abs(new_angle))/speed).sleep();
+		
+		// Update previous error for next iteration
+		prev_error_l = error_l;
+	}
+
+	// Rechts korrigieren
+	if (abs(error_r) >= max_deg_error) {
+
+		new_angle = calculate_step(error_r, prev_error_r, time_step);
+
+		if (new_angle > 0) {
+			direction = speed;
+		} else {
+			direction = -speed;
+		}
+		srv_drive.request.left = 0;
+		srv_drive.request.right = direction;
+
+		diffDrive.call(srv_drive);
+		ROS_INFO("Moving %f degrees right.", (new_angle));
+		ros::Duration(deg_to_rad(abs(new_angle))/speed).sleep();
+		
+		// Update previous error for next iteration
+		prev_error_r = error_r;
+	}
+
+	time_step += 0.1;
+
+	pd_controller_pub.publish(msg);
 }
 
 void pd_control(){
@@ -155,13 +232,13 @@ int main(int argc, char **argv) {
 		// Stoppen
 		mover.stop();
 
-		// Collect current data
-        ros::spinOnce();
-        ROS_INFO("curr_left: %f", curr_left);
-        ROS_INFO("curr_right: %f", curr_right);
-
+		// Drehen / Korrigieren
+		while(ros::ok() && correction){
+			ros::spinOnce();
+		}
+		
         // Drehen / Korrigieren
-        pd_control();
+        //pd_control();
 
         // Stoppen
 		mover.stop();
