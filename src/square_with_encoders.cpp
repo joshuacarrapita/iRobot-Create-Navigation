@@ -63,6 +63,11 @@ float calculate_step(float error, float prev_error, float time_step) {
 }
 
 void pd_control(){
+	float time_step = 0.1;
+
+	curr_left = curr_left * time_step;
+	curr_right = curr_right * time_step;
+
 	float error_l = SETPOINT - rad_to_deg(curr_left);
     float error_r = - SETPOINT - rad_to_deg(curr_right);
 
@@ -73,15 +78,16 @@ void pd_control(){
 
 	float speed = 1;
 
-	float time_step = 0.1;
-
 	while (abs(error_l) >= max_deg_error || abs(error_r) >= max_deg_error){
-        float new_angle = 90.0;
+       
+		curr_left = curr_left * time_step;
+		curr_right = curr_right * time_step;
         
+		float new_angle = 90.0;
         int direction = speed;
 
-        error_l = SETPOINT - rad_to_deg(left);
-        error_r = -SETPOINT - rad_to_deg(right);
+        error_l = SETPOINT - rad_to_deg(curr_left);
+        error_r = -SETPOINT - rad_to_deg(curr_right);
         ROS_INFO("Error left %f", error_l);
         ROS_INFO("Error right %f", error_r);
 
@@ -124,9 +130,10 @@ void pd_control(){
             prev_error_r = error_r;
         }
 
+		time_step += 0.1;
+
         pd_controller_pub.publish(msg);
         ros::spinOnce();
-
     }
 }
 
