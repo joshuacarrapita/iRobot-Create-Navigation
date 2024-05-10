@@ -3,4 +3,6 @@
 	</node>
 	<node pkg="red_fundamentals" type="centering" name="centering" >
 	</node>
+	<node pkg="red_fundamentals" type="execute_plan_server" name="execute_plan_server" >
+	</node>
 </launch>
