@@ -81,7 +81,7 @@ void sransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 	//int j = 0;
 	//get all valid measurements and convert to cartesian
 	for (int i = (TOTALOFFSET-1); i < LARRSIZE - (LARRUSEDOFFSET+1); i++) {
-		if (isnan(msg->ranges[i])) {
+		if (isnan(msg->ranges[i]) && msg->ranges[i] < msg->range_min) {
 			continue;
 		}
 		pol.x = msg->ranges[i];
@@ -95,7 +95,7 @@ void sransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 	coords winner_a;
 	coords winner_b;
 	//take candidates with fixed interval instead of random
-	for (int i = 0; i < coordinates.size()-candidateDist; i++) {
+	for (int i = 0; i < coordinates.size()-(candidateDist+1); i+=candidateDist) {
 		int curInliers = 0;
 		coords candidate_a = coordinates[i];
 		coords candidate_b = coordinates[i+candidateDist];
