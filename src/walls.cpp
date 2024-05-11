@@ -74,49 +74,62 @@ double calcAngleAlt(double slope)
 }
 
 //simplified RANSAC making use of environment constraints
-void sransac(const sensor_msgs::LaserScan::ConstPtr& msg)
+void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	vector<coords> coordinates;
 	coords pol;
 	//int j = 0;
 	//get all valid measurements and convert to cartesian
-	for (int i = (TOTALOFFSET-1); i < LARRSIZE - (LARRUSEDOFFSET+1); i++) {
+	for (int i = (LARROFFSET-1); i < LARRSIZE - 1; i++) {
 		if (isnan(msg->ranges[i]) && msg->ranges[i] < msg->range_min) {
 			continue;
 		}
 		pol.x = msg->ranges[i];
-		pol.y = calcSensAngle(i - (TOTALOFFSET-1));
+		pol.y = calcSensAngle(i - (LARROFFSET-1));
 		coordinates.push_back(polToCart(pol));
 		//ROS_INFO("Generated cartesian coordinate %i with (%f , %f)", j, coordinates[j].x, coordinates[j].y);
 		//j++;
 	}
 	//actual SRANSAC start
+	vector<coords> outliers;
+	vector<coords> winner_outliers;
 	int maxInliers = 0;
 	coords winner_a;
 	coords winner_b;
-	//take candidates with fixed interval instead of random
-	for (int i = 0; i < coordinates.size()-(candidateDist+1); i+=candidateDist) {
-		int curInliers = 0;
-		coords candidate_a = coordinates[i];
-		coords candidate_b = coordinates[i+candidateDist];
-		//count number of inliers
-		for (int j = 0; j < coordinates.size(); j++) {
-			if (calcDist(candidate_a, candidate_b, coordinates[j]) < errThresh) {
-				curInliers++;
+	//find 3 best walls; remove inliers each iteration
+	for (int k = 0; k < 3; k++) {
+		//take candidates with fixed interval instead of random
+		for (int i = 0; i < coordinates.size()-(candidateDist+1); i+=candidateDist) {
+			int curInliers = 0;
+			coords candidate_a = coordinates[i];
+			coords candidate_b = coordinates[i+candidateDist];
+			//count number of inliers
+			for (int j = 0; j < coordinates.size(); j++) {
+				if (calcDist(candidate_a, candidate_b, coordinates[j]) < errThresh) {
+					curInliers++;
+				} else {
+					outliers.push_back(coordinates[j]);
+				}
 			}
+			//update winner if current candidates have more inliers than previous best
+			if (curInliers > maxInliers) {
+				//winner_outliers.clear();
+				winner_outliers = outliers;
+				maxInliers = curInliers;
+				winner_a = candidate_a;
+				winner_b = candidate_b;
+				//ROS_INFO("winner found with %i inliers", curInliers);
+			}
+			outliers.clear();
 		}
-		//update winner if current candidates have more inliers than previous best
-		if (curInliers > maxInliers) {
-			maxInliers = curInliers;
-			winner_a = candidate_a;
-			winner_b = candidate_b;
-			//ROS_INFO("winner found with %i inliers", curInliers);
-		}
+		candidates = winner_outliers;
+		wall.dist[k] = calcDist(winner_a, winner_b, robotpos);
+		wall.angle[k] = calcAngle(winner_a, winner_b);
+		ROS_INFO("Best wall %i with %i inliers has dist: %.7lf angle: %.7lf", k, maxInliers, wall.dist[k], wall.angle[k]);
 	}
-	wall.dist = calcDist(winner_a, winner_b, robotpos);
-	wall.angle = calcAngle(winner_a, winner_b);
+	//wall.dist = calcDist(winner_a, winner_b, robotpos);
+	//wall.angle = calcAngle(winner_a, winner_b);
 	//wall.angle = calcAngleAlt(calcLineEquation(winner_a, winner_b).x);
-	ROS_INFO("Best wall with %i inliers has dist: %.7lf angle: %.7lf", maxInliers, wall.dist, wall.angle);
 }
 
 
