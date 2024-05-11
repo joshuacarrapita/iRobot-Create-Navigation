@@ -42,7 +42,7 @@ coords polToCart(coords polar)
 //calculates angle of distance measurement in radians
 double calcSensAngle(int index)
 {
-	return((index * ANGLESTEPUSED/180)* ((double) M_PI));
+	return((index * ANGLESTEP/240)* ((double) M_PI));
 }
 
 //calculates distance between point and line given through 2 points
@@ -100,6 +100,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 	for (int k = 0; k < 3; k++) {
 		//take candidates with fixed interval instead of random
 		for (int i = 0; i < coordinates.size()-(candidateDist+1); i+=candidateDist) {
+			//ROS_INFO("checking candidates %i", i);
 			int curInliers = 0;
 			coords candidate_a = coordinates[i];
 			coords candidate_b = coordinates[i+candidateDist];
@@ -122,10 +123,13 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			}
 			outliers.clear();
 		}
-		candidates = winner_outliers;
-		wall.dist[k] = calcDist(winner_a, winner_b, robotpos);
-		wall.angle[k] = calcAngle(winner_a, winner_b);
+		//ROS_INFO("first wall found");
+		coordinates = winner_outliers;
+		ROS_INFO("new candidate size: %i", coordinates.size());
+		wall.dist.push_back(calcDist(winner_a, winner_b, robotpos));
+		wall.angle.push_back(calcAngle(winner_a, winner_b));
 		ROS_INFO("Best wall %i with %i inliers has dist: %.7lf angle: %.7lf", k, maxInliers, wall.dist[k], wall.angle[k]);
+		maxInliers = 0;
 	}
 	//wall.dist = calcDist(winner_a, winner_b, robotpos);
 	//wall.angle = calcAngle(winner_a, winner_b);
@@ -145,7 +149,7 @@ int main(int argc, char **argv)
 	}
 	ros::init(argc, argv, "walls");
 	ros::NodeHandle n;
-	ros::Subscriber sub = n.subscribe("scan_filtered", 1, sransac);
+	ros::Subscriber sub = n.subscribe("scan_filtered", 1, extendedSransac);
 	ros::Publisher pub = n.advertise<red_fundamentals::Walls>("walls_topic", 1);
 
 	while(ros::ok()) {
