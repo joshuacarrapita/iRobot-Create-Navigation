@@ -93,6 +93,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 	}
 	//actual SRANSAC start
 	vector<coords> inliers;
+	vector<coords> winner_inliers;
 	vector<coords> outliers;
 	vector<coords> winner_outliers;
 	int maxInliers = 0;
@@ -117,17 +118,9 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			}
 			//update winner if current candidates have more inliers than previous best
 			if (curInliers > maxInliers) {
-				
-				if (k < 4) {
-					for (int i = 0; i < inliers.size(); i++) {
-						ROS_INFO("inlier coord: (%lf , %lf)", inliers[i].x, inliers[i].y);
-					}
-				}
-				int outliersize = outliers.size();
 				winner_outliers = outliers;
-				int woutliersize = winner_outliers.size();
+				winner_inliers = inliers;
 				maxInliers = curInliers;
-				ROS_INFO("outliers of size: %i now set as winner_outliers of size: %i | inliers: %i", outliersize, woutliersize, curInliers);
 				winner_a = candidate_a;
 				winner_b = candidate_b;
 			}
