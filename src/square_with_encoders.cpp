@@ -15,6 +15,9 @@ float curr_right = 0.0;
 float offset_left = 0.0;
 float offset_right = 0.0;
 
+float prev_error_l = 0.0;
+float prev_error_r = 0.0;
+
 float left = 0.0;
 float right = 0.0;
 
@@ -23,6 +26,8 @@ float Ki = 0.1;
 float Kd = 0.01;
 
 float integral = 0;
+
+float time_step = 0.1;
 
 // wanted angle
 const float SETPOINT = 90;

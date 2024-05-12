@@ -4,7 +4,7 @@
 #include "create_fundamentals/SensorPacket.h"
 #include "sensor_msgs/LaserScan.h"
 #include <math.h>
-#include <lightblue_fundamentals/PDController.h>
+#include <red_fundamentals/PDController.h>
 
 
 //create_fundamentals::ResetEncoders srv_reset;
@@ -30,7 +30,7 @@ float error_l = 99.9;
 float error_r = 99.9;
 
 ros::Publisher pd_controller_pub;
-lightblue_fundamentals::PDController msg;
+red_fundamentals::PDController msg;
 
 
 create_fundamentals::DiffDrive srv_drive;
@@ -186,7 +186,7 @@ int main(int argc, char **argv) {
 
     diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
     ros::Subscriber sub_move = n.subscribe("sensorPacket", 1, moveCallback);
-    pd_controller_pub = n.advertise<lightblue_fundamentals::PDController>("pd_controller", 10);
+    pd_controller_pub = n.advertise<red_fundamentals::PDController>("pd_controller", 10);
 /*
     srv_reset.response.success = true;
     reset.call(srv_reset);

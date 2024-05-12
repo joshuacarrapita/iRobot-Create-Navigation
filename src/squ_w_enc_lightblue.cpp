@@ -6,6 +6,8 @@
 #include <math.h>
 #include <red_fundamentals/PDController.h>
 
+using namespace std;
+
 
 //create_fundamentals::ResetEncoders srv_reset;
 //ros::ServiceClient reset;
@@ -16,8 +18,8 @@ float offset_right = 0.0;
 float curr_left = 0.0;
 float curr_right = 0.0;
 
-float left = 0.0;
-float right = 0.0;
+float links = 0.0;
+float rechts = 0.0;
 
 const float Kp = 1.1;
 const float Kd = 1.1;
@@ -37,8 +39,8 @@ void moveCallback(const create_fundamentals::SensorPacket::ConstPtr& msg)
 {
   curr_left = msg->encoderLeft;
   curr_right = msg->encoderRight;
-  left = curr_left - offset_left;
-  right = curr_right - offset_right;
+  links = curr_left - offset_left;
+  rechts = curr_right - offset_right;
 }
 
 float deg_to_rad(float degree) {
@@ -58,8 +60,8 @@ float calculate_step(float error, float prev_error) {
 }
 
 void turn(){
-    float error_l = SETPOINT - rad_to_deg(left);
-    float error_r = -SETPOINT - rad_to_deg(right);
+    float error_l = SETPOINT - rad_to_deg(links);
+    float error_r = -SETPOINT - rad_to_deg(rechts);
     
     srv_drive.request.left = 2;
     srv_drive.request.right = 2;
@@ -69,6 +71,7 @@ void turn(){
 }
 
 void pd_control(){
+    cout << "Start PD Control"<< endl;
     float error_l = 99.9;
     float error_r = 99.9;
     float speed = 1;
@@ -89,8 +92,8 @@ void pd_control(){
         msg.derivative_l;
         msg.derivative_r;
 
-        error_l = SETPOINT - rad_to_deg(left);
-        error_r = -SETPOINT - rad_to_deg(right);
+        error_l = SETPOINT - rad_to_deg(links);
+        error_r = -SETPOINT - rad_to_deg(rechts);
         ROS_INFO("Error left %f", error_l);
         ROS_INFO("Error right %f", error_r);
 
@@ -137,6 +140,18 @@ void pd_control(){
 
         pd_controller_pub.publish(msg);
         ros::spinOnce();
+        
+        cout << "After correction: " << endl;
+        cout << endl;
+        cout << "current left = " << curr_left << endl;
+        cout << "current right = " << curr_right << endl;
+        cout << endl;
+        cout << "offset_left = " << offset_left << endl;
+        cout << "offset_right = " << offset_right << endl;
+        cout << endl;
+        cout << "left = " << links << endl;
+        cout << "right = " << rechts << endl;
+        
     }
 }
 
@@ -285,8 +300,16 @@ int main(int argc, char **argv) {
         left = curr_left - offset_left;
         right = curr_right - offset_right;
 
-        ROS_INFO("left: %f", left);
-        ROS_INFO("right: %f", right);
+        cout << "Before first correction: " << endl;
+        cout << endl;
+        cout << "current left = " << curr_left << endl;
+        cout << "current right = " << curr_right << endl;
+        cout << endl;
+        cout << "offset_left = " << offset_left << endl;
+        cout << "offset_right = " << offset_right << endl;
+        cout << endl;
+        cout << "left = " << left << endl;
+        cout << "right = " << right << endl;
 
         //Stoppen
         pd_control();

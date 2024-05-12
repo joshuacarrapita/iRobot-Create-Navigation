@@ -54,7 +54,7 @@ add_message_files(FILES
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
-    DEPENDENCIES std_msgs create_fundamentals
+    DEPENDENCIES std_msgs create_fundamentals red_fundamentals
 )
 
 # catkin_package parameters: http://ros.org/doc/groovy/api/catkin/html/dev_guide/generated_cmake_api.html#catkin-package
@@ -95,11 +95,12 @@ add_dependencies(walls create_fundamentals_generate_messages_cpp)
 
 add_executable(squ_w_enc_lightblue src/squ_w_enc_lightblue.cpp)
 target_link_libraries(squ_w_enc_lightblue ${catkin_LIBRARIES})
-#add_dependencies(squ_w_enc_lightblue create_fundamentals_generate_messages_cpp)
+add_dependencies(squ_w_enc_lightblue create_fundamentals_generate_messages_cpp)
 
-add_executable(squ_w_enc_v2_lightblue src/squ_w_enc_lightblue.cpp)
+add_executable(squ_w_enc_v2_lightblue src/squ_w_enc_v2_lightblue.cpp)
 target_link_libraries(squ_w_enc_v2_lightblue ${catkin_LIBRARIES})
-#add_dependencies(squ_w_enc_v2_lightblue create_fundamentals_generate_messages_cpp)
+add_dependencies(squ_w_enc_v2_lightblue create_fundamentals_generate_messages_cpp)
 
 add_library(moving src/moving.cpp)
 target_link_libraries(square_with_encoders moving ${catkin_LIBRARIES})
+add_dependencies(moving create_fundamentals_generate_messages_cpp)
