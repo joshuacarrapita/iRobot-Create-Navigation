@@ -91,6 +91,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 		//j++;
 	}
 	//actual SRANSAC start
+	vector<coords> inliers;
 	vector<coords> outliers;
 	vector<coords> winner_outliers;
 	int maxInliers = 0;
@@ -108,19 +109,19 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			for (int j = 0; j < coordinates.size(); j++) {
 				if (calcDist(candidate_a, candidate_b, coordinates[j]) < errThresh) {
 					curInliers++;
+					inliers.push_back(coordinates[j]);
 				} else {
 					outliers.push_back(coordinates[j]);
 				}
 			}
 			//update winner if current candidates have more inliers than previous best
 			if (curInliers > maxInliers) {
-				//winner_outliers.clear();
 				winner_outliers = outliers;
 				maxInliers = curInliers;
-				winner_a = candidate_a;
-				winner_b = candidate_b;
-				//ROS_INFO("winner found with %i inliers", curInliers);
+				winner_a = inliers[0];
+				winner_b = inliers.back();
 			}
+			inliers.clear()
 			outliers.clear();
 		}
 		//ROS_INFO("first wall found");
@@ -131,9 +132,6 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 		ROS_INFO("Best wall %i with %i inliers has dist: %.7lf angle: %.7lf", k, maxInliers, wall.dist[k], wall.angle[k]);
 		maxInliers = 0;
 	}
-	//wall.dist = calcDist(winner_a, winner_b, robotpos);
-	//wall.angle = calcAngle(winner_a, winner_b);
-	//wall.angle = calcAngleAlt(calcLineEquation(winner_a, winner_b).x);
 }
 
 
