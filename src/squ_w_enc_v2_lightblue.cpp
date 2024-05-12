@@ -36,9 +36,6 @@ lightblue_fundamentals::PDController msg;
 create_fundamentals::DiffDrive srv_drive;
 ros::ServiceClient diffDrive;
 
-
-
-
 void moveCallback(const create_fundamentals::SensorPacket::ConstPtr& msg)
 {
   curr_left = msg->encoderLeft;
@@ -100,8 +97,8 @@ void pd_control(){
         ROS_INFO("Error left %f", error_l);
         ROS_INFO("Error right %f", error_r);
 
-        msg.error_l = error_l;
-        msg.error_r = error_r;
+        /* msg.error_l = error_l;
+        msg.error_r = error_r; */
     
         if (abs(error_l) >= max_deg_error) {
             // msg.proportional_l = Kp * error_l;
