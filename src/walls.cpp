@@ -42,7 +42,8 @@ coords polToCart(coords polar)
 //calculates angle of distance measurement in radians
 double calcSensAngle(int index)
 {
-	return((index * ANGLESTEP/240)* ((double) M_PI));
+	//return((index * ANGLESTEP/240)* ((double) M_PI));
+	return((-30.0 + ((index * 240)/682)) * ((double) M_PI /180));
 }
 
 //calculates distance between point and line given through 2 points
@@ -80,8 +81,8 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 	coords pol;
 	//int j = 0;
 	//get all valid measurements and convert to cartesian
-	for (int i = (LARROFFSET-1); i < LARRSIZE - 1; i++) {
-		if (isnan(msg->ranges[i]) && msg->ranges[i] < msg->range_min) {
+	for (int i = LARROFFSET; i < LARRSIZE; i++) {
+		if (isnan(msg->ranges[i]) && msg->ranges[i] <= msg->range_min) {
 			continue;
 		}
 		pol.x = msg->ranges[i];
@@ -116,17 +117,26 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			}
 			//update winner if current candidates have more inliers than previous best
 			if (curInliers > maxInliers) {
+				
+				if (k < 4) {
+					for (int i = 0; i < inliers.size(); i++) {
+						ROS_INFO("inlier coord: (%lf , %lf)", inliers[i].x, inliers[i].y);
+					}
+				}
+				int outliersize = outliers.size();
 				winner_outliers = outliers;
+				int woutliersize = winner_outliers.size();
 				maxInliers = curInliers;
-				winner_a = inliers[0];
-				winner_b = inliers.back();
+				ROS_INFO("outliers of size: %i now set as winner_outliers of size: %i | inliers: %i", outliersize, woutliersize, curInliers);
+				winner_a = candidate_a;
+				winner_b = candidate_b;
 			}
-			inliers.clear()
+			inliers.clear();
 			outliers.clear();
 		}
-		//ROS_INFO("first wall found");
 		coordinates = winner_outliers;
-		ROS_INFO("new candidate size: %i", coordinates.size());
+		int newsize = winner_outliers.size();
+		ROS_INFO("new candidate size: %i", newsize);
 		wall.dist.push_back(calcDist(winner_a, winner_b, robotpos));
 		wall.angle.push_back(calcAngle(winner_a, winner_b));
 		ROS_INFO("Best wall %i with %i inliers has dist: %.7lf angle: %.7lf", k, maxInliers, wall.dist[k], wall.angle[k]);
@@ -153,7 +163,7 @@ int main(int argc, char **argv)
 	while(ros::ok()) {
 		ros::spinOnce();
 		pub.publish(wall);
-		ros::Duration(0.3).sleep();
+		ros::Duration(0.8).sleep();
 	}
 	return 0;
 }
