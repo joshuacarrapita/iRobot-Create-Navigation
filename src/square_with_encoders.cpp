@@ -9,7 +9,11 @@
 float curr_left = 0.0;
 float curr_right = 0.0;
 
-//float time_step = 0;
+float offset_left = 0.0;
+float offset_right = 0.0;
+
+float left = 0.0;
+float right = 0.0;
 
 float Kp = 1.0;
 float Ki = 0.1;

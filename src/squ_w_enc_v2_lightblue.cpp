@@ -90,10 +90,10 @@ void pd_control(){
         float new_angle = 90.0;
         
         int direction = speed;
-        msg.proportional_l;
+        /* msg.proportional_l;
         msg.proportional_r;
         msg.derivative_l;
-        msg.derivative_r;
+        msg.derivative_r; */
 
         error_l = SETPOINT - rad_to_deg(left);
         error_r = -SETPOINT - rad_to_deg(right);
@@ -104,10 +104,10 @@ void pd_control(){
         msg.error_r = error_r;
     
         if (abs(error_l) >= max_deg_error) {
-            msg.proportional_l = Kp * error_l;
-            msg.derivative_l = Kd * (error_l-prev_error_l);
+            // msg.proportional_l = Kp * error_l;
+            // msg.derivative_l = Kd * (error_l-prev_error_l);
             new_angle = calculate_step(error_l, prev_error_l);
-            msg.out_l = new_angle;
+            // msg.out_l = new_angle;
             if (new_angle > 0) {
                 direction = speed;
             } else {
@@ -123,10 +123,10 @@ void pd_control(){
         }
 
         if (abs(error_r) >= max_deg_error) {
-            msg.proportional_r = Kp * error_r;
-            msg.derivative_r = Kd * (error_r-prev_error_r);
+            //msg.proportional_r = Kp * error_r;
+            //msg.derivative_r = Kd * (error_r-prev_error_r);
             new_angle = calculate_step(error_r, prev_error_r);
-            msg.out_r = new_angle;
+            //msg.out_r = new_angle;
             if (new_angle > 0) {
                 direction = speed;
             } else {
@@ -300,8 +300,8 @@ int main(int argc, char **argv) {
         
 
         //Stoppen
-        turn();
-        //pd_control();
+        //turn();
+        pd_control();
 
         
         srv_drive.request.left = 0;
