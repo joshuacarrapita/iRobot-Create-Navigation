@@ -37,10 +37,21 @@ ros::ServiceClient diffDrive;
 
 void moveCallback(const create_fundamentals::SensorPacket::ConstPtr& msg)
 {
-  curr_left = msg->encoderLeft;
-  curr_right = msg->encoderRight;
-  links = curr_left - offset_left;
-  rechts = curr_right - offset_right;
+
+    curr_left = msg->encoderLeft;
+    curr_right = msg->encoderRight;
+
+    links = curr_left - offset_left;
+    rechts = curr_right - offset_right;
+
+    cout << endl;
+    cout << "Callback: " << endl;
+    cout << "current left = " << curr_left << endl;
+    cout << "current right = " << curr_right << endl;
+    cout << "left = " << links << endl;
+    cout << "right = " << rechts << endl;
+    cout << endl;
+    cout << endl;
 }
 
 float deg_to_rad(float degree) {
@@ -152,6 +163,7 @@ void pd_control(){
         cout << endl;
         cout << "left = " << links << endl;
         cout << "right = " << rechts << endl;
+        cout << endl;
         
     }
 }

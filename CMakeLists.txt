@@ -101,6 +101,10 @@ add_executable(squ_w_enc_v2_lightblue src/squ_w_enc_v2_lightblue.cpp)
 target_link_libraries(squ_w_enc_v2_lightblue ${catkin_LIBRARIES})
 add_dependencies(squ_w_enc_v2_lightblue create_fundamentals_generate_messages_cpp)
 
+add_executable(pd_test src/pd_test.cpp)
+target_link_libraries(pd_test ${catkin_LIBRARIES})
+add_dependencies(pd_test create_fundamentals_generate_messages_cpp)
+
 add_library(moving src/moving.cpp)
 target_link_libraries(square_with_encoders moving ${catkin_LIBRARIES})
 add_dependencies(moving create_fundamentals_generate_messages_cpp)
