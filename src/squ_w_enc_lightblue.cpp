@@ -94,8 +94,9 @@ void pd_control(){
 
         error_l = SETPOINT - rad_to_deg(links);
         error_r = -SETPOINT - rad_to_deg(rechts);
-        ROS_INFO("Error left %f", error_l);
-        ROS_INFO("Error right %f", error_r);
+        cout << endl;
+        cout << "error_l = " << SETPOINT << " - " << rad_to_deg(links) << " = " << error_l << endl;
+        cout << "error_r = " << -SETPOINT << " - " << rad_to_deg(rechts) << " = " << error_r << endl;
 
         msg.error_l = error_l;
         msg.error_r = error_r;
@@ -297,8 +298,8 @@ int main(int argc, char **argv) {
         // diffDrive.call(srv_drive);
         // ros::Duration(SETPOINT).sleep();
 
-        left = curr_left - offset_left;
-        right = curr_right - offset_right;
+        links = curr_left - offset_left;
+        rechts = curr_right - offset_right;
 
         cout << "Before first correction: " << endl;
         cout << endl;
@@ -308,8 +309,8 @@ int main(int argc, char **argv) {
         cout << "offset_left = " << offset_left << endl;
         cout << "offset_right = " << offset_right << endl;
         cout << endl;
-        cout << "left = " << left << endl;
-        cout << "right = " << right << endl;
+        cout << "left = " << links << endl;
+        cout << "right = " << rechts << endl;
 
         //Stoppen
         pd_control();
