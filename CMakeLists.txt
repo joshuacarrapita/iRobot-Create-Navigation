@@ -100,3 +100,7 @@ add_dependencies(execute_plan_server create_fundamentals_generate_messages_cpp)
 add_executable(corridor src/corridor.cpp)
 target_link_libraries(corridor moving ${catkin_LIBRARIES})
 add_dependencies(corridor create_fundamentals_generate_messages_cpp)
+
+add_executable(pd_control src/pd_control.cpp)
+target_link_libraries(pd_control moving ${catkin_LIBRARIES})
+add_dependencies(pd_control create_fundamentals_generate_messages_cpp)
