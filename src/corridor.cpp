@@ -9,6 +9,9 @@ using namespace std;
 //Moving mover;
 
 void drive(int move, int streak){
+
+    // Fürs drehen brauchen wir eigentlich den vorherigen Move oder?
+    
     Moving mover;
 
     switch (move) {

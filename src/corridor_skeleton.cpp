@@ -2,6 +2,9 @@
 using namespace std;
 
 void drive(int move, int streak){
+
+    // Fürs drehen brauchen wir eigentlich den vorherigen Move oder?
+    
     switch (move) {
         case 0:
             cout << "Wir drehen uns nach rechts." << endl;
