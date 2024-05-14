@@ -63,9 +63,11 @@ coords calcLineEquation(coords pt_a, coords pt_b)
 //calculates angle relative to y axis via 2 winner points
 double calcAngle(coords pt_a, coords pt_b)
 {
-	//double ydiff = max(pt_a.y,pt_b.y) - min(pt_a.y,pt_b.y);
-	double ydiff = pt_a.y-pt_b.y;
-	return ((acos(ydiff/sqrt((pt_a.x-pt_b.x)*(pt_a.x-pt_b.x) + ydiff*ydiff))) * (180/(double) M_PI));
+	double ydiff = max(pt_a.y,pt_b.y) - min(pt_a.y,pt_b.y);
+	int signer = 1;
+	//if (pt_a.x < 0) { signer = -1; }
+	//double ydiff = pt_a.y-pt_b.y;
+	return signer*((acos(ydiff/sqrt((pt_a.x-pt_b.x)*(pt_a.x-pt_b.x) + ydiff*ydiff))) * (180/(double) M_PI));
 }
 
 //calculates angle relative to y axis via slope of line
