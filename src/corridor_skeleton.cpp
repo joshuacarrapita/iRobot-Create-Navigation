@@ -25,7 +25,7 @@ void corridor(int plan[], int size){
 
     for(int i = 1; i < size; i++){
         
-        int predecessor = plan[i -1];
+        int predecessor = plan[i-1];
         int successor = plan[i];
 
         cout << "pre = " << predecessor << endl;
@@ -42,6 +42,13 @@ void corridor(int plan[], int size){
             // Streak wird erneuert
             streak = 1;
         }
+
+        // Egal ob der letze Move Teil einer Streak ist oder nicht: Er muss nochmal seperat ausgeführt werden
+        if(i == size - 1){
+            cout << "Jetzt wird " << streak << " Mal " << successor << " ausgeführt: " << endl;
+            drive(successor, streak);
+        }
+
     }
 }
 
