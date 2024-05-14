@@ -31,7 +31,7 @@ void drive(int move, int streak){
     }
     
     float dist = 0.8 * streak;
-    cout << "Und fahren " << streak << " Zelle(n), also " << dist << "m geradeaus." << endl;
+    cout << "Und fahren " << streak << " Zelle(n), also " << dist << " m geradeaus." << endl;
     // Accelerating... ? 
     
     mover.moveDist(dist);
@@ -49,7 +49,7 @@ void corridor(int plan[], int size){
         drive(plan[0], 1);
         return;
     }
-    
+
     int streak = 1;
 
     for(int i = 1; i < size; i++){
@@ -88,8 +88,8 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "corridor");
 	ros::NodeHandle n;
     
-    int arr[] = {0,0};
-    corridor(arr, 2);
+    int arr[] = {0};
+    corridor(arr, 1);
     return 0;
 
 }
