@@ -96,3 +96,7 @@ add_executable(execute_plan_server src/execute_plan_server.cpp)
 add_library(moving src/moving.cpp)
 target_link_libraries(execute_plan_server moving ${catkin_LIBRARIES})
 add_dependencies(execute_plan_server create_fundamentals_generate_messages_cpp)
+
+add_executable(corridor src/corridor.cpp)
+target_link_libraries(corridor moving ${catkin_LIBRARIES})
+add_dependencies(corridor create_fundamentals_generate_messages_cpp)
