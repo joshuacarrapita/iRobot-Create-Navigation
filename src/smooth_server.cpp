@@ -17,7 +17,8 @@ Moving mover;
 } */
 
 bool move_direction(int movement, double goal){
-  switch(movement){
+// TODO: add wall/obstacle detection part
+      	switch(movement){
   	// for curve 0: right curve 1: left curve
   	case RIGHT_CURVE:
   		mover.curve(0, goal, 0.4);
@@ -38,6 +39,7 @@ bool move_direction(int movement, double goal){
   		else mover.curve(1, fabs(goal), 0);
   		break;
   }
+  return true;
 }
 
 bool execute_plan_smooth(red_fundamentals::ExecutePlan::Request  &req,
