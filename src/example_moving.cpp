@@ -17,7 +17,7 @@ int main(int argc, char **argv)
   
   create_fundamentals::DiffDrive srv;
 
-  ROS_INFO("diffDrive 10 10");
+  /*ROS_INFO("diffDrive 10 10");
   srv.request.left = 10;
   srv.request.right = 10;
   diffDrive.call(srv);
@@ -27,7 +27,7 @@ int main(int argc, char **argv)
   ROS_INFO("diffDrive 0 0");
   srv.request.left = 0;
   srv.request.right = 0;
-  diffDrive.call(srv);
+  diffDrive.call(srv); */
 
   ros::spin();
   return 0;
