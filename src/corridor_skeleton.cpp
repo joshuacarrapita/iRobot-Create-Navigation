@@ -21,6 +21,19 @@ void drive(int move, int streak){
 }
 
 void corridor(int plan[], int size){
+    
+    // Falls das Array leer ist, einfach abbrechen
+    if(size == 0){
+        cout << "Array ist leer. Return" << endl;
+        return;
+    }
+    
+    // Falls es nur ein Move ist, sollten wir den einfach ausführen und abbrechen
+    if(size == 1){
+        drive(plan[0], 1);
+        return;
+    }
+    
     int streak = 1;
 
     for(int i = 1; i < size; i++){

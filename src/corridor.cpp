@@ -5,10 +5,12 @@
 
 using namespace std;
 
-// Possible to define it up here?
-Moving mover;
+// Possible to define it up here? I think not
+//Moving mover;
 
 void drive(int move, int streak){
+    Moving mover;
+
     switch (move) {
         case 0:
             cout << "Wir drehen uns nach rechts." << endl;
@@ -27,10 +29,11 @@ void drive(int move, int streak){
             //mover.turn(?);
             break;
     }
-
-    cout << "Und fahren " << streak << " Zelle(n) geradeaus." << endl;
-    // Accelerating... ? 
+    
     float dist = 0.8 * streak;
+    cout << "Und fahren " << streak << " Zelle(n), also " << dist << "m geradeaus." << endl;
+    // Accelerating... ? 
+    
     mover.moveDist(dist);
 }
 
@@ -73,8 +76,8 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "corridor");
 	ros::NodeHandle n;
     
-    int arr[] = {0,0,3,2,2,2,1,0,0,0,3,3,1};
-    corridor(arr, 13);
+    int arr[] = {0,0};
+    corridor(arr, 2);
     return 0;
 
 }
