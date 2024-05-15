@@ -17,15 +17,22 @@ void sensorCallback(const create_fundamentals::SensorPacket::ConstPtr& msg)
   cout << endl;
   l_act = msg->encoderLeft;
   r_act = msg->encoderRight;
+  ROS_INFO("left: %f, right: %f", l_act, r_act);
 
 }
 
-void pd_control(int streak){
+void pd_control(Moving mover, int streak){
+  ros::spinOnce();
   cout << "Start of pd control" << endl;
   cout << endl;
   
   float dist = 0.8 * streak;
   cout << "Wir wollen " << streak << " Zelle(n) fahren, also " << dist << " m geradeaus." << endl;
+
+  
+  cout<< "Wir fangen an zu fahren mit geringer Geschwindigkeit"<< endl;
+
+  mover.move(2, 2);
   
   cout << "Actual Encoder Values: "<< endl;
   ROS_INFO("left: %f, right: %f", l_act, r_act);
@@ -42,8 +49,13 @@ void pd_control(int streak){
   cout << "Error: "<< endl;
   ROS_INFO("left: %f, right: %f", error_l, error_r);
 
-  while(l_act < l_des || r_act < l_des){
+  while(ros::ok()){
+
     ros::spinOnce();
+
+    if(l_act >= l_des || r_act >= r_des){
+      break;
+    }
 
     cout << "Actual Encoder Values: "<< endl;
     ROS_INFO("left: %f, right: %f", l_act, r_act);
@@ -60,10 +72,21 @@ void pd_control(int streak){
     cout << "Error: "<< endl;
     ROS_INFO("left: %f, right: %f", error_l, error_r);
 
+    ros::Duration(0.2).sleep();
+
+    //mover.move(0, 0);
+    //break;
+
     float speed_l = Kp * error_l;
     float speed_r = Kp * error_r;
     mover.move(speed_l, speed_r);
+
   }
+
+  cout << "End of pd control" << endl;
+  cout << endl;
+  mover.move(0, 0);
+
 }
 
 int main(int argc, char **argv)
@@ -73,11 +96,14 @@ int main(int argc, char **argv)
   ros::Subscriber sub = n.subscribe("sensor_packet", 1, sensorCallback);
   Moving mover;
 
+  ros::Duration(0.2).sleep();
+  ros::spinOnce();
+  ros::spinOnce();
+  ros::spinOnce();
+  ros::spinOnce();
   ros::spinOnce();
 
-  pd_control(1);
+  pd_control(mover, 1);
 
-
-  ros::spin();
   return 0;
 }
