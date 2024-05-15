@@ -25,15 +25,9 @@ void sensorCallback(const create_fundamentals::SensorPacket::ConstPtr& msg)
 
   float l_des = l_act + (dist * 30,3);
   float r_des = r_act + (dist * 30,3);
-
-  
- 
 }
 
 void pd_control(int streak){
-  
-
-
 
 }
 
