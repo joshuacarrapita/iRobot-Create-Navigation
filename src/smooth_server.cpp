@@ -72,7 +72,7 @@ void pd_control(double dist){
   ROS_INFO("Start of pd control");
   
   // float dist = 0.8 * streak;
-  ROS_INFO("Wir wollen %d Zelle(n) fahren, also %f m geradeaus", streak, dist);
+  ROS_INFO("We want to go %f m straight", dist);
 
   while(!calling){
     ROS_INFO("No encoder values yet");
@@ -185,7 +185,7 @@ bool execute_plan_smooth(red_fundamentals::ExecutePlan::Request  &req,
   vector<pair<int, double>> movements = compute_plan((get_direction(req.plan)));
   
   // simplify the plan if needed
-  // merge_plan(movements);
+  merge_plan(movements);
   
   for(auto movement : movements){
   	if(!move_direction(movement.first, movement.second)){
@@ -205,7 +205,7 @@ int main(int argc, char **argv)
   
   ros::ServiceServer service = n.advertiseService("execute_plan", execute_plan_smooth);
   diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
-  ros::Subscriber sub = n.subscribe("sensor_packet", 1, sensorCallback);
+  //ros::Subscriber sub = n.subscribe("sensor_packet", 1, sensorCallback);
   
   ROS_INFO("Ready to run smooth plan");
   ros::spin();
