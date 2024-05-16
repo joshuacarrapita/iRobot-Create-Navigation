@@ -51,14 +51,9 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 	
 	// go over the whole execution plan
 	for (int i = 0; i < exec_plan.size(); i++){
-		//red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(0.1));
+		red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(1));
 
-		/*if (stop_message) {
-			if (stop_message->content == "STOP") {
-				return false;
-			}
-		}*/
-				
+		if (stop_message && stop_message->content == "STOP") return false;
 
 		int next_action = exec_plan[i];
 		int turn_dir = robot_dir - next_action; // dynamically calculate the necessary turn amount based on current robot direction and desired cell
@@ -103,6 +98,9 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 		mover.moveDist(0.8);
 	}
 
+	red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(1));
+
+	if (stop_message && stop_message->content == "STOP") return false;
 	res.success = true;
 	return true;
 }
