@@ -34,19 +34,19 @@ void DiffDriving::stop()
 }
 
 //returns distance in mm
-double encoderToDist(double encDiff)
+double DiffDriving::encoderToDist(double encDiff)
 {
 	return (encDiff/RADIANSPERROTATION)*DISTPERROTATION;
 }
 
 //takes distance travelled by each wheel and returns distance travelled of the centre of robot
-double centDist(double distLeft, double distRight)
+double DiffDriving::centDist(double distLeft, double distRight)
 {
 	return (distLeft + distRight)/2;
 }
 
 //returns difference in theta according to distance travelled by each wheel
-double thetaDiff(double distLeft, double distRight)
+double DiffDriving::thetaDiff(double distLeft, double distRight)
 {
 	return (distRight - distLeft)/WHEELBASE;
 }
@@ -68,12 +68,12 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 
 void DiffDriving::turn(double x, double y)
 {
-	
+	return;
 }
 
 void DiffDriving::smoothTurn(double x, double y, double targetTheta)
 {
-	
+	return;
 }
 
 /*Idea:
@@ -82,12 +82,13 @@ void DiffDriving::smoothTurn(double x, double y, double targetTheta)
 */
 int DiffDriving::drive(int mode, double x, double y, double targetTheta)
 {
-
+	return;
 }
 
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "diffdriving");
+	
 	/*
 	ros::NodeHandle n;
 	DiffDriving driver;

@@ -9,8 +9,14 @@ class DiffDriving
 {
 	public:
 		void stop();
-		void getEncVals();
-		int drive(int mode, double x, double y, double theta);
+		double encoderToDist(double encDiff);
+		double centDist(double distLeft, double distRight);
+		double thetaDiff(double distLeft, double distRight);
+		void odometer(const create_fundamentals::SensorPacket::ConstPtr& msg);
+		void turn(double x, double y);
+		void smoothTurn(double x, double y, double targetTheta);
+		int drive(int mode, double x, double y, double targetTheta);
+
 		ros::NodeHandle n;
 		ros::ServiceClient diffDrive;
 		create_fundamentals::DiffDrive pdsrv;
