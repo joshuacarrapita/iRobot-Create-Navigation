@@ -105,12 +105,7 @@ add_executable(pd_control src/pd_control.cpp)
 target_link_libraries(pd_control moving ${catkin_LIBRARIES})
 add_dependencies(pd_control create_fundamentals_generate_messages_cpp)
 
-add_executable(moving_test src/moving_test.cpp)
-target_link_libraries(moving_test moving ${catkin_LIBRARIES})
-add_dependencies(moving_test create_fundamentals_generate_messages_cpp)
-
 add_executable(smooth_server src/smooth_server.cpp)
 add_library(smooth_plan src/smooth_plan.cpp)
-add_library(moving_nonstop src/moving_nonstop.cpp)
-target_link_libraries(smooth_server smooth_plan moving_nonstop ${catkin_LIBRARIES})
+target_link_libraries(smooth_server smooth_plan ${catkin_LIBRARIES})
 add_dependencies(smooth_server create_fundamentals_generate_messages_cpp)
