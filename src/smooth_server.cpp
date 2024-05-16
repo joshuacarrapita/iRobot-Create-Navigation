@@ -9,8 +9,8 @@
 using namespace std;
 
 #define DRIVESPEED (2 * M_PI)
-#define CURVESPEED M_PI
-#define WHEELRADIUS 0.033
+#define CURVESPEED (1.5 * M_PI)
+#define WHEELRADIUS 0.0305
 #define WHEELDISTANCE 0.26
 
 ros::ServiceClient diffDrive;
