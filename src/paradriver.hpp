@@ -9,6 +9,7 @@ class DiffDriving
 {
 	public:
 		void stop();
+		void resetOdometer();
 		double encoderToDist(double encDiff);
 		double centDist(double distLeft, double distRight);
 		double thetaDiff(double distLeft, double distRight);
