@@ -90,7 +90,7 @@ int main(int argc, char **argv)
 			ddsrv.request.left = 0;
 			ddsrv.request.right = 0;
 			diffDrive.call(ddsrv);
-			ros::Duration(1/call_frequency).sleep();
+			ros::Rate(call_frequency).sleep();
 		} 
 
  		// TODO: Maybe we don't need the reset function as other nodes would
