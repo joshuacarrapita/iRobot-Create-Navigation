@@ -104,3 +104,7 @@ add_dependencies(corridor create_fundamentals_generate_messages_cpp)
 add_executable(pd_control src/pd_control.cpp)
 target_link_libraries(pd_control moving ${catkin_LIBRARIES})
 add_dependencies(pd_control create_fundamentals_generate_messages_cpp)
+
+add_executable(moving_test src/moving_test.cpp)
+target_link_libraries(moving_test moving ${catkin_LIBRARIES})
+add_dependencies(moving_test create_fundamentals_generate_messages_cpp)

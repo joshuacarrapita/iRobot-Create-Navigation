@@ -3,9 +3,14 @@
 #include "create_fundamentals/DiffDrive.h"
 #include "create_fundamentals/SensorPacket.h"
 
+float l_act;
+float r_act;
+
 void sensorCallback(const create_fundamentals::SensorPacket::ConstPtr& msg)
 {
-  ROS_INFO("left encoder: %f, right encoder: %f", msg->encoderLeft, msg->encoderRight);
+  l_act = msg->encoderLeft;
+  r_act = msg->encoderRight;
+  ROS_INFO("Callback called: left: %f, right: %f", l_act, r_act);
 }
 
 int main(int argc, char **argv)
@@ -17,17 +22,18 @@ int main(int argc, char **argv)
   
   create_fundamentals::DiffDrive srv;
 
-  /*ROS_INFO("diffDrive 10 10");
-  srv.request.left = 10;
-  srv.request.right = 10;
-  diffDrive.call(srv);
+  while(ros::ok()){
+    ros::spinOnce();
+    ROS_INFO("diffDrive 2 2");
+    srv.request.left = 2;
+    srv.request.right = 2;
+    diffDrive.call(srv);
+  }
 
-  ros::Duration(2.0).sleep();
-  
   ROS_INFO("diffDrive 0 0");
   srv.request.left = 0;
   srv.request.right = 0;
-  diffDrive.call(srv); */
+  diffDrive.call(srv);
 
   ros::spinOnce();
   return 0;
