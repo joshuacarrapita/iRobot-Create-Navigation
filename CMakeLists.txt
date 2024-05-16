@@ -32,10 +32,13 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined messages
 add_message_files(FILES
 	Walls.msg
+	StopMsg.msg
 )
 #uncomment if you have defined services
 add_service_files(FILES
-	ExecutePlan.srv)
+	ExecutePlan.srv
+	StopSrv.srv
+)
 
 #common commands for building c++ executables and libraries
 #add_library(${PROJECT_NAME} src/example.cpp)
@@ -95,6 +98,10 @@ add_dependencies(walls create_fundamentals_generate_messages_cpp)
 add_executable(stopper src/stopper.cpp)
 target_link_libraries(stopper ${catkin_LIBRARIES})
 add_dependencies(stopper create_fundamentals_generate_messages_cpp)
+
+add_executable(stopper_testing src/stopper.cpp)
+target_link_libraries(stopper_testing ${catkin_LIBRARIES})
+add_dependencies(stopper_testing create_fundamentals_generate_messages_cpp)
 
 add_executable(execute_plan_server src/execute_plan_server.cpp)
 add_library(moving src/moving.cpp)
