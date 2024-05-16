@@ -2,6 +2,7 @@
 #include <cmath>
 #include "ros/ros.h"
 #include "red_fundamentals/ExecutePlan.h"
+#include "red_fundamentals/StopMsg.h"
 #include "create_fundamentals/DiffDrive.h"
 #include "sensor_msgs/LaserScan.h"
 #include "moving.hpp"
@@ -16,6 +17,7 @@ enum drive_direction { RIGHT = 0, UP = 1, LEFT = 2, DOWN = 3 };
 enum turn_direction { RIGHT_TURN = 1, ALSO_RIGHT_TURN = -3, NO_TURN = 0, LEFT_TURN = -1, ALSO_LEFT_TURN = 3, BACK_TURN = 2, ALSO_BACK_TURN = -2 };
 
 double wall_distance_check(){
+	return safe_wall_dist+0.1; // JUST FOR DEBUGGING
 	sensor_msgs::LaserScan::ConstPtr laser_message = ros::topic::waitForMessage<sensor_msgs::LaserScan>("scan_filtered", ros::Duration(wait_wall_msg));
 
 	if (!laser_message) return -1; // return if "scan_filtered" didn't provide a message
@@ -49,13 +51,13 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 	
 	// go over the whole execution plan
 	for (int i = 0; i < exec_plan.size(); i++){
-		red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(0.0));
+		//red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(0.1));
 
-		if (stop_message) {
+		/*if (stop_message) {
 			if (stop_message->content == "STOP") {
 				return false;
 			}
-		}
+		}*/
 				
 
 		int next_action = exec_plan[i];

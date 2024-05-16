@@ -14,7 +14,7 @@ const int laser_msg_offset = 44;
 
 void should_stop_check(){
 
-	sensor_msgs::LaserScan::ConstPtr laser_message = ros::topic::waitForMessage<sensor_msgs::LaserScan>("scan_filtered", ros::Duration(0.0));
+	sensor_msgs::LaserScan::ConstPtr laser_message = ros::topic::waitForMessage<sensor_msgs::LaserScan>("scan_filtered", ros::Duration(1));
 
 	if (!laser_message) {
 		ROS_INFO("I couldn't find any laser message!");
@@ -26,6 +26,7 @@ void should_stop_check(){
 
 	// get the distance in front of the robot
 	double dist = laser_message->ranges[valid_ranges_size/2+laser_msg_offset]; 
+	ROS_INFO("Wall at dist %f.\n", dist);
 	if (dist < laser_message->range_min) return; // no need to proceed if we didn't get a valid message
 
 	if (dist < stop_dist) {
@@ -45,9 +46,8 @@ bool execute_stop_callback(red_fundamentals::StopSrv::Request &req,
 		res.processed = true;
 		return true;
 	}
-	if (req.plead == "isweariwanttoresetandiwontbreakanything") {
+	if (req.plead == "FINE") {
 		should_stop = false;
-		should_reset = true;
 		res.processed = true;
 		return true;
 	}
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 {
 
 	if (argc != 3) {
-		ROS_ERROR("Usage stop <double stopDistance> <double StopCallFrequency (Hz)>");
+		ROS_ERROR("Usage stopper <double stopDistance> <double StopCallFrequency (Hz)>");
 		ROS_INFO("Setting default values...");
 	} else {
 		stop_dist = atof(argv[1]);
@@ -86,20 +86,17 @@ int main(int argc, char **argv)
 		should_stop_check();
 
 		if (should_stop) {
+			ROS_INFO("Publishing STOP");
 			msg.content = "STOP";
 			pub.publish(msg);
 			ddsrv.request.left = 0;
 			ddsrv.request.right = 0;
 			diffDrive.call(ddsrv);
 			ros::Rate(call_frequency).sleep();
-		} 
-
- 		// TODO: Maybe we don't need the reset function as other nodes would
-		// read old messages first anyways
-		if (should_reset) {
-			msg.content = "CONTINUE";
+		} else {
+			ROS_INFO("Publishing FINE");
+			msg.content = "FINE";
 			pub.publish(msg);
-			should_reset = false;
 		}
 
 	}
