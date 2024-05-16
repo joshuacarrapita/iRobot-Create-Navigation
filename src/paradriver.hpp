@@ -17,6 +17,9 @@ class DiffDriving
 		ros::Subscriber pdsub;
 		double encLeft;
 		double encRight;
+		double xcord;
+		double ycord;
+		double theta;
 }
 
 #endif

@@ -4,15 +4,26 @@
 #include <cstdlib>
 #include "paradriver.h"
 
+#define MAXSPEED 15.625
+#define MINSPEED 0.3
+#define CORRECTIONMARGIN 3.0
+#define WHEELBASE 260	//mm
+#define WHEELRADIUS 33	//mm
+#define RADIANSPERROTATION 5.5
+#define DISTPERROTATION 181.5	//mm
+
 ros::ServiceClient diffDrive;
 create_fundamentals::DiffDrive pdsrv;
 
 DiffDriving::DiffDriving()
 {
 	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
-	pdsub = n.subscribe("sensor_packet", 1, getEncVals);
+	pdsub = n.subscribe("sensor_packet", 1, odometer);
 	encLeft = 0;
 	encRight = 0;
+	xcord = 0;
+	ycord = 0;
+	theta = 0;
 }
 
 void DiffDriving::stop()
@@ -22,13 +33,54 @@ void DiffDriving::stop()
 	diffDrive.call(pdsrv);
 }
 
-void getEncVals(const create_fundamentals::SensorPacket::ConstPtr& msg)
+//returns distance in mm
+double encoderToDist(double encDiff)
 {
+	return (encDiff/RADIANSPERROTATION)*DISTPERROTATION;
+}
+
+//takes distance travelled by each wheel and returns distance travelled of the centre of robot
+double centDist(double distLeft, double distRight)
+{
+	return (distLeft + distRight)/2;
+}
+
+//returns difference in theta according to distance travelled by each wheel
+double thetaDiff(double distLeft, double distRight)
+{
+	return (distRight - distLeft)/WHEELBASE;
+}
+
+
+//continuously calculates x,y,theta of robot
+void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& msg)
+{
+	double distL = encoderToDist(msg->encoderLeft - encLeft);
+	double distR = encoderToDist(msg->encoderRight - encRight);
+	double dist = centDist(distL, distR);
+	double deltaTheta = thetaDiff(distL, distR);
+	xcord += dist * cos(theta + deltaTheta/2);
+	ycord += dist * sin(theta + deltaTheta/2);
+	theta += deltaTheta;
 	encLeft = msg->encoderLeft;
 	encRight = msg->encoderRight;
 }
 
-int DiffDriving::drive(int mode, double x, double y, double theta)
+void DiffDriving::turn(double x, double y)
+{
+	
+}
+
+void DiffDriving::smoothTurn(double x, double y, double targetTheta)
+{
+	
+}
+
+/*Idea:
+ *mode 0: Turn to face goalpoint, Drive until at goalpoint, Turn to meet targetTheta
+ *mode 1: Do a smooth turn until goalpoint is hit, adjust theta to meet targetTheta
+*/
+int DiffDriving::drive(int mode, double x, double y, double targetTheta)
 {
 
 }
