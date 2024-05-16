@@ -87,10 +87,6 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
   ros::Subscriber sub = n.subscribe("sensor_packet", 1, sensorCallback);
   Moving mover;
-  
-  ros::spinOnce();
-  ros::Duration(0.2).sleep();
-  ros::spinOnce();
 
   pd_control(mover, 2);
 
