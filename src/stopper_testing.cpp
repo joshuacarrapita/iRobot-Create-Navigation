@@ -2,6 +2,9 @@
 #include <cmath>
 #include "ros/ros.h"
 #include "create_fundamentals/DiffDrive.h"
+#include "red_fundamentals/StopMsg.h"
+#include "red_fundamentals/ExecutePlan.h"
+#include "red_fundamentals/StopSrv.h"
 #include "sensor_msgs/LaserScan.h"
 #include "moving.hpp"
 
@@ -50,7 +53,7 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 	for (int i = 0; i < exec_plan.size(); i++){
 		red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(0.0));
 
-		if (!stop_message || stop_message.content != "STOP") {
+		if (!stop_message || stop_message->content != "STOP") {
 
 			int next_action = exec_plan[i];
 			int turn_dir = robot_dir - next_action; // dynamically calculate the necessary turn amount based on current robot direction and desired cell

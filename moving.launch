@@ -3,6 +3,7 @@
 	</node>
 	<node pkg="red_fundamentals" type="centering" name="centering" >
 	</node>
-	<node pkg="red_fundamentals" type="execute_plan_server" name="execute_plan_server" >
+	<node pkg="red_fundamentals" type="stopper" name="stopper" >
+	<node pkg="red_fundamentals" type="stopper_testing" name="stopper_testing" >
 	</node>
 </launch>

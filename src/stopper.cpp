@@ -2,17 +2,19 @@
 #include "ros/ros.h"
 #include "sensor_msgs/LaserScan.h"
 #include "red_fundamentals/StopMsg.h"
+#include "red_fundamentals/StopSrv.h"
 #include "create_fundamentals/DiffDrive.h"
 
 bool should_stop = false;
 bool should_reset = false;
 double stop_dist = 0.15;
 int call_frequency = 1.0;
+const int laser_msg_offset = 44;
 
 
 void should_stop_check(){
 
-	sensor_msgs::LaserScan::ConstPtr laser_message = ros::topic::waitForMessage<sensor_msgs::LaserScan>("scan_filtered", ros::Duration(wait_wall_msg));
+	sensor_msgs::LaserScan::ConstPtr laser_message = ros::topic::waitForMessage<sensor_msgs::LaserScan>("scan_filtered", ros::Duration(0.0));
 
 	if (!laser_message) {
 		ROS_INFO("I couldn't find any laser message!");
@@ -70,7 +72,7 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "stopper");
 	ros::NodeHandle n;
 
-  	ros::ServiceServer service = n.advertiseService("stop", execute_stop_callback);
+  	ros::ServiceServer service = n.advertiseService("stop_service", execute_stop_callback);
 
 	ros::Publisher pub = n.advertise<red_fundamentals::StopMsg>("stop_topic", 100);
 	red_fundamentals::StopMsg msg;
@@ -102,7 +104,7 @@ int main(int argc, char **argv)
 
 	}
 
-	ros::shutdown()
+	ros::shutdown();
 	return 0;
 
 }
