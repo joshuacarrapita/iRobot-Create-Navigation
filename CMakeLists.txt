@@ -99,11 +99,7 @@ add_executable(stopper src/stopper.cpp)
 target_link_libraries(stopper ${catkin_LIBRARIES})
 add_dependencies(stopper create_fundamentals_generate_messages_cpp)
 
-add_executable(stopper_testing src/stopper_testing.cpp)
-add_library(moving src/moving.cpp)
-target_link_libraries(stopper_testing moving ${catkin_LIBRARIES})
-add_dependencies(stopper_testing create_fundamentals_generate_messages_cpp)
-
 add_executable(execute_plan_server src/execute_plan_server.cpp)
+add_library(moving src/moving.cpp)
 target_link_libraries(execute_plan_server moving ${catkin_LIBRARIES})
 add_dependencies(execute_plan_server create_fundamentals_generate_messages_cpp)
