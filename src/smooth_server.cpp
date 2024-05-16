@@ -103,6 +103,7 @@ void pd_control(double dist){
       
       ROS_INFO("No encoder values yet");
     }
+
   }
 
   ROS_INFO("End of pd control! Stop");

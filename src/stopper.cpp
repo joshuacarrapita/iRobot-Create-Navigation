@@ -9,11 +9,9 @@ enum StopMode { MSGDD = 0, MSGONLY = 1, SHUTDOWN = 2};
 
 bool should_stop = false;
 double stop_dist = 0.15;
-int call_frequency = 1.0;
+double call_frequency = 1.0;
 const int laser_msg_offset = 44;
 StopMode stop_mode = MSGDD;
-
-
 
 void should_stop_check(){
 
@@ -63,12 +61,12 @@ int main(int argc, char **argv)
 {
 
 	if (argc != 4) {
-		ROS_ERROR("Usage stopper <double stopDistance> <double StopCallFrequency (Hz | 0 = inf)> <StopMode {0 = msg+dd, 1 = msg only , 2 = shutdown}");
+		ROS_ERROR("Usage stopper <double stopDistance> <double StopCallFrequency (Hz | < 0.0 = inf)> <StopMode {0 = msg+dd, 1 = msg only , 2 = shutdown}");
 		ROS_INFO("Setting default values...");
 	} else {
 		stop_dist = atof(argv[1]);
 		if (stop_dist < 0) stop_dist * -1;
-		call_frequency = abs(atoi(argv[2]));
+		call_frequency = atof(argv[2]);
 		stop_mode = (StopMode) abs(atoi(argv[3]));
 	}
 
@@ -97,15 +95,24 @@ int main(int argc, char **argv)
 					ddsrv.request.left = 0;
 					ddsrv.request.right = 0;
 					diffDrive.call(ddsrv);
-					if (call_frequency != 0.0){
+					if (call_frequency > 0.0) {
 						ros::Rate(call_frequency).sleep();
 					}
+					break;
 				case MSGONLY:
 					ROS_INFO("Publishing STOP");
 					msg.content = "STOP";
 					pub.publish(msg);
+					if (call_frequency > 0.0) {
+						ros::Rate(call_frequency).sleep();
+					}
+					break;
 				case SHUTDOWN:
+					ddsrv.request.left = 0;
+					ddsrv.request.right = 0;
+					diffDrive.call(ddsrv);
 					system("bash -c 'source ~/red_ws/devel/setup.bash ; rosnode kill -a'");
+					break;
 
 			}
 		} else {
