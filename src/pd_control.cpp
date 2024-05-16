@@ -42,6 +42,8 @@ void pd_control(Moving mover, int streak){
   while(ros::ok()){
 
     ros::spinOnce();
+    ros::Duration(0.2).sleep();
+    ros::spinOnce();
 
     ROS_INFO("Actual Encoder Values: left: %f, right: %f", l_act, r_act);
 
@@ -64,11 +66,8 @@ void pd_control(Moving mover, int streak){
 
     } else {                                    // no encoder values yet
       
-      ROS_INFO("Wir fangen an zu fahren mit geringer Geschwindigkeit");
-      mover.move(2, 2);
+      ROS_INFO("No encoder values yet");
     }
-
-    ros::spinOnce();
   }
 
   ROS_INFO("End of pd control! Stop");
