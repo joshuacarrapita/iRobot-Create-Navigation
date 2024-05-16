@@ -29,8 +29,21 @@ double speed_r;
 
 bool calling = false;
 
-void sensorCallback(const create_fundamentals::SensorPacket::ConstPtr& msg)
+/* void sensorCallback(const create_fundamentals::SensorPacket::ConstPtr& msg)
 {
+  l_act = msg->encoderLeft;
+  r_act = msg->encoderRight;
+  ROS_INFO("Callback called: left: %f, right: %f", l_act, r_act);
+  calling = true;
+
+} */
+
+void sensorCallback2()
+{
+  create_fundamentals::SensorPacket::ConstPtr msg = ros::topic::waitForMessage<create_fundamentals::SensorPacket>("sensor_packet", ros::Duration(0.2));
+  if(!msg){
+    return;
+  }
   l_act = msg->encoderLeft;
   r_act = msg->encoderRight;
   ROS_INFO("Callback called: left: %f, right: %f", l_act, r_act);
@@ -63,9 +76,7 @@ void pd_control(double dist){
 
   while(!calling){
     ROS_INFO("No encoder values yet");
-    ros::spinOnce();
-    ros::Duration(0.2).sleep();
-    ros::spinOnce();
+    sensorCallback2();
   }
   
   double l_des = l_act + (dist * 30.3);
@@ -76,9 +87,7 @@ void pd_control(double dist){
 
   while(ros::ok()){
 
-    ros::spinOnce();
-    ros::Duration(0.2).sleep();
-    ros::spinOnce();
+    sensorCallback2();
 
     ROS_INFO("Actual Encoder Values: left: %f, right: %f", l_act, r_act);
 
@@ -110,8 +119,6 @@ void pd_control(double dist){
   ROS_INFO("End of pd control! Stop");
 
 }
-
-
 
 void curve(int direction, double angle, double radius){
 	// if right curve (direction == 0)
