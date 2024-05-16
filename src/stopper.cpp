@@ -8,8 +8,8 @@
 enum StopMode { MSGDD = 0, MSGONLY = 1, SHUTDOWN = 2};
 
 bool should_stop = false;
-double stop_dist = 0.15;
-double call_frequency = 1.0;
+double stop_dist = 0.21;
+double call_frequency = -1.0;
 const int laser_msg_offset = 44;
 StopMode stop_mode = MSGDD;
 
@@ -111,6 +111,7 @@ int main(int argc, char **argv)
 					ddsrv.request.left = 0;
 					ddsrv.request.right = 0;
 					diffDrive.call(ddsrv);
+					system("bash -c 'source ~/red_ws/devel/setup.bash ; rosnode kill /create'");
 					system("bash -c 'source ~/red_ws/devel/setup.bash ; rosnode kill -a'");
 					break;
 
