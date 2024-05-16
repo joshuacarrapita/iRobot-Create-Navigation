@@ -2,7 +2,6 @@
 #include "ros/ros.h"
 #include "sensor_msgs/LaserScan.h"
 #include "red_fundamentals/StopMsg.h"
-#include "red_fundamentals/Stopper.h"
 #include "create_fundamentals/DiffDrive.h"
 
 bool should_stop = false;
