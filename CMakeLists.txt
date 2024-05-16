@@ -107,5 +107,5 @@ add_dependencies(pd_control create_fundamentals_generate_messages_cpp)
 
 add_executable(smooth_server src/smooth_server.cpp)
 add_library(smooth_plan src/smooth_plan.cpp)
-target_link_libraries(smooth_server smooth_plan ${catkin_LIBRARIES})
+target_link_libraries(smooth_server moving smooth_plan ${catkin_LIBRARIES})
 add_dependencies(smooth_server create_fundamentals_generate_messages_cpp)
