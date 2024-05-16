@@ -14,8 +14,9 @@
 
 using namespace std;
 
-double errThresh = 0.05;
-int candidateDist = 10;
+double errThresh = 0.03;
+int candidateDist = 5;
+int winnerThresh = 50;
 
 red_fundamentals::Walls wall;
 
@@ -119,7 +120,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 				}
 			}
 			//update winner if current candidates have more inliers than previous best
-			if (curInliers > maxInliers) {
+			if (curInliers > maxInliers && curInliers > winnerThresh) {
 				winner_outliers = outliers;
 				winner_inliers = inliers;
 				maxInliers = curInliers;
@@ -131,7 +132,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 		}
 		coordinates = winner_outliers;
 		int newsize = winner_outliers.size();
-		ROS_INFO("new candidate size: %i", newsize);
+		ROS_INFO("new can didate size: %i", newsize);
 		wall.dist.push_back(calcDist(winner_a, winner_b, robotpos));
 		wall.angle.push_back(calcAngle(winner_a, winner_b));
 		ROS_INFO("Best wall %i with %i inliers has dist: %.7lf angle: %.7lf", k, maxInliers, wall.dist[k], wall.angle[k]);
@@ -143,12 +144,13 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 
 int main(int argc, char **argv)
 {
-	if (argc != 3) {
-		ROS_ERROR("Usage walls <candidateDist> <errThresh>");
+	if (argc != 4) {
+		ROS_ERROR("Usage: walls <candidateDist> <errThresh> <winnerThresh>");
 		ROS_INFO("Setting default values...");
 	} else {
 		candidateDist = atoi(argv[1]);
 		errThresh = atof(argv[2]);
+		winnerThresh = atoi(argv[3]);
 	}
 	ros::init(argc, argv, "walls");
 	ros::NodeHandle n;
@@ -158,7 +160,7 @@ int main(int argc, char **argv)
 	while(ros::ok()) {
 		ros::spinOnce();
 		pub.publish(wall);
-		ros::Duration(0.8).sleep();
+		ros::Duration(0.3).sleep();
 	}
 	return 0;
 }

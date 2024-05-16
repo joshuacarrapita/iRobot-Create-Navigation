@@ -72,24 +72,39 @@ void turnAngle(int direction, double angle)
 	return;
 }
 
+int getMinIndex(const red_fundamentals::Walls::ConstPtr& msg)
+{
+	int minindex = 0;
+	if (msg->dist[1] < msg->dist[0]) {
+		minindex = 1;
+	}
+	if (msg->dist[2] < msg->dist[1] && minindex == 1) {
+		minindex = 2;
+	} else if (msg->dist[2] < msg->dist[0]) {
+		minindex = 2;
+	}
+	return minindex;
+}
+
 //turns robot until it is roughly perpendicular to found wall
 void perpendicularise(const red_fundamentals::Walls::ConstPtr& msg)
 {
+	int mIndex = getMinIndex(msg);
 	//set variables if perpendicular
-	if (msg->angle < 85 + tolerance*20 && msg->angle > 85 - tolerance*20) {
+	if (msg->angle[mIndex] < 85 + tolerance*20 && msg->angle > 85 - tolerance*20) {
 		ROS_INFO("already perpendicular...");
 		isPerpendicular = 1;
 		heading = 0;
 		return;
 	//turn right if wall right of robot
-	} else if (msg->angle > 85 + tolerance*15) {
+	} else if (msg->angle[mIndex] > 85 + tolerance*15) {
 		ROS_INFO("turning right by %f degrees", (msg->angle - 86));
 		turnAngle(1, msg->angle - 86);
 		isPerpendicular = 1;
 		heading = 0;
 		return;
 	//turn left if wall left of robot
-	} else if (msg->angle < 88 - tolerance*15) {
+	} else if (msg->angle[mIndex] < 88 - tolerance*15) {
 		ROS_INFO("turning left by %f degrees", (88-msg->angle));
 		turnAngle(0, 88 - msg->angle);
 		isPerpendicular = 1;
@@ -103,18 +118,18 @@ void perpendicularise(const red_fundamentals::Walls::ConstPtr& msg)
 void correctDist(const red_fundamentals::Walls::ConstPtr& msg)
 {
 	//if too far away move forward
-	if (msg->dist > 0.24 + tolerance) {
+	if (msg->dist[0] > 0.24 + tolerance) {
 		ROS_INFO("moving forward to correct distance");
-		moveDist(1, msg->dist - 0.24);
+		moveDist(1, msg->dist[0] - 0.24);
 		distCorrect = 1;
 		if (centeringPhase == 1) {
 			centeringPhase = 2;
 		}
 		return;
 	//if too close move back
-	} else if (msg->dist < 0.24 - tolerance) {
+	} else if (msg->dist[0] < 0.24 - tolerance) {
 		ROS_INFO("moving backwards to correct distance");
-		moveDist(-1, 0.24 - msg->dist);
+		moveDist(-1, 0.24 - msg->dist[0]);
 		distCorrect = 1;
 		if (centeringPhase == 1) {
 			centeringPhase = 2;
@@ -134,7 +149,7 @@ void correctDist(const red_fundamentals::Walls::ConstPtr& msg)
 void center(const red_fundamentals::Walls::ConstPtr& msg)
 {
 	//check if wall in sight else move until it is
-	if (!msg->dist) {
+	if (!msg->dist[0]) {
 		//if no wall in sight turn right until full 360° rotation
 		if (turnCtr < 4) {
 			ROS_INFO("turning to find first wall");
@@ -153,7 +168,7 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 		}
 	}
 	//turn robot to be perpendicular to detected wall
-	if (msg->dist && !isPerpendicular) {
+	if (msg->dist[0] && !isPerpendicular) {
 		ROS_INFO("perpendicularising");
 		perpendicularise(msg);
 		return;
@@ -174,7 +189,7 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 			return;
 		}
 		//if found move on to phase 2
-		if (heading == 1 && msg->dist < 0.8 && msg->angle > 75 && msg->angle < 105) {
+		if (heading == 1 && msg->dist[0] < 0.8 && msg->angle[0] > 75 && msg->angle[0] < 105) {
 			ROS_INFO("second wall found at heading 1");
 			isPerpendicular = 0;
 			distCorrect = 0;
@@ -190,7 +205,7 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 			return;
 		}
 		//if found move on to phase 2
-		if (msg->dist < 0.8 && heading == 3 && msg->angle > 75 && msg->angle < 105) {
+		if (msg->dist[0] < 0.8 && heading == 3 && msg->angle[0] > 75 && msg->angle[0] < 105) {
 			ROS_INFO("second wall found at heading 3 with dist: %f and angle %f", msg->dist, msg->angle);
 			stop();
 			isPerpendicular = 0;
@@ -208,7 +223,7 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 			return;
 		}
 		//if found move on to phase 2
-		if (msg->dist < 0.8 && msg->angle > 75 && msg->angle < 105) {
+		if (msg->dist[0] < 0.8 && msg->angle[0] > 75 && msg->angle[0] < 105) {
 			ROS_INFO("moving on to phase 2");
 			isPerpendicular = 0;
 			distCorrect = 0;
