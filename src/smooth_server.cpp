@@ -4,6 +4,7 @@
 #include "create_fundamentals/SensorPacket.h"
 #include "sensor_msgs/LaserScan.h"
 #include "red_fundamentals/ExecutePlan.h"
+#include "red_fundamentals/StopMsg.h"
 #include "smooth_plan.hpp"
 #include "moving.hpp"
 
@@ -28,6 +29,8 @@ double error_r;
 double speed_l;
 double speed_r;
 
+const double tolerance = 0.25;
+
 bool calling = false;
 
 bool stop_check(){
@@ -50,7 +53,6 @@ void sensorCallback2()
 
 }
 
-// TODO: add wall/obstacle detection + stop part
 // TODO: replace moving functions
 
 void pd_control(double dist){
@@ -72,6 +74,8 @@ void pd_control(double dist){
 
   while(ros::ok()){
 
+    if (stop_check()) break;
+
     sensorCallback2();
 
     ROS_INFO("Actual Encoder Values: left: %f, right: %f", l_act, r_act);
@@ -83,7 +87,7 @@ void pd_control(double dist){
 
     ROS_INFO("Error: left: %f, right: %f", error_l, error_r);
 
-    if(l_act >= l_des || r_act >= r_des){       // Goal is reached
+    if(l_act + tolerance >= l_des || r_act + tolerance >= r_des){       // Goal is reached
       
       break;
 
@@ -131,7 +135,6 @@ void curve(int direction, double angle, double radius){
 
 bool move_direction(int movement, double goal, Moving mover){
   if (stop_check()) return false;
-// TODO: add wall/obstacle detection part
   
   switch(movement){
   	// for curve 0: right curve 1: left curve
@@ -190,10 +193,11 @@ bool execute_plan_smooth(red_fundamentals::ExecutePlan::Request  &req,
   
   // plan the movements
   vector<pair<int, double>> movements = compute_plan((get_direction(req.plan)));
+
   
   // simplify the plan if needed
   merge_plan(movements);
-  
+
   for(auto movement : movements){
   	if(!move_direction(movement.first, movement.second, mover)){
   		return true;
@@ -202,6 +206,7 @@ bool execute_plan_smooth(red_fundamentals::ExecutePlan::Request  &req,
   
   mover.stop();
   res.success = true;
+  ROS_INFO("Ready to run smooth plan");
   return true;
 }
 
