@@ -33,6 +33,14 @@ void DiffDriving::stop()
 	diffDrive.call(pdsrv);
 }
 
+void DiffDriving::resetOdometer()
+{
+	xcord = 0;
+	ycord = 0;
+	theta = 0;
+}
+
+
 //returns distance in mm
 double DiffDriving::encoderToDist(double encDiff)
 {
