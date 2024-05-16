@@ -16,11 +16,27 @@ using namespace std;
 ros::ServiceClient diffDrive;
 create_fundamentals::DiffDrive ddsrv;
 
-  
-/* void sensorCallback(const create_fundamentals::SensorPacket::ConstPtr& msg)
+const double Kp = 1.1;
+
+double l_act;
+double r_act;
+
+double error_l;
+double error_r;
+
+double speed_l;
+double speed_r;
+
+bool calling = false;
+
+void sensorCallback(const create_fundamentals::SensorPacket::ConstPtr& msg)
 {
-  ROS_INFO("left encoder: %f, right encoder: %f", msg->encoderLeft, msg->encoderRight);
-} */
+  l_act = msg->encoderLeft;
+  r_act = msg->encoderRight;
+  ROS_INFO("Callback called: left: %f, right: %f", l_act, r_act);
+  calling = true;
+
+}
 
 void stop(){
 	ddsrv.request.left = 0;
@@ -30,6 +46,7 @@ void stop(){
 }
 
 // TODO: add wall/obstacle detection + stop part
+// TODO: replace moving functions
 
 void move(double dist){
 	ddsrv.request.left = DRIVESPEED;
@@ -37,6 +54,64 @@ void move(double dist){
   	diffDrive.call(ddsrv);
   	ros::Duration(dist/(DRIVESPEED * WHEELRADIUS)).sleep();
 }
+
+void pd_control(double dist){
+  ROS_INFO("Start of pd control");
+  
+  // float dist = 0.8 * streak;
+  ROS_INFO("Wir wollen %d Zelle(n) fahren, also %f m geradeaus", streak, dist);
+
+  while(!calling){
+    ROS_INFO("No encoder values yet");
+    ros::spinOnce();
+    ros::Duration(0.2).sleep();
+    ros::spinOnce();
+  }
+  
+  double l_des = l_act + (dist * 30.3);
+  double r_des = r_act + (dist * 30.3);
+
+  ROS_INFO("Actual Encoder Values: left: %f, right: %f", l_act, r_act);
+  ROS_INFO("Desired Encoder Values: left: %f, right: %f", l_des, r_des);
+
+  while(ros::ok()){
+
+    ros::spinOnce();
+    ros::Duration(0.2).sleep();
+    ros::spinOnce();
+
+    ROS_INFO("Actual Encoder Values: left: %f, right: %f", l_act, r_act);
+
+    ROS_INFO("Desired Encoder Values: left: %f, right: %f", l_des, r_des);
+
+    error_l = l_des - l_act;
+    error_r = r_des - r_act;
+
+    ROS_INFO("Error: left: %f, right: %f", error_l, error_r);
+
+    if(l_act >= l_des || r_act >= r_des){       // Goal is reached
+      
+      break;
+
+    } else if(r_act != 0 || l_act != 0){        // p-Control: calculating speed
+      
+      speed_l = Kp * error_l;
+      speed_r = Kp * error_r;
+      ddsrv.request.left = speed_l;
+      ddsrv.request.right = speed_r;
+      diffDrive.call(ddsrv);
+
+    } else {                                    // no encoder values yet
+      
+      ROS_INFO("No encoder values yet");
+    }
+  }
+
+  ROS_INFO("End of pd control! Stop");
+
+}
+
+
 
 void curve(int direction, double angle, double radius){
 	// if right curve (direction == 0)
@@ -69,7 +144,7 @@ bool move_direction(int movement, double goal){
   		break;
   		
   	case GO_STRAIGHT:
-  		move(goal);
+  		pd_control(goal);
   		break;
   		
   	case LEFT_CURVE:
@@ -123,11 +198,10 @@ int main(int argc, char **argv)
   
   ros::ServiceServer service = n.advertiseService("execute_plan", execute_plan_smooth);
   diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
-  // ros::Subscriber sub = n.subscribe("scan_filtered", 1, laserCallback);
+  ros::Subscriber sub = n.subscribe("sensor_packet", 1, sensorCallback);
   
   ROS_INFO("Ready to run smooth plan");
   ros::spin();
   
   return 0;
 }
-
