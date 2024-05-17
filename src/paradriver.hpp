@@ -10,11 +10,12 @@ class DiffDriving
 	public:
 		void stop();
 		void resetOdometer();
+		int odomInit();
 		double encoderToDist(double encDiff);
 		double centDist(double distLeft, double distRight);
 		double thetaDiff(double distLeft, double distRight);
 		void odometer(const create_fundamentals::SensorPacket::ConstPtr& msg);
-		void turn(double x, double y);
+		void turn(double targetTheta);
 		void smoothTurn(double x, double y, double targetTheta);
 		int drive(int mode, double x, double y, double targetTheta);
 		void testdrive(double leftspeed, double rightspeed);
@@ -25,6 +26,7 @@ class DiffDriving
 		ros::ServiceClient diffDrive;
 		create_fundamentals::DiffDrive pdsrv;
 		ros::Subscriber pdsub;
+		int odomReady;
 		double encLeft;
 		double encRight;
 		double xcord;

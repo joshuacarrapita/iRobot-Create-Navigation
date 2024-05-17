@@ -12,9 +12,11 @@
 #define RADIANSPERROTATION 5.5
 #define DISTPERROTATION 181.5	//mm
 
+#define ANGLETOLERANCE 2
+#define KP 1.5
+
 //ros::ServiceClient diffDrive;
 //create_fundamentals::DiffDrive pdsrv;
-int odomReady = 0;
 
 DiffDriving::DiffDriving()
 {
@@ -25,6 +27,7 @@ DiffDriving::DiffDriving()
 	xcord = 0;
 	ycord = 0;
 	theta = 0;
+	this->odomInit();
 }
 
 void DiffDriving::stop()
@@ -39,6 +42,16 @@ void DiffDriving::resetOdometer()
 	this->xcord = 0;
 	this->ycord = 0;
 	this->theta = 0;
+}
+
+int DiffDriving::odomInit()
+{
+	for (int i = 0; i < 10; i++) {
+		ros::spinOnce();
+		ros::Duration(0.1).sleep();
+	}
+	this->odomReady = 1;
+	return 1;
 }
 
 
@@ -80,9 +93,24 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 	}
 }
 
-void DiffDriving::turn(double x, double y)
+void DiffDriving::turn(double targetTheta)
 {
-	return;
+	ros::spinOnce();
+	double err = targetTheta - theta;
+	double speed;
+	while (abs(err) > ANGLETOLERANCE)) {
+		ros::spinOnce();
+		err = targetTheta - theta;
+		speed = min(13, err * KP);
+		if (targetTheta > theta) {
+			this->pdsrv.request.left = -speed;
+			this->pdsrv.request.right = speed;
+		} else {
+			this->pdsrv.request.left = speed;
+			this->pdsrv.request.right = -speed;
+		}
+	}
+	this->stop();
 }
 
 void DiffDriving::smoothTurn(double x, double y, double targetTheta)
@@ -134,12 +162,15 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "diffdriving");
 	DiffDriving driver;
+	/*
 	for (int t = 0; t < 10; t++) {
 		ros::spinOnce();
 		ros::Duration(0.2).sleep();
 	}
 	driver.resetOdometer();
-	odomReady = 1;
+	driver.odomReady = 1;
+	*/
+
 	/*
 	for (int i = 0; i < 4; i++) {
 		ros::spinOnce();
@@ -156,6 +187,7 @@ int main(int argc, char **argv)
 		ros::Duration(0.1).sleep();
 	}
 	*/
+	/*
 	for (int i = 0; i < 50; i++) {
 		ros::spinOnce();
 		driver.testdrive(6.35, 6.35);
@@ -172,7 +204,7 @@ int main(int argc, char **argv)
 		ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
 		ros::Duration(0.1).sleep();
 	}
-	
+	*/
 	/*
 	while(ros::ok()) {
 		ros::spinOnce();
@@ -180,6 +212,7 @@ int main(int argc, char **argv)
 		ros::Duration(0.2).sleep();
 	}
 	*/
+	driver.turn(90);
 	driver.stop();
 	ros::spinOnce();
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
