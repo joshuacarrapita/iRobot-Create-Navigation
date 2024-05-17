@@ -19,7 +19,7 @@ class DiffDriving
 		void smoothTurn(double x, double y, double targetTheta);
 		int drive(int mode, double x, double y, double targetTheta);
 		void testdrive(double leftspeed, double rightspeed);
-		void turn(double angle);
+		//void turn(double angle);
 		void moveDist(double dist);
 
 		ros::NodeHandle n;
