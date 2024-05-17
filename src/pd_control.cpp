@@ -29,7 +29,7 @@ void sensorCallback(const create_fundamentals::SensorPacket::ConstPtr& msg)
 void pd_control(Moving mover, int streak){
   ROS_INFO("Start of pd control");
   
-  float dist = 0.8 * streak;
+  float dist = 1 * streak;
   ROS_INFO("Wir wollen %d Zelle(n) fahren, also %f m geradeaus", streak, dist);
 
   while(!calling){
@@ -39,8 +39,8 @@ void pd_control(Moving mover, int streak){
     ros::spinOnce();
   }
   
-  float l_des = l_act + (dist * 30.3);
-  float r_des = r_act + (dist * 30.3);
+  float l_des = l_act + (dist * 32);
+  float r_des = r_act + (dist * 32);
 
   ROS_INFO("Actual Encoder Values: left: %f, right: %f", l_act, r_act);
   ROS_INFO("Desired Encoder Values: left: %f, right: %f", l_des, r_des);
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
   ros::Subscriber sub = n.subscribe("sensor_packet", 1, sensorCallback);
   Moving mover;
 
-  pd_control(mover, 2);
+  pd_control(mover, 1);
 
   return 0;
 }

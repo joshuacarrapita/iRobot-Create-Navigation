@@ -66,8 +66,8 @@ void pd_control(double dist){
     sensorCallback2();
   }
   
-  double l_des = l_act + (dist * 30.3);
-  double r_des = r_act + (dist * 30.3);
+  double l_des = l_act + (dist * 32);
+  double r_des = r_act + (dist * 32);
 
   ROS_INFO("Actual Encoder Values: left: %f, right: %f", l_act, r_act);
   ROS_INFO("Desired Encoder Values: left: %f, right: %f", l_des, r_des);
