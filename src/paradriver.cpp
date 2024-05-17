@@ -71,7 +71,7 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 		double distL = encoderToDist(msg->encoderLeft - encLeft);
 		double distR = encoderToDist(msg->encoderRight - encRight);
 		double dist = centDist(distL, distR);
-		double deltaTheta = thetaDiff(distL, distR) * 55;
+		double deltaTheta = thetaDiff(distL, distR) * (180/M_PI);
 		this->xcord += dist * sin(theta + deltaTheta/2);
 		this->ycord += dist * cos(theta + deltaTheta/2);
 		this->theta += deltaTheta;
@@ -156,7 +156,6 @@ int main(int argc, char **argv)
 		ros::Duration(0.1).sleep();
 	}
 	*/
-	
 	for (int i = 0; i < 50; i++) {
 		ros::spinOnce();
 		driver.testdrive(6.35, 6.35);
@@ -164,8 +163,26 @@ int main(int argc, char **argv)
 		ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
 		ros::Duration(0.1).sleep();
 	}
-
 	driver.stop();
+	ros::Duration(0.5).sleep();
+	for (int i = 0; i < 50; i++) {
+		ros::spinOnce();
+		driver.testdrive(-6.35, -6.35);
+		ros::spinOnce();
+		ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
+		ros::Duration(0.1).sleep();
+	}
+	
+	/*
+	while(ros::ok()) {
+		ros::spinOnce();
+		ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
+		ros::Duration(0.2).sleep();
+	}
+	*/
+	driver.stop();
+	ros::spinOnce();
+	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
 	/*
 	ros::NodeHandle n;
 	DiffDriving driver;
