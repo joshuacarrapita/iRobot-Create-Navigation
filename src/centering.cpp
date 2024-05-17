@@ -91,22 +91,22 @@ void perpendicularise(const red_fundamentals::Walls::ConstPtr& msg)
 {
 	int mIndex = getMinIndex(msg);
 	//set variables if perpendicular
-	if (msg->angle[mIndex] < 85 + tolerance*20 && msg->angle > 85 - tolerance*20) {
+	if (msg->angle[mIndex] < 85 + tolerance*20 && msg->angle[mIndex] > 85 - tolerance*20) {
 		ROS_INFO("already perpendicular...");
 		isPerpendicular = 1;
 		heading = 0;
 		return;
 	//turn right if wall right of robot
 	} else if (msg->angle[mIndex] > 85 + tolerance*15) {
-		ROS_INFO("turning right by %f degrees", (msg->angle - 86));
-		turnAngle(1, msg->angle - 86);
+		ROS_INFO("turning right by %f degrees", (msg->angle[mIndex] - 86));
+		turnAngle(1, msg->angle[mIndex] - 86);
 		isPerpendicular = 1;
 		heading = 0;
 		return;
 	//turn left if wall left of robot
 	} else if (msg->angle[mIndex] < 88 - tolerance*15) {
-		ROS_INFO("turning left by %f degrees", (88-msg->angle));
-		turnAngle(0, 88 - msg->angle);
+		ROS_INFO("turning left by %f degrees", (88-msg->angle[mIndex]));
+		turnAngle(0, 88 - msg->angle[mIndex]);
 		isPerpendicular = 1;
 		heading = 0;
 		return;
