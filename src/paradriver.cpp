@@ -1,4 +1,4 @@
-#include "ros/ros.h"
+	#include "ros/ros.h"
 #include "create_fundamentals/DiffDrive.h"
 #include "create_fundamentals/SensorPacket.h"
 #include <cstdlib>
@@ -12,13 +12,14 @@
 #define RADIANSPERROTATION 5.5
 #define DISTPERROTATION 181.5	//mm
 
-ros::ServiceClient diffDrive;
-create_fundamentals::DiffDrive pdsrv;
+//ros::ServiceClient diffDrive;
+//create_fundamentals::DiffDrive pdsrv;
+int odomReady = 0;
 
 DiffDriving::DiffDriving()
 {
 	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
-	pdsub = n.subscribe("sensor_packet", 1, odometer);
+	pdsub = n.subscribe("sensor_packet", 1, &DiffDriving::odometer, this);
 	encLeft = 0;
 	encRight = 0;
 	xcord = 0;
@@ -28,16 +29,16 @@ DiffDriving::DiffDriving()
 
 void DiffDriving::stop()
 {
-	pdsrv.request.left = 0;
-	pdsrv.request.right = 0;
+	this->pdsrv.request.left = 0;
+	this->pdsrv.request.right = 0;
 	diffDrive.call(pdsrv);
 }
 
 void DiffDriving::resetOdometer()
 {
-	xcord = 0;
-	ycord = 0;
-	theta = 0;
+	this->xcord = 0;
+	this->ycord = 0;
+	this->theta = 0;
 }
 
 
@@ -63,15 +64,20 @@ double DiffDriving::thetaDiff(double distLeft, double distRight)
 //continuously calculates x,y,theta of robot
 void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& msg)
 {
-	double distL = encoderToDist(msg->encoderLeft - encLeft);
-	double distR = encoderToDist(msg->encoderRight - encRight);
-	double dist = centDist(distL, distR);
-	double deltaTheta = thetaDiff(distL, distR);
-	xcord += dist * cos(theta + deltaTheta/2);
-	ycord += dist * sin(theta + deltaTheta/2);
-	theta += deltaTheta;
-	encLeft = msg->encoderLeft;
-	encRight = msg->encoderRight;
+	if (!odomReady) {
+		this->encLeft = msg->encoderLeft;
+		this->encRight = msg->encoderRight;
+	} else {
+		double distL = encoderToDist(msg->encoderLeft - encLeft);
+		double distR = encoderToDist(msg->encoderRight - encRight);
+		double dist = centDist(distL, distR);
+		double deltaTheta = thetaDiff(distL, distR) * 55;
+		this->xcord += dist * sin(theta + deltaTheta/2);
+		this->ycord += dist * cos(theta + deltaTheta/2);
+		this->theta += deltaTheta;
+		this->encLeft = msg->encoderLeft;
+		this->encRight = msg->encoderRight;
+	}
 }
 
 void DiffDriving::turn(double x, double y)
@@ -90,13 +96,76 @@ void DiffDriving::smoothTurn(double x, double y, double targetTheta)
 */
 int DiffDriving::drive(int mode, double x, double y, double targetTheta)
 {
+	return 0;
+}
+
+void DiffDriving::testdrive(double leftspeed, double rightspeed)
+{
+	this->pdsrv.request.left = leftspeed;
+	this->pdsrv.request.right = rightspeed;
+	diffDrive.call(pdsrv);
+}
+
+void DiffDriving::turn(double angle)
+{
+	stop();
+	double anglemapped = (abs(angle)*4.0)/180;
+	if (angle > 0) {
+		testdrive(3.2, -3.2);
+	} else {
+		testdrive(-3.2, 3.2);
+	}
+	ros::Duration(anglemapped).sleep();
+	stop();
 	return;
 }
+
+void DiffDriving::moveDist(double dist)
+{
+	testdrive(6.35, 6.35);
+	ros::Duration(dist*5).sleep();
+	stop();
+	return;
+}
+
+
 
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "diffdriving");
+	DiffDriving driver;
+	for (int t = 0; t < 10; t++) {
+		ros::spinOnce();
+		ros::Duration(0.2).sleep();
+	}
+	driver.resetOdometer();
+	odomReady = 1;
+	/*
+	for (int i = 0; i < 4; i++) {
+		ros::spinOnce();
+		driver.turn(-90);
+		ros::spinOnce();
+		ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
+		ros::Duration(0.1).sleep();
+	}
+	for (int i = 0; i < 4; i++) {
+		ros::spinOnce();
+		driver.turn(90);
+		ros::spinOnce();
+		ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
+		ros::Duration(0.1).sleep();
+	}
+	*/
 	
+	for (int i = 0; i < 50; i++) {
+		ros::spinOnce();
+		driver.testdrive(6.35, 6.35);
+		ros::spinOnce();
+		ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
+		ros::Duration(0.1).sleep();
+	}
+
+	driver.stop();
 	/*
 	ros::NodeHandle n;
 	DiffDriving driver;

@@ -206,7 +206,7 @@ void center(const red_fundamentals::Walls::ConstPtr& msg)
 		}
 		//if found move on to phase 2
 		if (msg->dist[0] < 0.8 && heading == 3 && msg->angle[0] > 75 && msg->angle[0] < 105) {
-			ROS_INFO("second wall found at heading 3 with dist: %f and angle %f", msg->dist, msg->angle);
+			ROS_INFO("second wall found at heading 3 with dist: %f and angle %f", msg->dist[0], msg->angle[0]);
 			stop();
 			isPerpendicular = 0;
 			distCorrect = 0;
