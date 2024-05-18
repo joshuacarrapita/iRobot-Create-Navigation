@@ -8,19 +8,18 @@
 #define MAXSPEED 15.0
 #define MINSPEED 0.3
 #define CORRECTIONMARGIN 3.0
-#define WHEELBASE 260	//mm
-#define WHEELRADIUS 33	//mm
+#define WHEELBASE 260		//mm
+#define WHEELRADIUS 33		//mm
 #define RADIANSPERROTATION 5.5
 #define DISTPERROTATION 181.5	//mm
 
 #define THETACORRECTION 0.97
+#define DISTTOLERANCE 20	//mm
 #define ANGLETOLERANCE 2.0
 #define KP 0.20
 
 using namespace std;
 
-//ros::ServiceClient diffDrive;
-//create_fundamentals::DiffDrive pdsrv;
 
 DiffDriving::DiffDriving()
 {
@@ -50,7 +49,7 @@ void DiffDriving::resetOdometer()
 	this->xcord = 0;
 	this->ycord = 0;
 	this->theta = 0;
-	ROS_INFO("encoders reset...");
+	ROS_INFO("encoders reset");
 }
 
 int DiffDriving::odomInit()
@@ -63,6 +62,19 @@ int DiffDriving::odomInit()
 	this->odomReady = 1;
 	return 1;
 }
+
+double DiffDriving::calcAngle(double x, double y)
+{
+	if (odomReady) {
+		ros::spinOnce();
+		double ydiff = max(this->ycord - y) - min(this->ycord, y);
+	       	int signer = 1;
+		if (x < 0) { signer = -1; }
+	        return signer*((acos(ydiff/sqrt((this->xcord-x)*(this->xcord-x) + (this->ycord-y)*(this->ycord-y)))) * (180/(double) M_PI));
+	}
+	return 0;
+}
+
 
 
 //returns distance in mm
@@ -104,7 +116,32 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 	}
 }
 
-//Turn specific angles with P-Control via Odometer
+//Turn to specific absolute angle
+void DiffDriving::turnAbs(double targetTheta)
+{
+	ros::spinOnce();
+	double err = targetTheta - theta;
+	double speed;
+	while (abs(err) > ANGLETOLERANCE) {
+		ros::spinOnce();
+		err = abs(goal) - abs(theta);
+		speed = min(MAXSPEED, (err * KP + MINSPEED));
+		if (theta > targetTheta) {
+			this->pdsrv.request.left = -speed;
+			this->pdsrv.request.right = speed;
+		} else {
+			this->pdsrv.request.left = speed;
+			this->pdsrv.request.right = -speed;
+		}
+		diffDrive.call(pdsrv);
+	}
+	ROS_INFO("stopping...");
+	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
+	this->stop();
+}
+
+
+//Turn specific relative angles with P-Control via Odometer
 void DiffDriving::turn(double targetTheta)
 {
 	ros::spinOnce();
@@ -141,6 +178,27 @@ void DiffDriving::smoothTurn(double x, double y, double targetTheta)
 */
 int DiffDriving::drive(int mode, double x, double y, double targetTheta)
 {
+	ros::spinOnce();
+	double errX = x - this->xcord;
+	double errY = y - this->ycord;
+	double err = (errX + errY)/2
+	double vecAngle = calcAngle(x,y);
+	switch(mode)
+	{
+		case 0:
+			double speed;
+			turn(calcAngle(x, y));
+			while (abs(err) > DISTTOLERANCE) {
+				ros::spinOnce();
+				err = (abs(x - this->xcord)+(abs(y - this->ycord))/2;
+				speed = min(MAXSPEED, (err * KP + MINSPEED));
+				this->pdsrv.request.left = speed;
+				this->pdsrv.request.right = speed;
+				diffDrive.call(pdsrv);
+			}
+			this.stop();
+			return 1;
+	}
 	return 0;
 }
 
