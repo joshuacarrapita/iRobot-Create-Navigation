@@ -12,6 +12,7 @@ class DiffDriving
 		void resetOdometer();
 		int odomInit();
 		double calcAngle(double x, double y);
+		double calcDist(double x, double y);
 		double encoderToDist(double encDiff);
 		double centDist(double distLeft, double distRight);
 		double thetaDiff(double distLeft, double distRight);
