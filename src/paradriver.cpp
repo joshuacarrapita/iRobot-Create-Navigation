@@ -5,15 +5,16 @@
 #include <cstdlib>
 #include "paradriver.hpp"
 
-#define MAXSPEED 15.625
-#define MINSPEED 0.5
+#define MAXSPEED 15.0
+#define MINSPEED 0.3
 #define CORRECTIONMARGIN 3.0
 #define WHEELBASE 260	//mm
 #define WHEELRADIUS 33	//mm
 #define RADIANSPERROTATION 5.5
 #define DISTPERROTATION 181.5	//mm
 
-#define ANGLETOLERANCE 2
+#define THETACORRECTION 0.97
+#define ANGLETOLERANCE 2.0
 #define KP 0.20
 
 using namespace std;
@@ -30,8 +31,8 @@ DiffDriving::DiffDriving()
 	xcord = 0;
 	ycord = 0;
 	theta = 0;
-	this->odomInit();
 	this->resetOdometer();
+	this->odomInit();
 }
 
 void DiffDriving::stop()
@@ -49,10 +50,12 @@ void DiffDriving::resetOdometer()
 	this->xcord = 0;
 	this->ycord = 0;
 	this->theta = 0;
+	ROS_INFO("encoders reset...");
 }
 
 int DiffDriving::odomInit()
 {
+	ROS_INFO("initialising odometer");
 	for (int i = 0; i < 10; i++) {
 		ros::spinOnce();
 		ros::Duration(0.1).sleep();
@@ -77,7 +80,7 @@ double DiffDriving::centDist(double distLeft, double distRight)
 //returns difference in theta according to distance travelled by each wheel
 double DiffDriving::thetaDiff(double distLeft, double distRight)
 {
-	return (distRight - distLeft)/WHEELBASE;
+	return (distLeft - distRight)/WHEELBASE;
 }
 
 
@@ -87,6 +90,7 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 	if (!odomReady) {
 		this->encLeft = msg->encoderLeft;
 		this->encRight = msg->encoderRight;
+		ROS_INFO("encoderLeft: %lf encoderRight: %lf", msg->encoderLeft, msg->encoderRight);
 	} else {
 		double distL = encoderToDist(msg->encoderLeft - encLeft);
 		double distR = encoderToDist(msg->encoderRight - encRight);
@@ -94,7 +98,7 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 		double deltaTheta = thetaDiff(distL, distR) * (180/M_PI);
 		this->xcord += dist * sin(theta + deltaTheta/2);
 		this->ycord += dist * cos(theta + deltaTheta/2);
-		this->theta += deltaTheta;
+		this->theta += deltaTheta * THETACORRECTION;
 		this->encLeft = msg->encoderLeft;
 		this->encRight = msg->encoderRight;
 	}
@@ -104,14 +108,14 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 void DiffDriving::turn(double targetTheta)
 {
 	ros::spinOnce();
-	double goal = targetTheta - theta;
+	double goal = theta + targetTheta;
 	double err = goal - theta;
 	double speed;
 	while (abs(err) > ANGLETOLERANCE) {
-		ROS_INFO("turning with err: %lf",err);
+		//ROS_INFO("turning with err: %lf",err);
 		ros::spinOnce();
 		err = abs(goal) - abs(theta);
-		speed = min(15.0, (err * KP + MINSPEED));
+		speed = min(MAXSPEED, (err * KP + MINSPEED));
 		if (theta > goal) {
 			this->pdsrv.request.left = -speed;
 			this->pdsrv.request.right = speed;
@@ -163,7 +167,7 @@ int main(int argc, char **argv)
 	DiffDriving driver;
 	//driver.odomInit();
 	for (int i = 0; i < 8; i++) {
-		driver.turn(45);
+		driver.turn(-45);
 		ros::Duration(0.5).sleep();
 	}
 	driver.stop();
