@@ -15,7 +15,7 @@
 
 #define ACCELTIME 30
 #define THETACORRECTION 1.0
-#define DISTTOLERANCE 40	//mm
+#define DISTTOLERANCE 50	//mm
 #define ANGLETOLERANCE 1.5
 #define KP 0.20
 

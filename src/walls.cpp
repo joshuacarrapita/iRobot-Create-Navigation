@@ -64,10 +64,10 @@ coords calcLineEquation(coords pt_a, coords pt_b)
 //calculates angle relative to y axis via 2 winner points
 double calcAngle(coords pt_a, coords pt_b)
 {
-	double ydiff = max(pt_a.y,pt_b.y) - min(pt_a.y,pt_b.y);
+	//double ydiff = max(pt_a.y,pt_b.y) - min(pt_a.y,pt_b.y);
 	int signer = 1;
 	//if (pt_a.x < 0) { signer = -1; }
-	//double ydiff = pt_a.y-pt_b.y;
+	double ydiff = pt_a.y-pt_b.y;
 	return signer*((acos(ydiff/sqrt((pt_a.x-pt_b.x)*(pt_a.x-pt_b.x) + ydiff*ydiff))) * (180/(double) M_PI));
 }
 
@@ -104,6 +104,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 	coords winner_b;
 	//find 3 best walls; remove inliers each iteration
 	for (int k = 0; k < 3; k++) {
+		//ROS_INFO("looking for wall %i", k);
 		//take candidates with fixed interval instead of random
 		for (int i = 0; i < coordinates.size()-(candidateDist+1); i+=candidateDist) {
 			//ROS_INFO("checking candidates %i", i);
@@ -132,10 +133,27 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 		}
 		coordinates = winner_outliers;
 		int newsize = winner_outliers.size();
-		ROS_INFO("new can didate size: %i", newsize);
-		wall.dist.push_back(calcDist(winner_a, winner_b, robotpos));
-		wall.angle.push_back(calcAngle(winner_a, winner_b));
-		ROS_INFO("Best wall %i with %i inliers has dist: %.7lf angle: %.7lf", k, maxInliers, wall.dist[k], wall.angle[k]);
+		double walldist = calcDist(winner_a, winner_b, robotpos);
+		double wallangle = calcAngle(winner_a, winner_b);
+		//ROS_INFO("new can didate size: %i", newsize);
+		/*
+		wall.dist[k] = (calcDist(winner_a, winner_b, robotpos));
+		wall.angle[k] = (calcAngle(winner_a, winner_b));
+		*/
+		if (wallangle > 45 && wallangle < 135) {
+			wall.distfront = walldist;
+			wall.anglefront = wallangle;
+			ROS_INFO("Wall found front of robot with dist: %lf angle %lf", wall.distfront, wall.anglefront);
+		} else if (wallangle < 45) {
+			wall.distleft = walldist;
+			wall.angleleft = wallangle;
+			ROS_INFO("Wall found left of robot with dist: %lf angle %lf", wall.distleft, wall.angleleft);
+			} else if (wallangle > 135) {
+			wall.distright = walldist;
+			wall.angleright = wallangle;
+			ROS_INFO("Wall found right of robot with dist: %lf angle %lf", wall.distright, wall.angleright);
+		}
+		//ROS_INFO("Best wall %i with %i inliers has dist: %.7lf angle: %.7lf", k, maxInliers, wall.dist[k], wall.angle[k]);
 		maxInliers = 0;
 	}
 }
@@ -156,11 +174,11 @@ int main(int argc, char **argv)
 	ros::NodeHandle n;
 	ros::Subscriber sub = n.subscribe("scan_filtered", 1, extendedSransac);
 	ros::Publisher pub = n.advertise<red_fundamentals::Walls>("walls_topic", 1);
-
+	ROS_INFO("start detecting walls");
 	while(ros::ok()) {
 		ros::spinOnce();
 		pub.publish(wall);
-		ros::Duration(0.3).sleep();
+		ros::Duration(0.2).sleep();
 	}
 	return 0;
 }
