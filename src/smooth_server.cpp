@@ -225,6 +225,10 @@ bool execute_plan_smooth(red_fundamentals::ExecutePlan::Request  &req,
 	system("bash -c 'source ~/red_ws/devel/setup.bash ; rosnode kill /create'");
 	system("bash -c 'source ~/red_ws/devel/setup.bash ; rosrun create_fundamentals driver.py'");
   }
+  if (stop_check()) {
+	res.success = false;
+	return false;
+  }
   res.success = true;
   ROS_INFO("Ready to run smooth plan");
   return true;

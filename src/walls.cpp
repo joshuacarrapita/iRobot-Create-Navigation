@@ -14,8 +14,8 @@
 
 using namespace std;
 
-double errThresh = 0.05;
-int candidateDist = 10;
+double errThresh = 0.02;
+int candidateDist = 5;
 
 red_fundamentals::Walls wall;
 
