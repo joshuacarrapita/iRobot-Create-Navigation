@@ -3,8 +3,7 @@
 	</node>
 	<node pkg="red_fundamentals" type="centering" name="centering" >
 	</node>
-	<arg name="waitforcentering" default="10.0" /> 
-	<node pkg="red_fundamentals" type="stopper" name="stopper" launch-prefix="bash -c 'sleep $(arg waitforcentering); $0 $@' " >
+	<node pkg="red_fundamentals" type="stopper" name="stopper" >
 	</node>
 	<node pkg="red_fundamentals" type="smooth_server" name="smooth_server" args="true" >
 	</node>

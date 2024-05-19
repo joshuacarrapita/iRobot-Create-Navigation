@@ -12,7 +12,7 @@ bool should_pause = false;
 double stop_dist = 0.21;
 double call_frequency = -1.0;
 const int laser_msg_offset = 44;
-StopMode stop_mode = MSGONLY;
+StopMode stop_mode = MSGDD;
 
 void should_stop_check(){
 
@@ -27,7 +27,7 @@ void should_stop_check(){
 	int valid_ranges_size = laser_message->ranges.size()-laser_msg_offset;
 
 	// get the distance in front of the robot
-	double dist = laser_message->ranges[valid_ranges_size/2+laser_msg_offset]; 
+	double dist = laser_message->ranges[valid_ranges_size/2+laser_msg_offset];
 	ROS_INFO("Wall at dist %f.\n", dist);
 	if  (dist >= stop_dist || dist < laser_message->range_min) {
 		should_stop = false;
@@ -81,10 +81,11 @@ int main(int argc, char **argv)
 
 	ros::init(argc, argv, "stopper");
 	ros::NodeHandle n;
-
+	
+	ros::Duration(12.0).sleep();
 	ros::ServiceServer service = n.advertiseService("stop_service", execute_stop_callback);
 
-	ros::Publisher pub = n.advertise<red_fundamentals::StopMsg>("stop_topic", 1);
+	ros::Publisher pub = n.advertise<red_fundamentals::StopMsg>("stop_topic", 100);
 	red_fundamentals::StopMsg msg;
 
 	ros::ServiceClient diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");

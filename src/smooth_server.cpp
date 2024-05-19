@@ -227,7 +227,7 @@ bool execute_plan_smooth(red_fundamentals::ExecutePlan::Request  &req,
   }
   if (stop_check()) {
 	res.success = false;
-	return false;
+	return true;
   }
   res.success = true;
   ROS_INFO("Ready to run smooth plan");
