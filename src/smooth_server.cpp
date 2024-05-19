@@ -144,6 +144,7 @@ bool move_direction(int movement, double goal, Moving mover){
   
   if (stop_check()) {
 	  mover.stop();
+	  ROS_INFO("stopping");
 	  return false;
   }
   

@@ -9,7 +9,7 @@ enum StopMode { MSGDD = 0, MSGONLY = 1, SHUTDOWN = 2};
 
 bool should_stop = false;
 bool should_pause = false;
-double stop_dist = 0.21;
+double stop_dist = 0.2;
 double call_frequency = -1.0;
 const int laser_msg_offset = 44;
 StopMode stop_mode = MSGONLY;
@@ -29,9 +29,9 @@ void should_stop_check(){
 	// get the distance in front of the robot
 	double dist = laser_message->ranges[valid_ranges_size/2+laser_msg_offset]; 
 	ROS_INFO("Wall at dist %f.\n", dist);
-	if (dist < laser_message->range_min || dist >= stop_dist) {
+	if (dist > laser_message->range_min && dist >= stop_dist) {
 		should_stop = false;
-	} else {
+	} else if (!isnan(dist) && dist > laser_message->range_min) {
 		should_stop = true;
 	}
 
