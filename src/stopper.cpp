@@ -11,7 +11,7 @@ bool should_stop = false;
 double stop_dist = 0.21;
 double call_frequency = -1.0;
 const int laser_msg_offset = 44;
-StopMode stop_mode = MSGDD;
+StopMode stop_mode = MSGONLY;
 
 void should_stop_check(){
 
@@ -28,13 +28,13 @@ void should_stop_check(){
 	// get the distance in front of the robot
 	double dist = laser_message->ranges[valid_ranges_size/2+laser_msg_offset]; 
 	ROS_INFO("Wall at dist %f.\n", dist);
-	if (dist < laser_message->range_min) return; // no need to proceed if we didn't get a valid message
-
-	if (dist < stop_dist) {
+	if (dist < laser_message->range_min || dist >= stop_dist) {
+		should_stop = false;
+	} else {
 		should_stop = true;
-		return;
 	}
 
+	return;
 }
 
 bool execute_stop_callback(red_fundamentals::StopSrv::Request &req,

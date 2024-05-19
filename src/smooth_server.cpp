@@ -74,8 +74,13 @@ void pd_control(double dist){
 
   while(ros::ok()){
 
-    if (stop_check()) break;
-
+	if (stop_check()) {
+      	ddsrv.request.left = 0;
+      	ddsrv.request.right = 0;
+      	diffDrive.call(ddsrv);
+		break;
+	}
+  
     sensorCallback2();
 
     ROS_INFO("Actual Encoder Values: left: %f, right: %f", l_act, r_act);
@@ -135,7 +140,10 @@ void curve(int direction, double angle, double radius){
 }
 
 bool move_direction(int movement, double goal, Moving mover){
-  if (stop_check()) return false;
+  if (stop_check()) {
+	  mover.stop();
+	  return false;
+  }
   
   switch(movement){
   	// for curve 0: right curve 1: left curve
