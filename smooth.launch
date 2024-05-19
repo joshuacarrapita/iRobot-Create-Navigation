@@ -2,8 +2,9 @@
 	<node pkg="red_fundamentals" type="walls" name="walls" args="5 0.03" >
 	</node>
 	<node pkg="red_fundamentals" type="centering" name="centering" >
-	</node>  
-	<node pkg="red_fundamentals" type="stopper" name="stopper" >
+	</node>
+	<arg name="node_start_delay" default="10.0" /> 
+	<node pkg="red_fundamentals" type="stopper" name="stopper" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' " >
 	</node>
 	<node pkg="red_fundamentals" type="smooth_server" name="smooth_server" >
 	</node>

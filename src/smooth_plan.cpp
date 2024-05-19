@@ -39,7 +39,7 @@ std::vector<std::pair<int, double>> compute_plan(std::vector<int> directions) {
     }
 
     // and then go straight for 40 cm
-    movements.emplace_back(GO_STRAIGHT, 0.4);
+   // movements.emplace_back(GO_STRAIGHT, 0.4);
 
     for(int i=1; i<directions.size(); i++){
         switch (directions[i]){

@@ -140,6 +140,7 @@ void curve(int direction, double angle, double radius){
 }
 
 bool move_direction(int movement, double goal, Moving mover){
+  
   if (stop_check()) {
 	  mover.stop();
 	  return false;
