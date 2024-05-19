@@ -155,7 +155,7 @@ bool move_direction(int movement, double goal, Moving mover){
   		break;
   		
   	case GO_STRAIGHT:
-  		pd_control(goal);
+  		pd_control(goal - 0.1);
   		break;
   		
   	case LEFT_CURVE:
