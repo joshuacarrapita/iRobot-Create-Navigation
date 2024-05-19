@@ -13,9 +13,10 @@
 #define RADIANSPERROTATION 5.5
 #define DISTPERROTATION 181.5	//mm
 
-#define THETACORRECTION 0.97
-#define DISTTOLERANCE 20	//mm
-#define ANGLETOLERANCE 2.0
+#define ACCELTIME 30
+#define THETACORRECTION 1.0
+#define DISTTOLERANCE 50	//mm
+#define ANGLETOLERANCE 1.5
 #define KP 0.20
 
 using namespace std;
@@ -69,8 +70,10 @@ double DiffDriving::calcAngle(double x, double y)
 		ros::spinOnce();
 		double ydiff = max(this->ycord, y) - min(this->ycord, y);
 	       	int signer = 1;
-		if (x < 0) { signer = -1; }
-	        return signer*((acos(ydiff/sqrt((this->xcord-x)*(this->xcord-x) + (this->ycord-y)*(this->ycord-y)))) * (180/(double) M_PI));
+		int behind = 0;
+		if (x < this->xcord) { signer = -1; }
+		if (y < this->ycord) { behind = 180; }
+	        return signer*((acos(ydiff/sqrt((this->xcord-x)*(this->xcord-x) + (this->ycord-y)*(this->ycord-y)))) * (180/(double) M_PI) + behind);
 	}
 	return 0;
 }
@@ -130,11 +133,11 @@ void DiffDriving::turnAbs(double targetTheta)
 	double err = targetTheta - theta;
 	double speed;
 	//ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
-	//ROS_INFO("err: %lf", err);
 	while (abs(err) > ANGLETOLERANCE) {
+		//ROS_INFO("err: %lf", err);
 		ros::spinOnce();
 		err = targetTheta - theta;
-		speed = min(MAXSPEED, abs(err * KP + MINSPEED));
+		speed = min(MAXSPEED, abs(err * KP));
 		if (theta > targetTheta) {
 			//ROS_INFO("turning left");
 			this->pdsrv.request.left = -speed;
@@ -156,22 +159,26 @@ void DiffDriving::turnAbs(double targetTheta)
 void DiffDriving::turn(double targetTheta)
 {
 	ros::spinOnce();
-	double err = targetTheta - theta;
-	//double err = goal - theta;
+	double goal = theta + targetTheta;
+	double err = targetTheta;
 	double speed;
+	//double accel = ACCELTIME;
 	while (abs(err) > ANGLETOLERANCE) {
-		ROS_INFO("turning with err: %lf",err);
+		//ROS_INFO("turning with err: %lf", err);
 		ros::spinOnce();
-		err = targetTheta - theta;
-		speed = min(MAXSPEED, abs(err * KP + MINSPEED));
-		if (theta > err) {
+		err = goal - theta;
+		speed = min(MAXSPEED, abs(err * KP));
+		if (theta > goal) {
+			//turn left
 			this->pdsrv.request.left = -speed;
 			this->pdsrv.request.right = speed;
 		} else {
+			//turn right
 			this->pdsrv.request.left = speed;
 			this->pdsrv.request.right = -speed;
 		}
 		diffDrive.call(pdsrv);
+		//if (accel > 0) {accel--;}
 	}
 	ROS_INFO("stopping...");
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
@@ -211,7 +218,8 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta)
 				diffDrive.call(pdsrv);
 			}
 			this->stop();
-			this->turnAbs(targetTheta);
+			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
+			this->turnAbs(targetTheta-3);
 			return 1;
 	}
 	return 0;
@@ -238,6 +246,7 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "diffdriving");
 	DiffDriving driver;
+	/*
 	ros::spinOnce();
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
 	driver.turn(-90);
@@ -249,15 +258,25 @@ int main(int argc, char **argv)
 	driver.moveDist(0.3);
 	ros::spinOnce();
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
+	*/
 
-	//driver.drive(0, 500, 500, 0);
+	driver.drive(0, -500, 500, 0);
+	driver.drive(0, 0, 0, 0);
 	/*
-	for (int i = 0; i < 8; i++) {
-		driver.turn(-45);
+	for (int i = 0; i < 2; i++) {
+		driver.turnAbs(-180);
+		ros::Duration(0.5).sleep();
+		driver.turnAbs(0);
 		ros::Duration(0.5).sleep();
 	}
 	*/
+	/*
+	driver.turn(180);
+	ros::Duration(0.5).sleep();
+	driver.turn(180);
+	ros::Duration(0.5).sleep();
+	driver.turnAbs(0);
 	driver.stop();
-
+	*/
 	return 0;
 }
