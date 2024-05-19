@@ -20,7 +20,7 @@ class DiffDriving
 		void turnAbs(double targetTheta);
 		void turn(double targetTheta);
 		void smoothTurn(double x, double y, double targetTheta);
-		int drive(int mode, double x, double y, double targetTheta);
+		int drive(int mode, double x, double y, double targetTheta, int stay);
 		void testdrive(double leftspeed, double rightspeed);
 		//void turn(double angle);
 		void moveDist(double dist);
