@@ -32,6 +32,7 @@ double speed_r;
 const double tolerance = 0.25;
 
 bool calling = false;
+bool kill_driver = false;
 
 bool stop_check(){
 	red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(1));
@@ -210,11 +211,19 @@ bool execute_plan_smooth(red_fundamentals::ExecutePlan::Request  &req,
 
   for(auto movement : movements){
   	if(!move_direction(movement.first, movement.second, mover)){
+		if(kill_driver) {
+			system("bash -c 'source ~/red_ws/devel/setup.bash ; rosnode kill /create'");
+			system("bash -c 'source ~/red_ws/devel/setup.bash ; rosrun create_fundamentals driver.py'");
+		}
   		return true;
   	}
   }
   
   mover.stop();
+  if(kill_driver) {
+	system("bash -c 'source ~/red_ws/devel/setup.bash ; rosnode kill /create'");
+	system("bash -c 'source ~/red_ws/devel/setup.bash ; rosrun create_fundamentals driver.py'");
+  }
   res.success = true;
   ROS_INFO("Ready to run smooth plan");
   return true;
@@ -222,6 +231,13 @@ bool execute_plan_smooth(red_fundamentals::ExecutePlan::Request  &req,
 
 int main(int argc, char **argv)
 {
+	if (argc != 2) {
+		ROS_ERROR("Usage smooth_server <bool kill_driver{0,1}>");
+		ROS_INFO("Setting default values...");
+	} else {
+		kill_driver = (bool) atoi(argv[1]);
+	}
+
   ros::init(argc, argv, "smooth_server");
   ros::NodeHandle n;
   
