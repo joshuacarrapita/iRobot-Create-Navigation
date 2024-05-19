@@ -236,7 +236,9 @@ int main(int argc, char **argv)
 		ROS_ERROR("Usage smooth_server <bool kill_driver{0,1}>");
 		ROS_INFO("Setting default values...");
 	} else {
-		kill_driver = (bool) atoi(argv[1]);
+		if (atoi(argv[1]) == 1) {
+			kill_driver = true;
+		}
 	}
 
   ros::init(argc, argv, "smooth_server");
