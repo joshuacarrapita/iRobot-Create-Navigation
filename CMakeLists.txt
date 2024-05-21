@@ -33,6 +33,10 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 add_message_files(FILES
 	Walls.msg
 	StopMsg.msg
+	Cell.msg 
+	Grid.msg
+	Pose.msg
+	Row.msg
 )
 #uncomment if you have defined services
 add_service_files(FILES
