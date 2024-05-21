@@ -2,7 +2,7 @@
 import os
 import rospy
 from time import sleep
-from <TEAMCOLOR>_fundamentals.msg import *
+from red_fundamentals.msg import *
 import rospkg
 
 T = Cell.TOP
@@ -11,7 +11,7 @@ L = Cell.LEFT
 R = Cell.RIGHT
 
 rospack = rospkg.RosPack()
-filename = os.path.join(rospack.get_path("<TEAMCOLOR>_fundamentals"), "map.txt")
+filename = os.path.join(rospack.get_path("red_fundamentals"), "map.txt")
 with open(filename, 'r') as f:
     exec("map_layout = {}".format(f.read()))
 
