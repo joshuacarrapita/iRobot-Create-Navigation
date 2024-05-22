@@ -5,12 +5,13 @@
 #include "sensor_msgs/LaserScan.h"
 #include "red_fundamentals/ExecutePlan.h"
 #include "smooth_plan.hpp"
+#include "moving.hpp"
 
 using namespace std;
 
 #define DRIVESPEED (2 * M_PI)
 #define CURVESPEED (1.5 * M_PI)
-#define WHEELRADIUS 0.0305
+#define WHEELRADIUS 0.032
 #define WHEELDISTANCE 0.26
 
 ros::ServiceClient diffDrive;
@@ -60,7 +61,7 @@ void curve(int direction, double angle, double radius){
   	ros::Duration(fabs(goal_l /(speed_l * WHEELRADIUS))).sleep();
 }
 
-bool move_direction(int movement, double goal){
+bool move_direction(int movement, double goal, Moving mover){
 // TODO: add wall/obstacle detection part
   switch(movement){
   	// for curve 0: right curve 1: left curve
@@ -77,10 +78,20 @@ bool move_direction(int movement, double goal){
   		break;
   	
   	case ROTATE:
-		// cw
-  		if(goal > 0) curve(0, goal, 0);
-  		// ccw
-  		else curve(1, fabs(goal), 0);
+		switch((int) goal){
+			case -90:
+				mover.turnRA(0);
+				break;
+			case 90:
+				mover.turnRA(1);
+				break;
+			case 180:
+				mover.turnAround();
+				break;
+			default:
+				break;
+		}
+
   		break;
   }
   return true;
@@ -92,6 +103,7 @@ bool execute_plan_smooth(red_fundamentals::ExecutePlan::Request  &req,
 
   // initialize variables 
   res.success = false;
+  Moving mover;
   
   // after centering, the robot will always face the wall
   // immediate failure, if it wants to go up
@@ -106,12 +118,14 @@ bool execute_plan_smooth(red_fundamentals::ExecutePlan::Request  &req,
   // merge_plan(movements);
   
   for(auto movement : movements){
-  	if(!move_direction(movement.first, movement.second)){
+  	ROS_INFO("direction: %d, goal: %f", movement.first, movement.second);
+  	if(!move_direction(movement.first, movement.second, mover)){
   		return true;
   	}
   }
   
-  stop();
+  mover.stop();
+  ROS_INFO("moving finished");
   res.success = true;
   return true;
 }
@@ -130,3 +144,4 @@ int main(int argc, char **argv)
   
   return 0;
 }
+
