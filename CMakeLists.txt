@@ -97,3 +97,8 @@ add_library(smooth_plan src/smooth_plan.cpp)
 add_library(moving src/moving.cpp)
 target_link_libraries(smooth_server moving smooth_plan ${catkin_LIBRARIES})
 add_dependencies(smooth_server create_fundamentals_generate_messages_cpp)
+
+add_executable(smooth_server_with_p src/smooth_server_with_p.cpp)
+target_link_libraries(smooth_server_with_p moving smooth_plan ${catkin_LIBRARIES})
+add_dependencies(smooth_server_with_p create_fundamentals_generate_messages_cpp)
+
