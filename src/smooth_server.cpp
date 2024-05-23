@@ -18,7 +18,7 @@ using namespace std;
 ros::ServiceClient diffDrive;
 create_fundamentals::DiffDrive ddsrv;
 
-const double Kp = 1.1;
+const double Kp = 0.2;
 
 double l_act;
 double r_act;
@@ -29,7 +29,7 @@ double error_r;
 double speed_l;
 double speed_r;
 
-const double tolerance = 0.25;
+const double tolerance = 0.5;
 
 bool calling = false;
 bool kill_driver = false;
@@ -55,7 +55,7 @@ void sensorCallback2()
 }
 
 // TODO: replace moving functions
-
+/*
 void pd_control(double dist){
   ROS_INFO("Start of pd control");
   
@@ -115,7 +115,28 @@ void pd_control(double dist){
   ROS_INFO("End of pd control! Stop");
 
 }
+*/
 
+void pd_control(double dist)
+{
+	double errL = dist*32.0;
+	double errR = dist*32.0;
+	double errT = errL+errR/2;
+	ROS_INFO("Moving %lf m",dist);
+	sensorCallback2();
+	double goalL = errL + l_act;
+	double goalR = errR + r_act;
+	while (errT > tolerance) {
+				sensorCallback2();
+				errT = (goalL-l_act)+(goalR-r_act)/2;
+				speed = min(13, (errT * Kp + 0.4));
+				this->pdsrv.request.left = speed;
+				this->pdsrv.request.right = speed;
+				diffDrive.call(pdsrv);
+			}
+
+	return;
+}
 
 
 void curve(int direction, double angle, double radius){
@@ -155,7 +176,7 @@ bool move_direction(int movement, double goal, Moving mover){
   		break;
   		
   	case GO_STRAIGHT:
-  		pd_control(goal - 0.1);
+  		pd_control(goal);
   		break;
   		
   	case LEFT_CURVE:
