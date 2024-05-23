@@ -130,9 +130,9 @@ void pd_control(double dist)
 				sensorCallback2();
 				errT = (goalL-l_act)+(goalR-r_act)/2;
 				speed = min(13, (errT * Kp + 0.4));
-				this->pdsrv.request.left = speed;
-				this->pdsrv.request.right = speed;
-				diffDrive.call(pdsrv);
+				ddsrv.request.left = speed;
+				ddsrv.request.right = speed;
+				diffDrive.call(ddsrv);
 			}
 
 	return;
