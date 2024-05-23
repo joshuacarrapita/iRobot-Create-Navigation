@@ -9,10 +9,10 @@ enum StopMode { MSGDD = 0, MSGONLY = 1, SHUTDOWN = 2};
 
 bool should_stop = false;
 bool should_pause = false;
-double stop_dist = 0.21;
+double stop_dist = 0.15;
 double call_frequency = -1.0;
 const int laser_msg_offset = 44;
-StopMode stop_mode = MSGDD;
+StopMode stop_mode = MSGONLY;
 
 void should_stop_check(){
 
@@ -82,7 +82,6 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "stopper");
 	ros::NodeHandle n;
 	
-	ros::Duration(12.0).sleep();
 	ros::ServiceServer service = n.advertiseService("stop_service", execute_stop_callback);
 
 	ros::Publisher pub = n.advertise<red_fundamentals::StopMsg>("stop_topic", 100);

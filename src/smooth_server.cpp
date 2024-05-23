@@ -5,6 +5,7 @@
 #include "sensor_msgs/LaserScan.h"
 #include "red_fundamentals/ExecutePlan.h"
 #include "red_fundamentals/StopMsg.h"
+#include "create_fundamentals/ResetEncoders.h"
 #include "smooth_plan.hpp"
 #include "moving.hpp"
 
@@ -17,8 +18,9 @@ using namespace std;
 
 ros::ServiceClient diffDrive;
 create_fundamentals::DiffDrive ddsrv;
+ros::ServiceClient resetEncoders; 
 
-const double Kp = 0.2;
+const double Kp = 1;
 
 double l_act;
 double r_act;
@@ -29,7 +31,7 @@ double error_r;
 double speed_l;
 double speed_r;
 
-const double tolerance = 0.5;
+const double tolerance = 1;
 
 bool calling = false;
 bool kill_driver = false;
@@ -43,99 +45,45 @@ bool stop_check(){
 
 void sensorCallback2()
 {
-  create_fundamentals::SensorPacket::ConstPtr msg = ros::topic::waitForMessage<create_fundamentals::SensorPacket>("sensor_packet", ros::Duration(0.2));
+  create_fundamentals::SensorPacket::ConstPtr msg = ros::topic::waitForMessage<create_fundamentals::SensorPacket>("sensor_packet", ros::Duration(10));
   if(!msg){
     return;
   }
   l_act = msg->encoderLeft;
   r_act = msg->encoderRight;
-  ROS_INFO("Callback called: left: %f, right: %f", l_act, r_act);
+  //ROS_INFO("Callback called: left: %f, right: %f", l_act, r_act);
   calling = true;
 
 }
 
-// TODO: replace moving functions
-/*
-void pd_control(double dist){
-  ROS_INFO("Start of pd control");
-  
-  // float dist = 0.8 * streak;
-  ROS_INFO("We want to go %f m straight", dist);
-
-  while(!calling){
-    ROS_INFO("No encoder values yet");
-    sensorCallback2();
-  }
-  
-  double l_des = l_act + (dist * 32);
-  double r_des = r_act + (dist * 32);
-
-  ROS_INFO("Actual Encoder Values: left: %f, right: %f", l_act, r_act);
-  ROS_INFO("Desired Encoder Values: left: %f, right: %f", l_des, r_des);
-
-  while(ros::ok()){
-
-	if (stop_check()) {
-      	ddsrv.request.left = 0;
-      	ddsrv.request.right = 0;
-      	diffDrive.call(ddsrv);
-		break;
-	}
-  
-    sensorCallback2();
-
-    ROS_INFO("Actual Encoder Values: left: %f, right: %f", l_act, r_act);
-
-    ROS_INFO("Desired Encoder Values: left: %f, right: %f", l_des, r_des);
-
-    error_l = l_des - l_act;
-    error_r = r_des - r_act;
-
-    ROS_INFO("Error: left: %f, right: %f", error_l, error_r);
-
-    if(l_act + tolerance >= l_des || r_act + tolerance >= r_des){       // Goal is reached
-      
-      break;
-
-    } else if(r_act != 0 || l_act != 0){        // p-Control: calculating speed
-      
-      speed_l = Kp * error_l;
-      speed_r = Kp * error_r;
-      ddsrv.request.left = speed_l;
-      ddsrv.request.right = speed_r;
-      diffDrive.call(ddsrv);
-
-    } else {                                    // no encoder values yet
-      
-      ROS_INFO("No encoder values yet");
-    }
-
-  }
-
-  ROS_INFO("End of pd control! Stop");
-
-}
-*/
-
-void pd_control(double dist)
+bool pd_control(double dist)
 {
-	double errL = dist*32.0;
-	double errR = dist*32.0;
+	double speed;
+	double errL = dist*32;
+	double errR = dist*32;
 	double errT = errL+errR/2;
 	ROS_INFO("Moving %lf m",dist);
 	sensorCallback2();
 	double goalL = errL + l_act;
 	double goalR = errR + r_act;
+  	ROS_INFO("Callback called: left: %f, right: %f", l_act, r_act);
 	while (errT > tolerance) {
+				if (stop_check()) {
+					ddsrv.request.left = 0;
+					ddsrv.request.right = 0;
+					diffDrive.call(ddsrv);
+					return false;
+				}
 				sensorCallback2();
 				errT = (goalL-l_act)+(goalR-r_act)/2;
-				speed = min(13, (errT * Kp + 0.4));
+				speed = abs(min(10.0, (errT * Kp + 0.4)));
 				ddsrv.request.left = speed;
 				ddsrv.request.right = speed;
 				diffDrive.call(ddsrv);
 			}
 
-	return;
+  	ROS_INFO("Callback called: left: %f, right: %f", l_act, r_act);
+	return true;
 }
 
 
@@ -158,7 +106,14 @@ void curve(int direction, double angle, double radius){
   	ddsrv.request.left = speed_l;
   	ddsrv.request.right = speed_r;
   	diffDrive.call(ddsrv);
-  	ros::Duration(fabs(goal_l /(speed_l * WHEELRADIUS))).sleep();
+  	ros::Duration(fabs(goal_l /(speed_l * WHEELRADIUS))*0.83).sleep();
+}
+
+void resetOdometer()
+{
+	create_fundamentals::ResetEncoders srv;
+	resetEncoders.call(srv);
+	ROS_INFO("encoders reset");
 }
 
 bool move_direction(int movement, double goal, Moving mover){
@@ -176,7 +131,7 @@ bool move_direction(int movement, double goal, Moving mover){
   		break;
   		
   	case GO_STRAIGHT:
-  		pd_control(goal);
+  		if(!pd_control(goal)) return false;
   		break;
   		
   	case LEFT_CURVE:
@@ -218,12 +173,6 @@ bool execute_plan_smooth(red_fundamentals::ExecutePlan::Request  &req,
   // initialize variables 
   res.success = false;
   
-  // after centering, the robot will always face the wall
-  // immediate failure, if it wants to go up
-  if(req.plan[0] == 1){
-  	return true;
-  }
-  
   // plan the movements
   vector<pair<int, double>> movements = compute_plan((get_direction(req.plan)));
 
@@ -251,6 +200,7 @@ bool execute_plan_smooth(red_fundamentals::ExecutePlan::Request  &req,
 	return true;
   }
   res.success = true;
+  resetOdometer();
   ROS_INFO("Ready to run smooth plan");
   return true;
 }
@@ -270,6 +220,7 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
   
   ros::ServiceServer service = n.advertiseService("execute_plan", execute_plan_smooth);
+  resetEncoders = n.serviceClient<create_fundamentals::ResetEncoders>("reset_encoders");
   diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
 
   ROS_INFO("Ready to run smooth plan");
