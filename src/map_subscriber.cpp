@@ -11,7 +11,32 @@ std::vector<std::pair<int, int>> potential_positions;
 
 void localization(){
     // How many walls are around me?
+
+    int numWalls = 2;
+    
     // All cells in the map with the same amount of walls are potential positions
+    
+    // Go through the rows
+    for (size_t i = 0; i < map.rows.size(); ++i) {
+        const red_fundamentals::Row& row = map.rows[i];
+
+        // Go through the cells
+        for (size_t j = 0; j < row.cells.size(); ++j) {
+            const red_fundamentals::Cell& cell = row.cells[j];
+            ROS_INFO("At coordinates (%lu, %lu), there are %lu walls", i, j, cell.walls.size());
+            
+            // Same amount of walls get pushed back as potential position
+            if(numWalls == cell.walls.size()){
+                potential_positions.push_back(std::make_pair(i, j));
+            } 
+        }
+    }
+
+    //Output of all the poteential positions:
+    ROS_INFO("Potential Positions: ");
+    for (size_t i = 0; i < potential_positions.size(); ++i) {
+        ROS_INFO("(%d, %d)", potential_positions[i].first, potential_positions[i].second);
+    }
 
     //Lets go through the potential positions
     // Looking at a potential position: Which cells can I reach from here?
@@ -28,16 +53,6 @@ void mapCallback(const red_fundamentals::Grid::ConstPtr& msg) {
     receivedMap = true;
 
     ROS_INFO("Received map");
-    // Go through the rows
-    for (size_t i = 0; i < msg->rows.size(); ++i) {
-        
-        const red_fundamentals::Row& row = msg->rows[i];
-        // Go through the cells
-        for (size_t j = 0; j < row.cells.size(); ++j) {
-            const red_fundamentals::Cell& cell = row.cells[j];
-            ROS_INFO("At coordinates (%lu, %lu), there are %lu walls", i, j, cell.walls.size());
-        }
-    }
 }
 
 int main(int argc, char **argv){
