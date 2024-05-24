@@ -124,3 +124,7 @@ add_dependencies(smooth_server create_fundamentals_generate_messages_cpp)
 add_executable(paradriver src/paradriver.cpp)
 target_link_libraries(paradriver ${catkin_LIBRARIES})
 add_dependencies(paradriver create_fundamentals_generate_messages_cpp)
+
+add_executable(map_subscriber src/map_subscriber.cpp)
+target_link_libraries(map_subscriber ${catkin_LIBRARIES})
+add_dependencies(map_subscriber create_fundamentals_generate_messages_cpp)
