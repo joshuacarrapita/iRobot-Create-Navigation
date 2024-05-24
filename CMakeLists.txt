@@ -124,3 +124,7 @@ add_dependencies(smooth_server create_fundamentals_generate_messages_cpp)
 add_executable(paradriver src/paradriver.cpp)
 target_link_libraries(paradriver ${catkin_LIBRARIES})
 add_dependencies(paradriver create_fundamentals_generate_messages_cpp)
+
+add_executable(hough_algorithm src/hough_algorithm.cpp)
+target_link_libraries(hough_algorithm ${catkin_LIBRARIES})
+add_dependencies(hough_algorithm create_fundamentals_generate_messages_cpp)

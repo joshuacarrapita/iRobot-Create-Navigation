@@ -3,7 +3,6 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-#include <iostream>
 using namespace std;
 #include "sensor_msgs/LaserScan.h"
 
@@ -146,7 +145,7 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg)
 
 int main(int argc, char **argv){
     
-    ros::init(argc, argv, "align");
+    ros::init(argc, argv, "hough_algorithm");
     ros::NodeHandle n;
     ros::Subscriber sub1 = n.subscribe("scan_filtered", 1, laserCallback);
 
