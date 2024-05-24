@@ -7,8 +7,10 @@ using namespace std;
 #include "sensor_msgs/LaserScan.h"
 
 // Globale Variablen
-const int num_rows = 180; // 0 bis pi entspricht 180 Grad
-const int num_cols = 1100; 
+const int num_rows = 360; // 0 bis 2pi entspricht 360 Grad
+const int num_cols = 1100;
+
+bool laserData = false;
 
 vector<vector<int>> houghRaum(num_rows, vector<int>(num_cols)); // Hough Raum
 
@@ -57,13 +59,14 @@ pair<int, int> findMaxValueIndex(vector<vector<int>>& array) {
         }
     }
     
-    return maxIndex; // Gib die Indizes des größten Werts zurück
+    return maxIndex; 
 }
 
 
-void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg)
-{
+void houghTransform(const sensor_msgs::LaserScan::ConstPtr& msg)
+{   
 
+  laserData = true;
   // Hough Raum auf 0 setzen
   for (int i = 0; i < num_rows; ++i) {
     for (int j = 0; j < num_cols; ++j) {
@@ -77,21 +80,33 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg)
   // msg->ranges[384] misst bei 0 Grad (geradeaus)
   // msg->ranges[639] misst bei 90 Grad
   
-  for(int i = 128; i < 640; i++){
+  for(int i = 0; i < msg->ranges.size(); i++){
     // Durch die Datenpunkte iterieren
-    if (!isnan(msg->ranges[i])){
-
+    if (!isnan(msg->ranges[i]) && msg->ranges[i] >= msg->range_min && msg->ranges[i] <= msg->range_max){
 
       float angle = msg->angle_min + (msg->angle_increment * i);
+      ROS_INFO("Angle = %f", angle);
+      
+      // Winkel positiv machen (z.B. -pi/2 (90) wird zu 3pi/2 (270))
+      if(angle < 0){
+        angle += 2 * M_PI;
+        ROS_INFO("Positiv machen: Angle = %f", angle);
+      }
+      
       // Wir drehen den Winkel um 90 Grad 
       angle += 0.5 * M_PI;
+      ROS_INFO("Um 90 Grad drehen: Angle = %f", angle);
       
       float x = cos(angle) * msg->ranges[i];
       float y = sin(angle) * msg->ranges[i];
 
-      if(y < 0){
-        ROS_INFO("kann nicht sein");
+      /* if(x < 0){
+        ROS_INFO("x kleiner als 0");
       }
+
+      if(y < 0){
+        ROS_INFO("y kleiner als 0");
+      } */
 
       for(int alpha = 0; alpha < num_rows; alpha ++){
         
@@ -101,6 +116,10 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg)
         
         // Abstand berechnen
         double d = (x * cos(radians) + y * sin(radians)) * 1000;
+
+        /* if(d < 0){
+          ROS_INFO("Abstand kleiner als 0");
+        } */
         
 
         // Index berechnen
@@ -108,6 +127,8 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg)
         
         houghRaum[alpha][d_index]++;
       }
+    } else {
+      ROS_INFO("Nicht betrachteter Datenpunkt: %f", msg->ranges[i]);
     }
   }
 
@@ -118,7 +139,7 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg)
   int angle_act = maxIndex.first;
   int distance =  maxIndex.second;
 
-  ROS_INFO("Winkel = %d | Abstand =  %d", angle_act, distance);
+  //ROS_INFO("Winkel = %d | Abstand =  %d", angle_act, distance);
 
   int angle_des = 90;
 
@@ -147,9 +168,11 @@ int main(int argc, char **argv){
     
     ros::init(argc, argv, "hough_algorithm");
     ros::NodeHandle n;
-    ros::Subscriber sub1 = n.subscribe("scan_filtered", 1, laserCallback);
+    ros::Subscriber sub1 = n.subscribe("scan_filtered", 1, houghTransform);
 
-    ros::spin();
+    while(!laserData){
+      ros::spinOnce();
+    }
     return 0;
 }
 
