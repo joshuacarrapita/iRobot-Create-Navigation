@@ -118,9 +118,15 @@ add_dependencies(pd_control create_fundamentals_generate_messages_cpp)
 
 add_executable(smooth_server src/smooth_server.cpp)
 add_library(smooth_plan src/smooth_plan.cpp)
-target_link_libraries(smooth_server moving smooth_plan ${catkin_LIBRARIES})
+add_library(map src/map.cpp)
+target_link_libraries(smooth_server moving smooth_plan map ${catkin_LIBRARIES})
 add_dependencies(smooth_server create_fundamentals_generate_messages_cpp)
 
 add_executable(paradriver src/paradriver.cpp)
 target_link_libraries(paradriver ${catkin_LIBRARIES})
 add_dependencies(paradriver create_fundamentals_generate_messages_cpp)
+
+add_executable(localization src/localization.cpp)
+target_link_libraries(localization ${catkin_LIBRARIES})
+add_dependencies(localization create_fundamentals_generate_messages_cpp)
+
