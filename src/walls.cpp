@@ -4,6 +4,8 @@
 #include <cstdlib>
 
 #define LARRSIZE 726
+#define LARRRIGHTEND 272
+#define LARRFRONTEND 498
 #define LARROFFSET 44
 #define LARRACTSIZE 682
 #define ANGLESTEP 0.351906
@@ -80,17 +82,38 @@ double calcAngleAlt(double slope)
 //simplified RANSAC making use of environment constraints
 void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
-	vector<coords> coordinates;
+	coords coordinates[3][228] = {};
 	coords pol;
-	//int j = 0;
+	int j = 0;
 	//get all valid measurements and convert to cartesian
-	for (int i = LARROFFSET; i < LARRSIZE; i++) {
+	for (int i = LARROFFSET; i < LARRRIGHTEND; i++) {
 		if (isnan(msg->ranges[i]) && msg->ranges[i] <= msg->range_min) {
 			continue;
 		}
 		pol.x = msg->ranges[i];
 		pol.y = calcSensAngle(i - (LARROFFSET-1));
-		coordinates.push_back(polToCart(pol));
+		coordinates[0][j] = polToCart(pol);
+		//ROS_INFO("Generated cartesian coordinate %i with (%f , %f)", j, coordinates[j].x, coordinates[j].y);
+		j++;
+	}
+	j = 0;
+	for (int i = LARRRIGHTEND; i < LARRFRONTEND; i++) {
+		if (isnan(msg->ranges[i]) && msg->ranges[i] <= msg->range_min) {
+			continue;
+		}
+		pol.x = msg->ranges[i];
+		pol.y = calcSensAngle(i - (LARROFFSET-1));
+		coordinates[1][j] = polToCart(pol);
+		//ROS_INFO("Generated cartesian coordinate %i with (%f , %f)", j, coordinates[j].x, coordinates[j].y);
+		j++;
+	}
+	for (int i = LARRFRONTEND; i < LARRSIZE; i++) {
+		if (isnan(msg->ranges[i]) && msg->ranges[i] <= msg->range_min) {
+			continue;
+		}
+		pol.x = msg->ranges[i];
+		pol.y = calcSensAngle(i - (LARROFFSET-1));
+		coordinates[2].push_back(polToCart(pol));
 		//ROS_INFO("Generated cartesian coordinate %i with (%f , %f)", j, coordinates[j].x, coordinates[j].y);
 		//j++;
 	}
@@ -148,7 +171,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			wall.distleft = walldist;
 			wall.angleleft = wallangle;
 			ROS_INFO("Wall found left of robot with dist: %lf angle %lf", wall.distleft, wall.angleleft);
-			} else if (wallangle > 135) {
+		} else if (wallangle > 135) {
 			wall.distright = walldist;
 			wall.angleright = wallangle;
 			ROS_INFO("Wall found right of robot with dist: %lf angle %lf", wall.distright, wall.angleright);
