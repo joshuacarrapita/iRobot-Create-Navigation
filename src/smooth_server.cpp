@@ -120,7 +120,7 @@ bool curve(int direction, double angle, double radius){
 	ddsrv.request.left = speed_l;
 	ddsrv.request.right = speed_r;
 	diffDrive.call(ddsrv);
-	return sleep_and_stop(fabs(goal_l /(speed_l * WHEELRADIUS))*0.83);
+	return sleep_and_stop(fabs(goal_l /(speed_l * WHEELRADIUS))*0.85);
 
 }
 
@@ -177,7 +177,7 @@ bool move_direction(int movement, double goal, Moving mover){
 bool execute_plan_smooth(red_fundamentals::ExecutePlan::Request  &req,
 		red_fundamentals::ExecutePlan::Response &res)
 {
-	Moving mover; // TODO maybe make this global if possible
+	Moving mover;
 
 	// initialize variables 
 	res.success = false;
@@ -197,6 +197,9 @@ bool execute_plan_smooth(red_fundamentals::ExecutePlan::Request  &req,
 		}
 	}
 
+	mover.stop(); // This is so it doesn't keep driving after the very last
+	//p_control drive instruction
+	
 	res.success = true;
 	resetOdometer();
 	ROS_INFO("Executed smooth plan! Ready to run another one!");
