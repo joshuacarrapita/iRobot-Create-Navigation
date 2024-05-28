@@ -87,7 +87,7 @@ bool pd_control(double dist)
 
 bool sleep_and_stop(double duration){
 
-	ros::Time then = ros::Time::now() + duration;
+	ros::Time then = ros::Time::now() + ros::Duration(duration);
 	while (ros::Time::now() <= then) {
 		if (stop_check()) {
 			ddsrv.request.left = 0;
@@ -120,7 +120,7 @@ bool curve(int direction, double angle, double radius){
 	ddsrv.request.left = speed_l;
 	ddsrv.request.right = speed_r;
 	diffDrive.call(ddsrv);
-	return sleep_and_stop(fabs(goal_l /(speed_l * WHEELRADIUS))*0.83));
+	return sleep_and_stop(fabs(goal_l /(speed_l * WHEELRADIUS))*0.83);
 
 }
 

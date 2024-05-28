@@ -59,8 +59,7 @@ int main(int argc, char **argv)
 		ROS_ERROR("Usage stopper <double stopDistance>");
 		ROS_INFO("Setting default values...");
 	} else {
-		stop_dist = atof(argv[1]);
-		if (stop_dist < 0) stop_dist * -1;
+		stop_dist = fabs(atof(argv[1]));
 	}
 
 	ros::init(argc, argv, "stopper");
