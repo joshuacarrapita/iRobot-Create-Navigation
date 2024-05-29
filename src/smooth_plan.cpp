@@ -65,11 +65,11 @@ std::vector<int> get_direction(std::vector<int> plan){
 }
 
 // compute the movement sequence using the directions
-std::vector<std::pair<int, double>> compute_plan(std::vector<int> directions) {
+std::vector<std::pair<int, double>> compute_plan(std::vector<int> directions, int orientation) {
     std::vector<std::pair<int, double>> movements;
     
     // for the first movement we have to rotate to face the right direction
-    switch (directions[0]) {
+    switch ((directions[0] - orientation + 5) % 4) {
         case RIGHT:
             movements.emplace_back(ROTATE, 90);
             break;
