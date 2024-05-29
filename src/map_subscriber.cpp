@@ -55,13 +55,19 @@ void mapCallback(const red_fundamentals::Grid::ConstPtr& msg) {
     ROS_INFO("Received map");
 }
 
+void wallCallback(const red_fundamentals::Walls::ConstPtr& msg){
+
+}
+
 int main(int argc, char **argv){
     ros::init(argc, argv, "map_subscriber");
 
     ros::NodeHandle n;
 
     ros::Subscriber sub = n.subscribe("map", 1000, mapCallback);
+    ros::Subscriber sub1 = n.subscribe("walls_topic", 1, wallCallback);
 
+    // Get the map
     while(!receivedMap){
         ros::spinOnce();
     }
