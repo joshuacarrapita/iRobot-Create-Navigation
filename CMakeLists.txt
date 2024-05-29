@@ -32,11 +32,13 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined messages
 add_message_files(FILES
 	Walls.msg
+	NewWalls.msg
 	StopMsg.msg
 	Cell.msg 
 	Grid.msg
 	Pose.msg
 	Row.msg
+	CalculateCenter.msg
 )
 #uncomment if you have defined services
 add_service_files(FILES
@@ -124,3 +126,7 @@ add_dependencies(smooth_server create_fundamentals_generate_messages_cpp)
 add_executable(paradriver src/paradriver.cpp)
 target_link_libraries(paradriver ${catkin_LIBRARIES})
 add_dependencies(paradriver create_fundamentals_generate_messages_cpp)
+
+add_executable(calculate_center src/calculate_center.cpp)
+target_link_libraries(calculate_center ${catkin_LIBRARIES})
+add_dependencies(calculate_center create_fundamentals_generate_messages_cpp)
