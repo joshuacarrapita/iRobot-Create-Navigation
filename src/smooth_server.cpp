@@ -51,12 +51,13 @@ void get_current_pose(){
     		row = msg->row;
     		column = msg->column;
     		orientation = msg->orientation;
-    		x = 0.4 + 0.8 * row;
-    		y = 0.4 + 0.8 * column;
+    		y = 0.4 + 0.8 * row;
+    		x = 0.4 + 0.8 * column;
     		theta = -M_PI/2 + (M_PI/2) * orientation;
     		ROS_INFO("Pose message arrived");
     		ROS_INFO("Pose after localization");
     		ROS_INFO("row: %d, column: %d, orientation: %d", row, column, orientation);
+		ROS_INFO("x: %f, y: %f, theta: %f", x, y, theta);
     		break;
   	}
   	
@@ -98,9 +99,10 @@ void sensorCallback2(){
 	x += dist_d * cos(theta + theta_d/2);
 	y += dist_d * sin(theta + theta_d/2);
 	theta += theta_d;
-	row = floor(x/0.8);
-	column = floor(y/0.8);
-	orientation = (int)round(theta / (M_PI / 2)) + 1;
+	ROS_INFO("x: %f, y: %f, theta: %f", x, y, theta);
+	row = floor(y/0.8);
+	column = floor(x/0.8);
+	orientation = (int)round((theta / (M_PI / 2))/90) + 1;
 	publish_pose();
 }
 
