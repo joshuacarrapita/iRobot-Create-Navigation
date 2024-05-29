@@ -79,3 +79,7 @@ add_dependencies(centering create_fundamentals_generate_messages_cpp)
 add_executable(walls src/walls.cpp)
 target_link_libraries(walls ${catkin_LIBRARIES})
 add_dependencies(walls create_fundamentals_generate_messages_cpp)
+
+add_executable(multiple_walls src/multiple_walls.cpp)
+target_link_libraries(multiple_walls ${catkin_LIBRARIES})
+add_dependencies(multiple_walls create_fundamentals_generate_messages_cpp)
