@@ -233,10 +233,6 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "diffdriving");
 	DiffDriving driver;
-
-	driver.drive(0, 500, 500, 0, 0);
-	driver.drive(0, 1, 1, 0, 0);
-
 	/*
 	ros::spinOnce();
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
@@ -271,7 +267,5 @@ int main(int argc, char **argv)
 	driver.turnAbs(0);
 	driver.stop();
 	*/
-
-
 	return 0;
 }

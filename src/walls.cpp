@@ -4,6 +4,8 @@
 #include <cstdlib>
 
 #define LARRSIZE 726
+#define LARRRIGHTEND 272
+#define LARRFRONTEND 498
 #define LARROFFSET 44
 #define LARRACTSIZE 682
 #define ANGLESTEP 0.351906
@@ -14,8 +16,9 @@
 
 using namespace std;
 
-double errThresh = 0.02;
+double errThresh = 0.03;
 int candidateDist = 5;
+int winnerThresh = 50;
 
 red_fundamentals::Walls wall;
 
@@ -42,7 +45,8 @@ coords polToCart(coords polar)
 //calculates angle of distance measurement in radians
 double calcSensAngle(int index)
 {
-	return((index * ANGLESTEPUSED/180)* ((double) M_PI));
+	//return((index * ANGLESTEP/240)* ((double) M_PI));
+	return((-30.0 + ((index * 240)/682)) * ((double) M_PI /180));
 }
 
 //calculates distance between point and line given through 2 points
@@ -63,8 +67,10 @@ coords calcLineEquation(coords pt_a, coords pt_b)
 double calcAngle(coords pt_a, coords pt_b)
 {
 	//double ydiff = max(pt_a.y,pt_b.y) - min(pt_a.y,pt_b.y);
+	int signer = 1;
+	//if (pt_a.x < 0) { signer = -1; }
 	double ydiff = pt_a.y-pt_b.y;
-	return ((acos(ydiff/sqrt((pt_a.x-pt_b.x)*(pt_a.x-pt_b.x) + ydiff*ydiff))) * (180/(double) M_PI));
+	return signer*((acos(ydiff/sqrt((pt_a.x-pt_b.x)*(pt_a.x-pt_b.x) + ydiff*ydiff))) * (180/(double) M_PI));
 }
 
 //calculates angle relative to y axis via slope of line
@@ -74,71 +80,129 @@ double calcAngleAlt(double slope)
 }
 
 //simplified RANSAC making use of environment constraints
-void sransac(const sensor_msgs::LaserScan::ConstPtr& msg)
+void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
-	vector<coords> coordinates;
+	//array for holding valid coordinates
+	coords coordinates[3][228] = {};
 	coords pol;
-	//int j = 0;
+
+	int lens[3] = {};
+
 	//get all valid measurements and convert to cartesian
-	for (int i = (TOTALOFFSET-1); i < LARRSIZE - (LARRUSEDOFFSET+1); i++) {
-		if (isnan(msg->ranges[i]) && msg->ranges[i] < msg->range_min) {
+	for (int i = LARROFFSET; i < LARRRIGHTEND; i++) {
+		if (isnan(msg->ranges[i]) && msg->ranges[i] <= msg->range_min) {
 			continue;
 		}
 		pol.x = msg->ranges[i];
-		pol.y = calcSensAngle(i - (TOTALOFFSET-1));
-		coordinates.push_back(polToCart(pol));
+		pol.y = calcSensAngle(i - (LARROFFSET-1));
+		coordinates[0][lens[0]] = polToCart(pol);
 		//ROS_INFO("Generated cartesian coordinate %i with (%f , %f)", j, coordinates[j].x, coordinates[j].y);
-		//j++;
+		lens[0]++;
+	}
+	for (int i = LARRRIGHTEND; i < LARRFRONTEND; i++) {
+		if (isnan(msg->ranges[i]) && msg->ranges[i] <= msg->range_min) {
+			continue;
+		}
+		pol.x = msg->ranges[i];
+		pol.y = calcSensAngle(i - (LARROFFSET-1));
+		coordinates[1][frontlen] = polToCart(pol);
+		//ROS_INFO("Generated cartesian coordinate %i with (%f , %f)", j, coordinates[j].x, coordinates[j].y);
+		lens[1]++;
+	}
+	for (int i = LARRFRONTEND; i < LARRSIZE; i++) {
+		if (isnan(msg->ranges[i]) && msg->ranges[i] <= msg->range_min) {
+			continue;
+		}
+		pol.x = msg->ranges[i];
+		pol.y = calcSensAngle(i - (LARROFFSET-1));
+		coordinates[2][leftlen] = polToCart(pol);
+		//ROS_INFO("Generated cartesian coordinate %i with (%f , %f)", j, coordinates[j].x, coordinates[j].y);
+		lens[2]++;
 	}
 	//actual SRANSAC start
-	int maxInliers = 0;
-	coords winner_a;
-	coords winner_b;
-	//take candidates with fixed interval instead of random
-	for (int i = 0; i < coordinates.size()-(candidateDist+1); i+=candidateDist) {
-		int curInliers = 0;
-		coords candidate_a = coordinates[i];
-		coords candidate_b = coordinates[i+candidateDist];
-		//count number of inliers
-		for (int j = 0; j < coordinates.size(); j++) {
-			if (calcDist(candidate_a, candidate_b, coordinates[j]) < errThresh) {
-				curInliers++;
+	coords winner_a = robotpos;
+	coords winner_b = robotpos;
+	int curInliers;
+	int maxInliers;
+	//look for walls in each respective section of laser values
+	for (int k = 0; k < 3; k++) {
+		maxInliers = 0;
+		//ROS_INFO("looking for wall %i", k);
+		//take candidates with fixed interval instead of random
+		for (int i = 0; i < lens[k]-(candidateDist+1); i+=candidateDist) {
+			//ROS_INFO("checking candidates %i", i);
+			curInliers = 0;
+			coords candidate_a = coordinates[k][i];
+			coords candidate_b = coordinates[k][i+candidateDist];
+			//count number of inliers
+			for (int j = 0; j < lens[k]; j++) {
+				if (calcDist(candidate_a, candidate_b, coordinates[j]) < errThresh) {
+					curInliers++;
+				}
+			}
+			//update winner if current candidates have more inliers than previous best and threshold
+			if (curInliers > maxInliers && curInliers > winnerThresh) {
+				maxInliers = curInliers;
+				winner_a = candidate_a;
+				winner_b = candidate_b;
 			}
 		}
-		//update winner if current candidates have more inliers than previous best
-		if (curInliers > maxInliers) {
-			maxInliers = curInliers;
-			winner_a = candidate_a;
-			winner_b = candidate_b;
-			//ROS_INFO("winner found with %i inliers", curInliers);
+
+		if (winner_a != robotpos) {
+			wall.walls[k] = true;
+			wall.wallcoords[k][0][0] = winner_a.x;
+			wall.wallcoords[k][0][1] = winner_a.y;
+			wall.wallcoords[k][1][0] = winner_b.x;
+			wall.wallcoords[k][1][1] = winner_b.y;
+			ROS_INFO("Wall %d found\n",k);
 		}
+		//double walldist = calcDist(winner_a, winner_b, robotpos);
+		//double wallangle = calcAngle(winner_a, winner_b);
+		//ROS_INFO("new can didate size: %i", newsize);
+		/*
+		wall.dist[k] = (calcDist(winner_a, winner_b, robotpos));
+		wall.angle[k] = (calcAngle(winner_a, winner_b));
+		
+		if (wallangle > 45 && wallangle < 135) {
+			wall.distfront = walldist;
+			wall.anglefront = wallangle;
+			ROS_INFO("Wall found front of robot with dist: %lf angle %lf", wall.distfront, wall.anglefront);
+		} else if (wallangle < 45) {
+			wall.distleft = walldist;
+			wall.angleleft = wallangle;
+			ROS_INFO("Wall found left of robot with dist: %lf angle %lf", wall.distleft, wall.angleleft);
+		} else if (wallangle > 135) {
+			wall.distright = walldist;
+			wall.angleright = wallangle;
+			ROS_INFO("Wall found right of robot with dist: %lf angle %lf", wall.distright, wall.angleright);
+		}
+		*/
+		//ROS_INFO("Best wall %i with %i inliers has dist: %.7lf angle: %.7lf", k, maxInliers, wall.dist[k], wall.angle[k]);
+		maxInliers = 0;
 	}
-	wall.dist = calcDist(winner_a, winner_b, robotpos);
-	wall.angle = calcAngle(winner_a, winner_b);
-	//wall.angle = calcAngleAlt(calcLineEquation(winner_a, winner_b).x);
-	ROS_INFO("Best wall with %i inliers has dist: %.7lf angle: %.7lf", maxInliers, wall.dist, wall.angle);
 }
 
 
 
 int main(int argc, char **argv)
 {
-	if (argc != 3) {
-		ROS_ERROR("Usage walls <candidateDist> <errThresh>");
+	if (argc != 4) {
+		ROS_ERROR("Usage: walls <candidateDist> <errThresh> <winnerThresh>");
 		ROS_INFO("Setting default values...");
 	} else {
 		candidateDist = atoi(argv[1]);
 		errThresh = atof(argv[2]);
+		winnerThresh = atoi(argv[3]);
 	}
 	ros::init(argc, argv, "walls");
 	ros::NodeHandle n;
-	ros::Subscriber sub = n.subscribe("scan_filtered", 1, sransac);
+	ros::Subscriber sub = n.subscribe("scan_filtered", 1, extendedSransac);
 	ros::Publisher pub = n.advertise<red_fundamentals::Walls>("walls_topic", 1);
-
+	ROS_INFO("start detecting walls");
 	while(ros::ok()) {
 		ros::spinOnce();
 		pub.publish(wall);
-		ros::Duration(0.3).sleep();
+		ros::Duration(0.2).sleep();
 	}
 	return 0;
 }
