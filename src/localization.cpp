@@ -4,6 +4,7 @@
 #include "red_fundamentals/Grid.h"
 #include "red_fundamentals/Row.h"
 #include "red_fundamentals/Cell.h"
+#include "paradriver.hpp"
 using namespace std;
 
 red_fundamentals::Grid map;
@@ -18,6 +19,16 @@ vector<int> wall_nums;
 float coords[6];
 
 ros::Publisher pose_pub;
+
+bool contains(int arr[], int size, int value) {
+    // Use std::find to search for the value in the array
+    return std::find(arr, arr + size, value) != arr + size;
+}
+
+bool contains(const std::vector<int>& vec, int value) {
+    // Use std::find to search for the value in the vector
+    return std::find(vec.begin(), vec.end(), value) != vec.end();
+}
 
 void localization(){
     // Maybe get the walls once after we moved?
@@ -78,18 +89,97 @@ void localization(){
         ROS_INFO("Pose message published");
     }
 
-    // else:
-    // Lets go through the potential positions
-    // Looking at a potential position: Which cells can I reach from here?
-    // save all reachable cells as next potential positions
+    else {
+        // Lets go through the potential positions
+        // Looking at a potential position: Which cells can I reach from here?
+
+        vector<pair<pair<int, int>, int>> reachable_cells;
+
+        for(auto potential_position : potential_positions){
+
+            int row = potential_position.first.first;
+            int col = potential_position.first.second;
+
+            int cell[] = map.rows[row].cells[col];
+            
+            
+            if(! contains(cell, cell.size(), 0)){
+                // if we don't have a 0, then a reachable cell would be in the map at (row, col +1)
+                if(map.rows[0].size() <= col + 1){
+                    ROS_INFO("Map Error ?");
+                } else {
+                    reachable_cells.emplace_back(std::make_pair(row, col + 1), 0);
+                }
+               
+            }
+
+            if(! contains(cell, cell.size(), 1)){
+                // if we don't have a 1, then a reachable cell would be in the map at (row -1, col)
+                if(0 > row - 1){
+                    ROS_INFO("Map Error ?");
+                } else {
+                    reachable_cells.emplace_back(std::make_pair(row - 1, col), 1);
+                }
+            }
+
+            if(! contains(cell, cell.size(), 2)){
+                // if we don't have a 2, then a reachable cell would be in the map at (row, col -1)
+                if(0 > col - 1){
+                    ROS_INFO("Map Error ?");
+                } else {
+                    reachable_cells.emplace_back(std::make_pair(row, col - 1), 2);
+                }
+            }
+
+            if(! contains(cell, cell.size(), 3)){
+                // if we don't have a 3, then a reachable cell would be in the map at (row +1, col)
+                if(map.size() >= row + 1){
+                    ROS_INFO("Map Error ?");
+                } else {
+                    reachable_cells.emplace_back(std::make_pair(row + 1, col), 3);
+                }
+            }
+        }
+
+        // save all reachable cells as next potential positions
+        potential_positions.clear();
+        potential_positions = reachable_cells;
+    }
     
     // compute the direction in which we want to move
+    // we just choose the smallest possible direction (where we couldn't find a wall)
+    int move_direction = 0;
 
-    // move
-    // DiffDriving driver;
+    for(int i=0; i < 4; i++){
+        if(! contains.(wall_nums, i)){
+            move_direction = i;
+            break;
+        }
+    }
+
+    // move into right direction
+
+    DiffDriving driver;
+    
+    switch(move_direction){
+        case 0:
+            driver.drive(0, 800, 0, 0, 1);
+            break;
+        case 1:
+            driver.drive(0, 0, 800, 0, 1);
+            break;
+        case 2:
+            driver.drive(0, -800, 0, 0, 1);
+            break;
+        case 3:
+            driver.drive(0, 0, -800, 0, 1);
+            break;
+        default:
+            ROS_INFO("Wrong Direction");
+    }
     
     // get walls
-    // red_fundamentals::Walls::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::Walls>("walls_topic", ros::Duration(0.2));
+    wallCallback();
 
     // localization()
 
@@ -111,7 +201,9 @@ void mapCallback(const red_fundamentals::Grid::ConstPtr& msg) {
     ROS_INFO("Received map");
 }
 
-void wallCallback(const red_fundamentals::Walls::ConstPtr& msg){
+void wallCallback(){
+    red_fundamentals::Walls::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::Walls>("walls_topic", ros::Duration(0.2));
+    
     wall_nums.clear();
     for (int i = 0; i < 3; ++i) {
         walls[i] = msg->walls[i];
@@ -130,7 +222,6 @@ int main(int argc, char **argv){
     ros::NodeHandle n;
 
     ros::Subscriber sub = n.subscribe("map", 1000, mapCallback);
-    ros::Subscriber sub1 = n.subscribe("walls_topic", 1, wallCallback);
 
     ros::Publisher pose_pub = n.advertise<red_fundamentals::Pose>("/pose", 1);
 
