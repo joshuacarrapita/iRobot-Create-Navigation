@@ -58,7 +58,7 @@ void localization(){
         ROS_INFO("(%d, %d)", potential_positions[i].first, potential_positions[i].second);
     }
 
-    // if there is only one potential position left, return and publish it to /pose
+    // if there is only one potential position left and the orientation is known ( != -1), return and publish it to /pose
 
     // else:
     // Lets go through the potential positions
