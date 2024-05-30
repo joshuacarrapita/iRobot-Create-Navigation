@@ -58,8 +58,20 @@ void localization(){
         ROS_INFO("(%d, %d)", potential_positions[i].first, potential_positions[i].second);
     }
 
-    //Lets go through the potential positions
+    // if there is only one potential position left, return and publish it to /pose
+
+    // else:
+    // Lets go through the potential positions
     // Looking at a potential position: Which cells can I reach from here?
+    // save all reachable cells as next potential positions
+    
+    // compute the direction in which we want to move
+
+    // move
+
+    // localization()
+
+
     // Lets go through all the reachable cells
     // Looking at a reachable cell: Do the walls we see match the walls from the cell?
     // Yes: look at the next reachable cell
