@@ -1,3 +1,3 @@
 Header header
-float64 dist
-float64 angle
+bool[3] walls
+float64[2] 
