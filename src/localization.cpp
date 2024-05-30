@@ -113,7 +113,7 @@ void localization(){
     }
 
     // if there is only one potential position left and the orientation is known ( != -1), return and publish it to /pose
-    if(potential_positions.size() == 1){
+    if(potential_positions.size() == 1 && potential_positions[0].second != -1){
         red_fundamentals::Pose pose;
         pose.row = potential_positions[0].first.first;
         pose.column = potential_positions[0].first.second;
@@ -122,6 +122,7 @@ void localization(){
         ros::Duration(1.0).sleep();
         pose_pub.publish(pose);
         ROS_INFO("Pose message published");
+        return;
     }
 
     else {
@@ -216,7 +217,7 @@ void localization(){
     // get walls
     wallCallback();
 
-    // localization()
+    localization()
 }
 
 
