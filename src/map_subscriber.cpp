@@ -1,41 +1,58 @@
+#include <utility>
+#include <vector>
 #include "ros/ros.h"
 #include "red_fundamentals/Grid.h"
 #include "red_fundamentals/Row.h"
 #include "red_fundamentals/Cell.h"
+using namespace std;
 
 red_fundamentals::Grid map;
 
 bool receivedMap = false;
 
-std::vector<std::pair<int, int>> potential_positions;
+// <row, column>, orientation
+vector<pair<pair<int, int>, int>> potential_positions;
 
 bool walls[3];
+vector<int> wall_nums;
 float coords[6];
 
 void localization(){
-    // How many walls are around me?
+    // Maybe get the walls once after we moved?
 
-    int numWalls = countNumberofWalls();
-    
+    // First, we compare the current candidates with the walls we received
+    // if potential_positions is empty, compare the number of walls
     // All cells in the map with the same amount of walls are potential positions
-    
-    // Go through the rows
-    for (size_t i = 0; i < map.rows.size(); ++i) {
-        const red_fundamentals::Row& row = map.rows[i];
+    if(potential_positions.empty()){
+        // Go through the rows
+        for (size_t i = 0; i < map.rows.size(); ++i) {
+            const red_fundamentals::Row& row = map.rows[i];
 
-        // Go through the cells
-        for (size_t j = 0; j < row.cells.size(); ++j) {
-            const red_fundamentals::Cell& cell = row.cells[j];
-            ROS_INFO("At coordinates (%lu, %lu), there are %lu walls", i, j, cell.walls.size());
-            
-            // Same amount of walls get pushed back as potential position
-            if(numWalls == cell.walls.size()){
-                potential_positions.push_back(std::make_pair(i, j));
-            } 
+            // Go through the cells
+            for (size_t j = 0; j < row.cells.size(); ++j) {
+                const red_fundamentals::Cell& cell = row.cells[j];
+                ROS_INFO("At coordinates (%lu, %lu), there are %lu walls", i, j, cell.walls.size());
+
+                // Same amount of walls get pushed back as potential position
+                // if NumWalls == 2 -> compare the difference of wall numbers
+                // since we do not know the orientation, save -1 for it
+                if(wall_nums.size() == cell.walls.size()){
+                    if(wall_nums.size() != 2 || abs(walls[0]-walls[1]) == abs(cell.walls[0] - cell.walls[1])) {
+                        potential_positions.emplace_back(make_pair(i, j), -1);
+                    }
+                }
+            }
         }
     }
 
-    //Output of all the poteential positions:
+    // else: we already have candidates!
+    // Go through the potential positions compare the number of walls AND their orientation
+    else{
+        for(auto pos : potential_positions){
+            
+        }
+    }
+    //Output of all the potential positions:
     ROS_INFO("Potential Positions: ");
     for (size_t i = 0; i < potential_positions.size(); ++i) {
         ROS_INFO("(%d, %d)", potential_positions[i].first, potential_positions[i].second);
@@ -43,22 +60,14 @@ void localization(){
 
     //Lets go through the potential positions
     // Looking at a potential position: Which cells can I reach from here?
-        // Lets go through all the reachable cells
-        // Looking at a reachable cell: Do the walls we see match the walls from the cell?
-        // Yes: look at the next reachable cell
-        // No: Delete the position from the list of potential positions
+    // Lets go through all the reachable cells
+    // Looking at a reachable cell: Do the walls we see match the walls from the cell?
+    // Yes: look at the next reachable cell
+    // No: Delete the position from the list of potential positions
 
 }
 
-int countNumberofWalls(){
-    int numWalls = 0;
-    for (int i = 0; i < 3; ++i) {
-        if(walls[i] == 1){
-            numWalls++;
-        } 
-    }
-    return numWalls;
-}
+
 
 void mapCallback(const red_fundamentals::Grid::ConstPtr& msg) {
 
@@ -69,8 +78,12 @@ void mapCallback(const red_fundamentals::Grid::ConstPtr& msg) {
 }
 
 void wallCallback(const red_fundamentals::Walls::ConstPtr& msg){
+    wall_nums.clear();
     for (int i = 0; i < 3; ++i) {
         walls[i] = msg->walls[i];
+        if(msg->walls[i]){
+            wall_nums.push_back(i);
+        }
     }
     for (int i = 0; i < 6; ++i) {
         coords[i] = msg->coords[i];
@@ -91,7 +104,7 @@ int main(int argc, char **argv){
     }
 
     localization();
-    
+
     return 0;
-    
+
 }
