@@ -17,6 +17,8 @@ bool walls[3];
 vector<int> wall_nums;
 float coords[6];
 
+ros::Publisher pose_pub;
+
 void localization(){
     // Maybe get the walls once after we moved?
 
@@ -59,6 +61,16 @@ void localization(){
     }
 
     // if there is only one potential position left and the orientation is known ( != -1), return and publish it to /pose
+    if(potential_positions.size() == 1){
+        /*red_fundamentals::Pose pose;
+        pose.row = row;
+        pose.column = column;
+        pose.orientation = orientation;
+    
+        ros::Duration(1.0).sleep();
+        pose_pub.publish(pose);
+        ROS_INFO("Pose message published");*/
+    }
 
     // else:
     // Lets go through the potential positions
@@ -113,6 +125,8 @@ int main(int argc, char **argv){
 
     ros::Subscriber sub = n.subscribe("map", 1000, mapCallback);
     ros::Subscriber sub1 = n.subscribe("walls_topic", 1, wallCallback);
+
+    ros::Publisher pose_pub = n.advertise<red_fundamentals::Pose>("/pose", 1);
 
     // Get the map
     while(!receivedMap){
