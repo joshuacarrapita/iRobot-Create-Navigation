@@ -79,6 +79,28 @@ double calcAngleAlt(double slope)
 	return (cos(slope)/sin(slope));
 }
 
+void resetMSG(red_fundamentals::Walls msg)
+{
+	//reset bools
+	msg.walls[0] = false;
+	msg.walls[1] = false;
+	msg.walls[2] = false;
+	//reset coords
+	wall.r_wall_a[0] = 0.0;
+	wall.r_wall_a[1] = 0.0;
+	wall.r_wall_b[0] = 0.0;
+	wall.r_wall_b[1] = 0.0;
+	wall.f_wall_a[0] = 0.0;
+	wall.f_wall_a[1] = 0.0;
+	wall.f_wall_b[0] = 0.0;
+	wall.f_wall_b[1] = 0.0;
+	wall.l_wall_a[0] = 0.0;
+	wall.l_wall_a[1] = 0.0;
+	wall.l_wall_b[0] = 0.0;
+	wall.l_wall_b[1] = 0.0;
+	return;
+}
+
 //simplified RANSAC making use of environment constraints
 void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
@@ -86,6 +108,9 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 	coords coordinates[3][228] = {};
 	coords pol;
 
+	//0:right
+	//1:front
+	//2:left
 	int lens[3] = {};
 
 	//get all valid measurements and convert to cartesian
@@ -149,34 +174,30 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 		}
 
 		if (winner_a != robotpos) {
-			wall.walls[k] = true;
-			wall.wallcoords[k][0][0] = winner_a.x;
-			wall.wallcoords[k][0][1] = winner_a.y;
-			wall.wallcoords[k][1][0] = winner_b.x;
-			wall.wallcoords[k][1][1] = winner_b.y;
 			ROS_INFO("Wall %d found\n",k);
+			wall.walls[k] = true;
+			switch(k)
+			{
+				case 0:
+					ROS_INFO("Right wall detected\n");
+					wall.r_wall_a[0] = winner_b.x;
+					wall.r_wall_a[1] = winner_b.y;
+					wall.r_wall_b[0] = winner_a.x;
+					wall.r_wall_b[1] = winner_a.y;
+				case 1:
+					ROS_INFO("Front wall detected\n");
+					wall.f_wall_a[0] = winner_b.x;
+					wall.f_wall_a[1] = winner_b.y;
+					wall.f_wall_b[0] = winner_a.x;
+					wall.f_wall_b[1] = winner_a.y;
+				case 2:
+					ROS_INFO("Left wall detected\n");
+					wall.l_wall_a[0] = winner_b.x;
+					wall.l_wall_a[1] = winner_b.y;
+					wall.l_wall_b[0] = winner_a.x;
+					wall.l_wall_b[1] = winner_a.y;
+
 		}
-		//double walldist = calcDist(winner_a, winner_b, robotpos);
-		//double wallangle = calcAngle(winner_a, winner_b);
-		//ROS_INFO("new can didate size: %i", newsize);
-		/*
-		wall.dist[k] = (calcDist(winner_a, winner_b, robotpos));
-		wall.angle[k] = (calcAngle(winner_a, winner_b));
-		
-		if (wallangle > 45 && wallangle < 135) {
-			wall.distfront = walldist;
-			wall.anglefront = wallangle;
-			ROS_INFO("Wall found front of robot with dist: %lf angle %lf", wall.distfront, wall.anglefront);
-		} else if (wallangle < 45) {
-			wall.distleft = walldist;
-			wall.angleleft = wallangle;
-			ROS_INFO("Wall found left of robot with dist: %lf angle %lf", wall.distleft, wall.angleleft);
-		} else if (wallangle > 135) {
-			wall.distright = walldist;
-			wall.angleright = wallangle;
-			ROS_INFO("Wall found right of robot with dist: %lf angle %lf", wall.distright, wall.angleright);
-		}
-		*/
 		//ROS_INFO("Best wall %i with %i inliers has dist: %.7lf angle: %.7lf", k, maxInliers, wall.dist[k], wall.angle[k]);
 		maxInliers = 0;
 	}
