@@ -50,15 +50,20 @@ void localization(){
     // else: we already have candidates!
     // Go through the potential positions compare the number of walls AND their orientation
     else{
-        for(auto pos : potential_positions){
-            int cell[] = map.rows[potential_positions.first.first].cells[potential_positions.first.second];
-            
+        for(auto candidate = potential_positions.begin(); candidate != potential_positions.end(); ){
+            if(true){ // TODO change the condition
+                candidate = potential_positions.erase(candidate);
+            }
+            else{
+                candidate++;
+            }
         }
     }
+
     //Output of all the potential positions:
     ROS_INFO("Potential Positions: ");
     for (size_t i = 0; i < potential_positions.size(); ++i) {
-        ROS_INFO("(%d, %d)", potential_positions[i].first, potential_positions[i].second);
+        ROS_INFO("(%d, %d)", potential_positions[i].first.first, potential_positions[i].first.second);
     }
 
     // if there is only one potential position left and the orientation is known ( != -1), return and publish it to /pose
