@@ -68,6 +68,10 @@ void localization(){
     // compute the direction in which we want to move
 
     // move
+    // DiffDriving driver;
+    
+    // get walls
+    // red_fundamentals::Walls::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::Walls>("walls_topic", ros::Duration(0.2));
 
     // localization()
 
