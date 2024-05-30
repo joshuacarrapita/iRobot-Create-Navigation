@@ -125,7 +125,7 @@ void wallCallback(const red_fundamentals::Walls::ConstPtr& msg){
 }
 
 int main(int argc, char **argv){
-    ros::init(argc, argv, "map_subscriber");
+    ros::init(argc, argv, "localization");
 
     ros::NodeHandle n;
 
