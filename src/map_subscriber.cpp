@@ -9,10 +9,13 @@ bool receivedMap = false;
 
 std::vector<std::pair<int, int>> potential_positions;
 
+bool walls[3];
+float coords[6];
+
 void localization(){
     // How many walls are around me?
 
-    int numWalls = 2;
+    int numWalls = countNumberofWalls();
     
     // All cells in the map with the same amount of walls are potential positions
     
@@ -47,6 +50,16 @@ void localization(){
 
 }
 
+int countNumberofWalls(){
+    int numWalls = 0;
+    for (int i = 0; i < 3; ++i) {
+        if(walls[i] == 1){
+            numWalls++;
+        } 
+    }
+    return numWalls;
+}
+
 void mapCallback(const red_fundamentals::Grid::ConstPtr& msg) {
 
     map = *msg;
@@ -56,7 +69,12 @@ void mapCallback(const red_fundamentals::Grid::ConstPtr& msg) {
 }
 
 void wallCallback(const red_fundamentals::Walls::ConstPtr& msg){
-
+    for (int i = 0; i < 3; ++i) {
+        walls[i] = msg->walls[i];
+    }
+    for (int i = 0; i < 6; ++i) {
+        coords[i] = msg->coords[i];
+    }
 }
 
 int main(int argc, char **argv){
