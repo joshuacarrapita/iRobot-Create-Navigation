@@ -224,8 +224,6 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			if (stay) { return 1; }
 			this->turnAbs(targetTheta);
 			return 1;
-		
-			
 	}
 	return 0;
 }
@@ -249,10 +247,10 @@ int main(int argc, char **argv)
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
 	*/
 
-	driver.drive(0, 0, 1000, 0, 1);
+	/* driver.drive(0, 0, 1000, 0, 1);
 	driver.drive(0, 1000, 1000, 0, 1);
 	driver.drive(0, 1000, 0, 0, 1);
-	driver.drive(0, 0, 0, 0, 0);
+	driver.drive(0, 0, 0, 0, 0); */
 	/*
 	for (int i = 0; i < 2; i++) {
 		driver.turnAbs(-180);

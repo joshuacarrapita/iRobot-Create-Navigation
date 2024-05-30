@@ -245,6 +245,7 @@ int main(int argc, char **argv)
 	}
 	ros::init(argc, argv, "centering");
 	ros::NodeHandle n;
+	ros::Duration(2.0).sleep();
 	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
 	ros::Subscriber sub = n.subscribe("walls_topic", 1, center);
 	//spin until centered

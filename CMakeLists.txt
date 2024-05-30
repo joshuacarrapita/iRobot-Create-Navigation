@@ -32,10 +32,17 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined messages
 add_message_files(FILES
 	Walls.msg
+	StopMsg.msg
+	Cell.msg 
+	Grid.msg
+	Pose.msg
+	Row.msg
 )
 #uncomment if you have defined services
-#add_service_files(FILES
-#)
+add_service_files(FILES
+	ExecutePlan.srv
+	StopSrv.srv
+)
 
 #common commands for building c++ executables and libraries
 #add_library(${PROJECT_NAME} src/example.cpp)
@@ -72,14 +79,52 @@ add_executable(example_moving src/example_moving.cpp)
 target_link_libraries(example_moving ${catkin_LIBRARIES})
 add_dependencies(example_moving create_fundamentals_generate_messages_cpp)
 
-#add_executable(centering src/centering.cpp)
-#target_link_libraries(centering ${catkin_LIBRARIES})
-#add_dependencies(centering create_fundamentals_generate_messages_cpp)
+add_executable(square_no_sensors src/square_no_sensors.cpp)
+target_link_libraries(square_no_sensors ${catkin_LIBRARIES})
+add_dependencies(square_no_sensors create_fundamentals_generate_messages_cpp)
+
+add_executable(square_with_encoders src/square_with_encoders.cpp)
+target_link_libraries(square_with_encoders ${catkin_LIBRARIES})
+add_dependencies(square_with_encoders create_fundamentals_generate_messages_cpp)
+
+add_executable(wanderer src/wanderer.cpp)
+target_link_libraries(wanderer ${catkin_LIBRARIES})
+add_dependencies(wanderer create_fundamentals_generate_messages_cpp)
+
+add_executable(centering src/centering.cpp)
+target_link_libraries(centering ${catkin_LIBRARIES})
+add_dependencies(centering create_fundamentals_generate_messages_cpp)
 
 add_executable(walls src/walls.cpp)
 target_link_libraries(walls ${catkin_LIBRARIES})
 add_dependencies(walls create_fundamentals_generate_messages_cpp)
 
+add_executable(stopper src/stopper.cpp)
+target_link_libraries(stopper ${catkin_LIBRARIES})
+add_dependencies(stopper create_fundamentals_generate_messages_cpp)
+
+add_executable(execute_plan_server src/execute_plan_server.cpp)
+add_library(moving src/moving.cpp)
+target_link_libraries(execute_plan_server moving ${catkin_LIBRARIES})
+add_dependencies(execute_plan_server create_fundamentals_generate_messages_cpp)
+
+add_executable(corridor src/corridor.cpp)
+target_link_libraries(corridor moving ${catkin_LIBRARIES})
+add_dependencies(corridor create_fundamentals_generate_messages_cpp)
+
+add_executable(pd_control src/pd_control.cpp)
+target_link_libraries(pd_control moving ${catkin_LIBRARIES})
+add_dependencies(pd_control create_fundamentals_generate_messages_cpp)
+
+add_executable(smooth_server src/smooth_server.cpp)
+add_library(smooth_plan src/smooth_plan.cpp)
+target_link_libraries(smooth_server moving smooth_plan ${catkin_LIBRARIES})
+add_dependencies(smooth_server create_fundamentals_generate_messages_cpp)
+
 add_executable(paradriver src/paradriver.cpp)
 target_link_libraries(paradriver ${catkin_LIBRARIES})
 add_dependencies(paradriver create_fundamentals_generate_messages_cpp)
+
+add_executable(map_subscriber src/map_subscriber.cpp)
+target_link_libraries(map_subscriber ${catkin_LIBRARIES})
+add_dependencies(map_subscriber create_fundamentals_generate_messages_cpp)
