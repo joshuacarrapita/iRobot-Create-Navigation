@@ -37,11 +37,7 @@ void localization(){
                 // if NumWalls == 2 -> compare the difference of wall numbers
                 // since we do not know the orientation, save -1 for it
                 if(wall_nums.size() == cell.walls.size()){
-                    if(wall_nums.size() != 2 || abs(wall_nums[0]-wall_nums[1]) == abs(cell.walls[0] - cell.walls[1])) {
-                        potential_positions.emplace_back(make_pair(i, j), -1);
-                    }
-                    // if both of them are not parallel walls then save as a possible position
-                    else if(abs(wall_nums[0] - wall_nums[1]) != 2 && abs(cell.walls[0] - cell.walls[1] != 2)){
+                    if(wall_nums.size() != 2 || abs(wall_nums[0]-wall_nums[1]) % 2 == abs(cell.walls[0] - cell.walls[1]) % 2) {
                         potential_positions.emplace_back(make_pair(i, j), -1);
                     }
                 }
