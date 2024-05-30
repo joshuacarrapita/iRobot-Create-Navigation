@@ -63,14 +63,14 @@ void localization(){
 
     // if there is only one potential position left and the orientation is known ( != -1), return and publish it to /pose
     if(potential_positions.size() == 1){
-        /*red_fundamentals::Pose pose;
-        pose.row = row;
-        pose.column = column;
-        pose.orientation = orientation;
+        red_fundamentals::Pose pose;
+        pose.row = potential_positions[0].first.first;
+        pose.column = potential_positions[0].first.second;
+        pose.orientation = potential_positions[0].second;
     
         ros::Duration(1.0).sleep();
         pose_pub.publish(pose);
-        ROS_INFO("Pose message published");*/
+        ROS_INFO("Pose message published");
     }
 
     // else:
