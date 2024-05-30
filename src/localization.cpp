@@ -21,6 +21,32 @@ float coords[6];
 
 ros::Publisher pose_pub;
 
+void mapCallback(const red_fundamentals::Grid::ConstPtr& msg) {
+    if(msg != nullptr){
+        map = *msg;
+        receivedMap = true;
+        ROS_INFO("Received map");
+    }
+    else{
+        ROS_INFO("Waiting for the map information");
+    }
+}
+
+void wallCallback(){
+    red_fundamentals::Walls::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::Walls>("walls_topic", ros::Duration(0.2));
+    
+    wall_nums.clear();
+    for (int i = 0; i < 3; ++i) {
+        walls[i] = msg->walls[i];
+        if(msg->walls[i]){
+            wall_nums.push_back(i);
+        }
+    }
+    for (int i = 0; i < 6; ++i) {
+        coords[i] = msg->coords[i];
+    }
+}
+
 bool contains(int arr[], int size, int value) {
     // Use std::find to search for the value in the array
     return std::find(arr, arr + size, value) != arr + size;
@@ -66,7 +92,7 @@ bool compareWalls(red_fundamentals::Cell cell, int orientation){
 
 void localization(){
     // Maybe get the walls once after we moved?
-
+    // wallCallback();
     // First, we compare the current candidates with the walls we received
     // if potential_positions is empty, compare the number of walls
     // All cells in the map with the same amount of walls are potential positions
@@ -217,35 +243,7 @@ void localization(){
     // get walls
     wallCallback();
 
-    localization()
-}
-
-
-
-void mapCallback(const red_fundamentals::Grid::ConstPtr& msg) {
-    if(msg != nullptr){
-        map = *msg;
-        receivedMap = true;
-        ROS_INFO("Received map");
-    }
-    else{
-        ROS_INFO("Waiting for the map information");
-    }
-}
-
-void wallCallback(){
-    red_fundamentals::Walls::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::Walls>("walls_topic", ros::Duration(0.2));
-    
-    wall_nums.clear();
-    for (int i = 0; i < 3; ++i) {
-        walls[i] = msg->walls[i];
-        if(msg->walls[i]){
-            wall_nums.push_back(i);
-        }
-    }
-    for (int i = 0; i < 6; ++i) {
-        coords[i] = msg->coords[i];
-    }
+    localization();
 }
 
 int main(int argc, char **argv){
@@ -261,6 +259,9 @@ int main(int argc, char **argv){
     while(!receivedMap){
         ros::spinOnce();
     }
+
+    // Get walls
+    wallCallback();
 
     localization();
 
