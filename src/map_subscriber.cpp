@@ -51,6 +51,7 @@ void localization(){
     // Go through the potential positions compare the number of walls AND their orientation
     else{
         for(auto pos : potential_positions){
+            int cell[] = map.rows[potential_positions.first.first].cells[potential_positions.first.second];
             
         }
     }
