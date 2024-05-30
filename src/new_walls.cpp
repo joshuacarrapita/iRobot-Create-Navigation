@@ -8,12 +8,12 @@ red_fundamentals::NewWalls walls;
 
 void set_walls(){
 	// TODO Set mock wall output
-	walls.L_A = 0;
-	walls.L_B = 0;
-	walls.F_A = 0;
-	walls.F_B = 0;
-	walls.R_A = 0;
-	walls.R_B = 0;
+	walls.L_A = {0,0};
+	walls.L_B = {0,0};
+	walls.F_A = {0,0};
+	walls.F_B = {0,0};
+	walls.R_A = {0,0};
+	walls.R_B = {0,0};
 }
 
 

@@ -130,3 +130,7 @@ add_dependencies(paradriver create_fundamentals_generate_messages_cpp)
 add_executable(calculate_center src/calculate_center.cpp)
 target_link_libraries(calculate_center ${catkin_LIBRARIES})
 add_dependencies(calculate_center create_fundamentals_generate_messages_cpp)
+
+add_executable(new_walls src/new_walls.cpp)
+target_link_libraries(new_walls ${catkin_LIBRARIES})
+add_dependencies(new_walls create_fundamentals_generate_messages_cpp)
