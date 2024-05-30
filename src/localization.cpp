@@ -4,6 +4,7 @@
 #include "red_fundamentals/Grid.h"
 #include "red_fundamentals/Row.h"
 #include "red_fundamentals/Cell.h"
+#include "red_fundamentlas/Pose.h"
 #include "paradriver.hpp"
 using namespace std;
 
@@ -28,6 +29,39 @@ bool contains(int arr[], int size, int value) {
 bool contains(const std::vector<int>& vec, int value) {
     // Use std::find to search for the value in the vector
     return std::find(vec.begin(), vec.end(), value) != vec.end();
+}
+
+bool compareWalls(red_fundamentals::Cell cell, int orientation){
+    if(wall_nums.size() != cell.walls.size()) return false;
+    bool walls_map[4];
+    for(int wall : cell.walls){
+        // we convert wall direction in the map to one the robot is facing
+        switch (orientation) {
+            case 0:
+                walls_map[(wall + 1) % 4] = true;
+                break;
+            case 1:
+                walls_map[wall] = true;
+                break;
+            case 2:
+                walls_map[(wall + 3) % 4] = true;
+                break;
+            case 3:
+                walls_map[(wall + 2) % 4] = true;
+                break;
+            default:
+                break;
+        }
+    }
+
+    for(int i=0; i<3; i++){
+        if(walls[i] != walls_map[i]) return false;
+    }
+
+    // Since we only call this function after we move from one cell to another cell,
+    // it is not possible that there is a wall behind us
+    if(walls_map[3]) return false;
+    return true;
 }
 
 void localization(){
@@ -62,7 +96,8 @@ void localization(){
     // Go through the potential positions compare the number of walls AND their orientation
     else{
         for(auto candidate = potential_positions.begin(); candidate != potential_positions.end(); ){
-            if(true){ // TODO change the condition
+            red_fundamentals::Cell cell = map.rows[candidate->first.first].cells[candidate->first.second];
+            if(!compareWalls(cell, candidate->second)){
                 candidate = potential_positions.erase(candidate);
             }
             else{
@@ -182,23 +217,19 @@ void localization(){
     wallCallback();
 
     // localization()
-
-
-    // Lets go through all the reachable cells
-    // Looking at a reachable cell: Do the walls we see match the walls from the cell?
-    // Yes: look at the next reachable cell
-    // No: Delete the position from the list of potential positions
-
 }
 
 
 
 void mapCallback(const red_fundamentals::Grid::ConstPtr& msg) {
-
-    map = *msg;
-    receivedMap = true;
-
-    ROS_INFO("Received map");
+    if(msg != nullptr){
+        map = *msg;
+        receivedMap = true;
+        ROS_INFO("Received map");
+    }
+    else{
+        ROS_INFO("Waiting for the map information");
+    }
 }
 
 void wallCallback(){
