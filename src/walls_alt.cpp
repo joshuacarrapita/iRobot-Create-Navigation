@@ -18,7 +18,7 @@ using namespace std;
 
 double errThresh = 0.02;
 int candidateDist = 5;
-int winnerThresh = 160;
+int winnerThresh = 70;
 
 ros::Publisher pub;
 red_fundamentals::Walls wall;
@@ -116,7 +116,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 
 	//get all valid measurements and convert to cartesian
 	for (int i = LARROFFSET; i < LARRSIZE; i++) {
-		if (isnan(msg->ranges[i]) && msg->ranges[i] <= msg->range_min) {
+		if (isnan(msg->ranges[i]) | msg->ranges[i] <= msg->range_min) {
 			continue;
 		}
 		pol.x = msg->ranges[i];
@@ -131,124 +131,84 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 
 	vector<coords> outliers;
 	outliers.reserve(683);
+	vector<coords> winneroutliers;
+	winneroutliers.reserve(683);
 
 	coords winners[3][2];
 	int winnerInliers[3] = {};
 
-	//look for walls in each respective section of laser values
+	//look for 3 best walls
 	for (int k = 0; k < 3; k++) {
+		//if not enough candidates stop looking for walls
+		if (coordinates.size() < winnerThresh) {
+			//ROS_INFO("not enough candidates");
+			break;
+		}
 		coords winner_a = robotpos;
 		coords winner_b = robotpos;
 		maxInliers = 0;
-		//ROS_INFO("looking for wall %i", k);
+		//ROS_INFO("looking for wall %i with %d candidates", k,coordinates.size());
 		//take candidates with fixed interval instead of random
-		for (int i = 0; i < lens[k]-(candidateDist+1); i+=candidateDist) {
+		for (int i = 0; i < coordinates.size()-(candidateDist+1); i+=candidateDist) {
 			//ROS_INFO("checking candidates %i", i);
 			curInliers = 0;
-			coords candidate_b = coordinates[k][i];
-			coords candidate_a = coordinates[k][i+candidateDist];
+			coords candidate_b = coordinates[i];
+			coords candidate_a = coordinates[i+candidateDist];
 			//count number of inliers
-			for (int j = 0; j < lens[k]; j++) {
+			for (int j = 0; j < coordinates.size(); j++) {
 				if (calcDist(candidate_a, candidate_b, coordinates[j]) < errThresh) {
 					curInliers++;
 				} else {
 					outliers.push_back(coordinates[j]);
 				}
 			}
-			//update winner if current candidates have more inliers than previous best and threshold
+			//update winner if current candidates have more inliers than previous best and threshold and remove inliers
 			if (curInliers > maxInliers && curInliers > winnerThresh) {
 				maxInliers = curInliers;
-				coordinates = outliers;
+				winneroutliers = outliers;
 				winner_a = candidate_a;
 				winner_b = candidate_b;
 			}
+			outliers.clear();
 		}
-
 		if (maxInliers > winnerThresh) {
 			//ROS_INFO("Wall %d found",k);
 			winners[k][0] = winner_a;
 			winners[k][1] = winner_b;
 			winnerInliers[k] = maxInliers;
-			/*
-			switch(k)
-			{
-				case 0:
-					//ROS_INFO("Right wall detected at A: (%lf,%lf) B: (%lf,%lf) with %d inliers", winner_a.x,winner_a.y,winner_b.x,winner_b.y,maxInliers);
-					wall.walls[0] = true;
-					winners[0][0] = winner_a;
-					winners[0][1] = winner_b;
-					wall.R_A[0] = winner_a.x;
-					wall.R_A[1] = winner_a.y;
-					wall.R_B[0] = winner_b.x;
-					wall.R_B[1] = winner_b.y;
-					winnerInliers[0] = maxInliers;
-					continue;
-				case 1:
-					//ROS_INFO("Front wall detected at A: (%lf,%lf) B: (%lf,%lf) with %d inliers", winner_a.x,winner_a.y,winner_b.x,winner_b.y,maxInliers);
-					wall.walls[1] = true;
-					winners[1][0] = winner_a;
-					winners[1][1] = winner_b;
-					wall.F_A[0] = winner_a.x;
-					wall.F_A[1] = winner_a.y;
-					wall.F_B[0] = winner_b.x;
-					wall.F_B[1] = winner_b.y;
-					winnerInliers[1] = maxInliers;
-					continue;
-				case 2:
-					//ROS_INFO("Left wall detected at A: (%lf,%lf) B: (%lf,%lf) with %d inliers", winner_a.x,winner_a.y,winner_b.x,winner_b.y,maxInliers);
-					wall.walls[2] = true;
-					winners[2][0] = winner_a;
-					winners[2][1] = winner_b;
-					wall.L_A[0] = winner_a.x;
-					wall.L_A[1] = winner_a.y;
-					wall.L_B[0] = winner_b.x;
-					wall.L_B[1] = winner_b.y;
-					winnerInliers[2] = maxInliers;
-					continue;
-			}
-			*/
 		}
+		coordinates = winneroutliers;
 	}
 	//classify walls
-	
+	for (int i = 0; i < 3; i++) {
+		if (winnerInliers[i]) {
+			double ang = calcAngle(winners[i][0],winners[i][1]);
+			//ROS_INFO("Wall %d has angle: %lf",i,ang);
+			if (ang > 120) {
+				//ROS_INFO("Left wall found");
+				wall.walls[2] = true;
+				wall.L_A[0] = winners[i][0].x;
+				wall.L_A[1] = winners[i][0].y;
+				wall.L_B[0] = winners[i][1].x;
+				wall.L_B[1] = winners[i][1].y;
+			} else if (ang < 60) {
+				//ROS_INFO("Right wall found");
+				wall.walls[0] = true;
+				wall.R_A[0] = winners[i][0].x;
+				wall.R_A[1] = winners[i][0].y;
+				wall.R_B[0] = winners[i][1].x;
+				wall.R_B[1] = winners[i][1].y;
+			} else {
+				//ROS_INFO("Front wall found");
+				wall.walls[1] = true;
+				wall.F_A[0] = winners[i][0].x;
+				wall.F_A[1] = winners[i][0].y;
+				wall.F_B[0] = winners[i][1].x;
+				wall.F_B[1] = winners[i][1].y;
+			}
 
-
-	/*
-	//check if duplicate wall detected then choose wall with more inliers
-	if (calcDist(winners[1][0], winners[1][1], winners[0][0]) < 0.05 && calcDist(winners[1][0], winners[1][1], winners[0][1]) < 0.05) {
-		if (winnerInliers[0] <= winnerInliers[1]) {
-			//ROS_INFO("Right wall same as Front. Deleting...");
-			wall.R_A[0] = 0.0;
-			wall.R_A[1] = 0.0;
-			wall.R_B[0] = 0.0;
-			wall.R_B[1] = 0.0;
-			wall.walls[0] = false;
-		} else {
-			//ROS_INFO("Front wall same as Right. Deleting...");
-			wall.F_A[0] = 0.0;
-			wall.F_A[1] = 0.0;
-			wall.F_B[0] = 0.0;
-			wall.F_B[1] = 0.0;
-			wall.walls[1] = false;
-		}
-	} else if (calcDist(winners[1][0], winners[1][1], winners[2][0]) < 0.05 && calcDist(winners[1][0], winners[1][1], winners[2][1]) < 0.05) {
-		if (winnerInliers[2] <= winnerInliers[0]) {
-			//ROS_INFO("Left wall same as Front. Deleting...");
-			wall.L_A[0] = 0.0;
-			wall.L_A[1] = 0.0;
-			wall.L_B[0] = 0.0;
-			wall.L_B[1] = 0.0;
-			wall.walls[2] = false;
-		} else {
-			//ROS_INFO("Front wall same as Left. Deleting...");
-			wall.F_A[0] = 0.0;
-			wall.F_A[1] = 0.0;
-			wall.F_B[0] = 0.0;
-			wall.F_B[1] = 0.0;
-			wall.walls[1] = false;
 		}
 	}
-	*/
 	pub.publish(wall);
 }
 

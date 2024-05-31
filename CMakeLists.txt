@@ -80,6 +80,10 @@ add_executable(walls src/walls.cpp)
 target_link_libraries(walls ${catkin_LIBRARIES})
 add_dependencies(walls create_fundamentals_generate_messages_cpp)
 
+add_executable(walls_alt src/walls_alt.cpp)
+target_link_libraries(walls_alt ${catkin_LIBRARIES})
+add_dependencies(walls_alt create_fundamentals_generate_messages_cpp)
+
 add_executable(paradriver src/paradriver.cpp)
 target_link_libraries(paradriver ${catkin_LIBRARIES})
 add_dependencies(paradriver create_fundamentals_generate_messages_cpp)
