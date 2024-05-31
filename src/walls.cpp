@@ -120,7 +120,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 
 	//get all valid measurements and convert to cartesian
 	for (int i = LARROFFSET; i < LARRRIGHTEND; i++) {
-		if (isnan(msg->ranges[i]) && msg->ranges[i] <= msg->range_min) {
+		if (isnan(msg->ranges[i]) | msg->ranges[i] <= msg->range_min) {
 			continue;
 		}
 		pol.x = msg->ranges[i];
@@ -130,7 +130,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 		lens[0]++;
 	}
 	for (int i = LARRRIGHTEND; i < LARRFRONTEND; i++) {
-		if (isnan(msg->ranges[i]) && msg->ranges[i] <= msg->range_min) {
+		if (isnan(msg->ranges[i]) | msg->ranges[i] <= msg->range_min) {
 			continue;
 		}
 		pol.x = msg->ranges[i];
@@ -140,7 +140,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 		lens[1]++;
 	}
 	for (int i = LARRFRONTEND; i < LARRSIZE; i++) {
-		if (isnan(msg->ranges[i]) && msg->ranges[i] <= msg->range_min) {
+		if (isnan(msg->ranges[i]) | msg->ranges[i] <= msg->range_min) {
 			continue;
 		}
 		pol.x = msg->ranges[i];
