@@ -80,12 +80,13 @@ double calcAngleAlt(double slope)
 	return (cos(slope)/sin(slope));
 }
 
-void resetMSG(red_fundamentals::Walls msg)
+void resetMSG()
 {
+	//ROS_INFO("Resetting msg vals");
 	//reset bools
-	msg.walls[0] = false;
-	msg.walls[1] = false;
-	msg.walls[2] = false;
+	wall.walls[0] = false;
+	wall.walls[1] = false;
+	wall.walls[2] = false;
 	//reset coords
 	wall.R_A[0] = 0.0;
 	wall.R_A[1] = 0.0;
@@ -106,7 +107,7 @@ void resetMSG(red_fundamentals::Walls msg)
 void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	//reset walls msg contents
-	resetMSG(wall);
+	resetMSG();
 
 	//array for holding valid coordinates
 	coords coordinates[3][228] = {};
@@ -182,13 +183,13 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			}
 		}
 
-		if (winner_a.x != 0 && winner_a.y != 0) {
-			//ROS_INFO("Wall %d found\n",k);
-			wall.walls[k] = true;
+		if (maxInliers > winnerThresh) {
+			//ROS_INFO("Wall %d found",k);
 			switch(k)
 			{
 				case 0:
 					//ROS_INFO("Right wall detected at A: (%lf,%lf) B: (%lf,%lf) with %d inliers", winner_a.x,winner_a.y,winner_b.x,winner_b.y,maxInliers);
+					wall.walls[0] = true;
 					winners[0][0] = winner_a;
 					winners[0][1] = winner_b;
 					wall.R_A[0] = winner_a.x;
@@ -199,6 +200,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 					continue;
 				case 1:
 					//ROS_INFO("Front wall detected at A: (%lf,%lf) B: (%lf,%lf) with %d inliers", winner_a.x,winner_a.y,winner_b.x,winner_b.y,maxInliers);
+					wall.walls[1] = true;
 					winners[1][0] = winner_a;
 					winners[1][1] = winner_b;
 					wall.F_A[0] = winner_a.x;
@@ -209,6 +211,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 					continue;
 				case 2:
 					//ROS_INFO("Left wall detected at A: (%lf,%lf) B: (%lf,%lf) with %d inliers", winner_a.x,winner_a.y,winner_b.x,winner_b.y,maxInliers);
+					wall.walls[2] = true;
 					winners[2][0] = winner_a;
 					winners[2][1] = winner_b;
 					wall.L_A[0] = winner_a.x;
@@ -222,7 +225,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 
 	}
 	//check if duplicate wall detected then choose wall with more inliers
-	if (calcDist(winners[1][0], winners[1][1], winners[0][0]) < 0.05 | calcDist(winners[1][0], winners[1][1], winners[0][1]) < 0.05) {
+	if (calcDist(winners[1][0], winners[1][1], winners[0][0]) < 0.05 && calcDist(winners[1][0], winners[1][1], winners[0][1]) < 0.05) {
 		if (winnerInliers[0] <= winnerInliers[1]) {
 			//ROS_INFO("Right wall same as Front. Deleting...");
 			wall.R_A[0] = 0.0;
@@ -238,7 +241,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			wall.F_B[1] = 0.0;
 			wall.walls[1] = false;
 		}
-	} else if (calcDist(winners[1][0], winners[1][1], winners[2][0]) < 0.05 | calcDist(winners[1][0], winners[1][1], winners[2][1]) < 0.05) {
+	} else if (calcDist(winners[1][0], winners[1][1], winners[2][0]) < 0.05 && calcDist(winners[1][0], winners[1][1], winners[2][1]) < 0.05) {
 		if (winnerInliers[2] <= winnerInliers[0]) {
 			//ROS_INFO("Left wall same as Front. Deleting...");
 			wall.L_A[0] = 0.0;
@@ -277,7 +280,7 @@ int main(int argc, char **argv)
 	ROS_INFO("start detecting walls");
 	while(ros::ok()) {
 		ros::spinOnce();
-		//ros::Duration(1.0).sleep();
+		//ros::Duration(0.5).sleep();
 	}
 	return 0;
 }
