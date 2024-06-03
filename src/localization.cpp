@@ -14,7 +14,7 @@ using namespace std;
 red_fundamentals::Grid map_cur;
 ros::Publisher pose_pub;
 
-bool receivedMap = false;
+// bool receivedMap = false;
 bool ready = false;
 // <row, column>, orientation
 vector<pair<pair<int, int>, int>> potential_positions;
@@ -29,14 +29,20 @@ double laserCallback(){
     return msg->ranges[msg->ranges.size()/2];
 }
 
-void mapCallback(const red_fundamentals::Grid::ConstPtr& msg) {
-    if(msg != nullptr){
-        map_cur = *msg;
-        receivedMap = true;
-        ROS_INFO("Received map");
-    }
-    else{
-        ROS_INFO("Waiting for the map information");
+void mapCallback() {
+    while(ros::ok()){
+	    const red_fundamentals::Grid::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::Grid>("map",
+                                                                                                    ros::Duration(0.2));
+
+	    if(msg != nullptr){
+            	map_cur = *msg;
+            	// receivedMap = true;
+        	ROS_INFO("Received map");
+		break;
+    	    }
+    	else{
+        	ROS_INFO("Waiting for the map information");
+    	}
     }
 }
 
@@ -118,7 +124,7 @@ void localization() {
         // check if there is a wall
         double dist = laserCallback();
         // if not, rotate 180
-        if(dist <= 0.4 ){
+        if(dist > 0.4 ){
             driver.turn(180);
         }
         // else rotate so that we do not have a wall behind us -> how?
@@ -132,8 +138,8 @@ void localization() {
             }
             switch (no_wall) {
                 // rotate so that no_wall becomes BACK and update walls
-                case 0: // no wall on the right BEFORE 180 turn -> turn 90 to the right
-                    driver.turn(90);
+                case 0: // no wall on the right BEFORE 180 turn -> turn 90 to the left
+                    driver.turn(-90);
                     walls[0] = walls[1];
                     walls[1] = walls[2];
                     walls[2] = true;
@@ -142,8 +148,8 @@ void localization() {
                     swap(walls[0], walls[2]);
                     walls[1] = true;
                     break;
-                case 2: // no wall on the left BEFORE 180 turn -> turn 90 to the left
-                    driver.turn(-90);
+                case 2: // no wall on the left BEFORE 180 turn -> turn 90 to the right
+                    driver.turn(90);
                     walls[2] = walls[1];
                     walls[1] = walls[0];
                     walls[0] = true;
@@ -311,13 +317,14 @@ void localization() {
 int main(int argc, char **argv){
     ros::init(argc, argv, "localization");
     ros::NodeHandle n;
-    ros::Subscriber sub = n.subscribe("map", 1000, mapCallback);
+    // ros::Subscriber sub = n.subscribe("map", 1000, mapCallback);
     pose_pub = n.advertise<red_fundamentals::Pose>("/pose", 1);
 
     // Get the map
-    while(!receivedMap){
+    /*  while(!receivedMap){
         ros::spinOnce();
-    }
+    } */
+    mapCallback();
 
     // Get walls
     wallCallback();
@@ -326,3 +333,4 @@ int main(int argc, char **argv){
     return 0;
 
 }
+
