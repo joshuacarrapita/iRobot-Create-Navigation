@@ -21,7 +21,7 @@ vector<pair<pair<int, int>, int>> potential_positions;
 
 bool walls[3] = {false,};
 vector<int> wall_nums;
-float coords[6];
+// float coords[6];
 
 double laserCallback(){
     sensor_msgs::LaserScan::ConstPtr msg = ros::topic::waitForMessage<sensor_msgs::LaserScan>("scan_filtered", ros::Duration(1));
@@ -52,9 +52,9 @@ void wallCallback(){
                     wall_nums.push_back(i);
                 }
             }
-            for (int i = 0; i < 6; ++i) {
+            /* for (int i = 0; i < 6; ++i) {
                 coords[i] = msg->coords[i];
-            }
+            } */
             break;
         }
 
@@ -111,7 +111,7 @@ void localization() {
     // after centering, we have to rotate and check if there is a wall behind the robot
     // rotate so that we do not have a wall behind us
     // maybe we can put this part outside of this function
-    Diffdriving driver;
+    DiffDriving driver;
     if(!ready){
         // Rotate 180
         driver.turn(180);
