@@ -133,6 +133,8 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 	outliers.reserve(683);
 	vector<coords> winneroutliers;
 	winneroutliers.reserve(683);
+	vector<coords> inliers;
+	inliers.reserve(683);
 
 	coords winners[3][2];
 	int winnerInliers[3] = {};
@@ -158,6 +160,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			for (int j = 0; j < coordinates.size(); j++) {
 				if (calcDist(candidate_a, candidate_b, coordinates[j]) < errThresh) {
 					curInliers++;
+					inliers.push_back(coordinates[j];
 				} else {
 					outliers.push_back(coordinates[j]);
 				}
@@ -166,10 +169,11 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			if (curInliers > maxInliers && curInliers > winnerThresh) {
 				maxInliers = curInliers;
 				winneroutliers = outliers;
-				winner_a = candidate_a;
-				winner_b = candidate_b;
+				winner_a = inliers.back();
+				winner_b = inliers.front();
 			}
 			outliers.clear();
+			inliers.clear();
 		}
 		if (maxInliers > winnerThresh) {
 			//ROS_INFO("Wall %d found",k);
@@ -186,21 +190,27 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			//ROS_INFO("Wall %d has angle: %lf",i,ang);
 			if (ang > 120) {
 				//ROS_INFO("Left wall found");
-				wall.walls[2] = true;
+				if (winners[i][0].y < 0.25) {
+					wall.walls[2] = true;
+				}
 				wall.L_A[0] = winners[i][0].x;
 				wall.L_A[1] = winners[i][0].y;
 				wall.L_B[0] = winners[i][1].x;
 				wall.L_B[1] = winners[i][1].y;
 			} else if (ang < 60) {
 				//ROS_INFO("Right wall found");
-				wall.walls[0] = true;
+				if (winners[i][1].y < 0.25) {
+					wall.walls[0] = true;
+				}
 				wall.R_A[0] = winners[i][0].x;
 				wall.R_A[1] = winners[i][0].y;
 				wall.R_B[0] = winners[i][1].x;
 				wall.R_B[1] = winners[i][1].y;
 			} else {
 				//ROS_INFO("Front wall found");
-				wall.walls[1] = true;
+				if (winners[i][0].y < 0.4) {
+					wall.walls[1] = true;
+				}
 				wall.F_A[0] = winners[i][0].x;
 				wall.F_A[1] = winners[i][0].y;
 				wall.F_B[0] = winners[i][1].x;
