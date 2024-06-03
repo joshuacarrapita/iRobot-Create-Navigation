@@ -68,6 +68,18 @@ void wallCallback(){
             ROS_INFO("Waiting for the wall information...");
         }
     }
+
+    ROS_INFO("walls = [ ");
+    for(int i = 0; i < 3; i++){
+        ROS_INFO("%d", walls[i]);
+    }
+    ROS_INFO("]");
+
+    ROS_INFO("wall_nums = [ ");
+    for(int i = 0; i < wall_nums.size(); i++){
+        ROS_INFO("%d", wall_nums[i]);
+    }
+    ROS_INFO("]");
 }
 
 /* bool contains(int arr[], int size, int value) {
@@ -328,7 +340,7 @@ int main(int argc, char **argv){
 
     // Get walls
     wallCallback();
-    localization();
+    //localization();
 
     return 0;
 
