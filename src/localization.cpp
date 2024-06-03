@@ -135,12 +135,16 @@ void localization() {
         driver.turn(180);
         // check if there is a wall
         double dist = laserCallback();
+        ROS_INFO("Distace = %f", dist);
         // if not, rotate 180
-        if(dist > 0.4 ){
+        if(isnan(dist) || dist > 0.4){
+            ROS_INFO("No wall behind detected! Turning back again");
             driver.turn(180);
+            
         }
         // else rotate so that we do not have a wall behind us -> how?
         else{
+            ROS_INFO("Wall behind detected!");
             int no_wall = 0;
             while(no_wall <3){
                 if(!walls[no_wall]){
@@ -148,20 +152,24 @@ void localization() {
                 }
                 no_wall ++;
             }
+            ROS_INFO("No wall at %d", no_wall);
             switch (no_wall) {
                 // rotate so that no_wall becomes BACK and update walls
                 case 0: // no wall on the right BEFORE 180 turn -> turn 90 to the left
-                    driver.turn(-90);
+                    ROS_INFO("Turn 90 degrees to the left");
+                    driver.turn(90);
                     walls[0] = walls[1];
                     walls[1] = walls[2];
                     walls[2] = true;
                     break;
                 case 1: // no wall in front of the robot BEFORE 180 turn -> stay
+                    ROS_INFO("Stay");
                     swap(walls[0], walls[2]);
                     walls[1] = true;
                     break;
                 case 2: // no wall on the left BEFORE 180 turn -> turn 90 to the right
-                    driver.turn(90);
+                    ROS_INFO("Turn 90 degrees to the right");
+                    driver.turn(-90);
                     walls[2] = walls[1];
                     walls[1] = walls[0];
                     walls[0] = true;
@@ -173,6 +181,18 @@ void localization() {
             for(int i=0; i<3; i++){
                 if(walls[i]) wall_nums.push_back(i);
             }
+
+            ROS_INFO("walls = [ ");
+            for(int i = 0; i < 3; i++){
+                ROS_INFO("%d", walls[i]);
+            }
+            ROS_INFO("]");
+
+            ROS_INFO("wall_nums = [ ");
+            for(int i = 0; i < wall_nums.size(); i++){
+                ROS_INFO("%d", wall_nums[i]);
+            }
+            ROS_INFO("]");
         }
         ready = true;
     }
@@ -202,6 +222,13 @@ void localization() {
                     }
                 }
             }
+
+            //Output of all the potential positions:
+            ROS_INFO("Potential Positions: ");
+            for (size_t i = 0; i < potential_positions.size(); ++i) {
+                ROS_INFO("(%d, %d)", potential_positions[i].first.first, potential_positions[i].first.second);
+            }
+
         }
 
 
@@ -216,13 +243,15 @@ void localization() {
                     candidate++;
                 }
             }
+
+            ROS_INFO("Potential Positions (After compareWalls: ");
+            for (size_t i = 0; i < potential_positions.size(); ++i) {
+                ROS_INFO("(%d, %d), (%d)", potential_positions[i].first.first, potential_positions[i].first.second, potential_positions[i].second);
+            }
+            return;
         }
 
-        //Output of all the potential positions:
-        ROS_INFO("Potential Positions: ");
-        for (size_t i = 0; i < potential_positions.size(); ++i) {
-            ROS_INFO("(%d, %d)", potential_positions[i].first.first, potential_positions[i].first.second);
-        }
+
 
         // if there is only one potential position left and the orientation is known ( != -1), return and publish it to /pose
         if (potential_positions.size() == 1 && potential_positions[0].second != -1) {
@@ -250,6 +279,7 @@ void localization() {
                 if (!contains(cell, 0)) {
                     // if we don't have a 0, then a reachable cell would be in the map at (row, col +1)
                     if (map_cur.rows[0].cells.size() <= col + 1) {
+                        ROS_INFO("map_cur.rows[0].cells.size() = %lu", map_cur.rows[0].cells.size());
                         ROS_INFO("Map Error ?");
                     } else {
                         reachable_cells.emplace_back(std::make_pair(row, col + 1), 0);
@@ -277,7 +307,8 @@ void localization() {
 
                 if (!contains(cell, 3)) {
                     // if we don't have a 3, then a reachable cell would be in the map at (row +1, col)
-                    if (map_cur.rows.size() >= row + 1) {
+                    if (map_cur.rows.size() <= row + 1) {
+                        ROS_INFO("map_cur.rows.size() = %lu", map_cur.rows.size());
                         ROS_INFO("Map Error ?");
                     } else {
                         reachable_cells.emplace_back(std::make_pair(row + 1, col), 3);
@@ -288,6 +319,12 @@ void localization() {
             // save all reachable cells as next potential positions
             potential_positions.clear();
             potential_positions = reachable_cells;
+
+            //Output of all the potential positions:
+            ROS_INFO("Potential Positions (Reachable Cells): ");
+            for (size_t i = 0; i < potential_positions.size(); ++i) {
+                ROS_INFO("(%d, %d), (%d)", potential_positions[i].first.first, potential_positions[i].first.second, potential_positions[i].second);
+            }
         }
 
         // compute the direction in which we want to move
@@ -301,9 +338,9 @@ void localization() {
             }
         }
 
-        // move into right direction
+        ROS_INFO("Move in direction %d", move_direction);
 
-        // DiffDriving driver;
+        // move into right direction
 
         switch (move_direction) {
             case 0:
@@ -321,6 +358,7 @@ void localization() {
             default:
                 ROS_INFO("Wrong Direction");
         }
+
 
         // get walls
         wallCallback();
@@ -340,7 +378,7 @@ int main(int argc, char **argv){
 
     // Get walls
     wallCallback();
-    //localization();
+    localization();
 
     return 0;
 
