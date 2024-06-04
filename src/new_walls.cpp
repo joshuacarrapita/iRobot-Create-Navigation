@@ -8,8 +8,10 @@ red_fundamentals::NewWalls walls;
 int i;
 
 void set_walls(){
+
 	// TODO Set mock wall output
 	switch (i) {
+
 		case 0:
 			ROS_INFO("Case 0 reached with i = %d", i);
 			walls.L_A = {0,0};
@@ -100,6 +102,16 @@ void set_walls(){
 			walls.R_B = {0.3,0.1};
 			break;
 
+		case 9:
+			ROS_INFO("Case 9 reached with i = %d", i);
+			walls.L_A = {-0.4,0.4};
+			walls.L_B = {-0.4,1.2};
+			walls.F_A = {-0.3,1.8};
+			walls.F_B = {0.5,1.8};
+			walls.R_A = {0,0};
+			walls.R_B = {0,0};
+			break;
+
 		default:
 			ROS_INFO("Case default reached with i = %d", i);
 			walls.L_A = {0,0};
@@ -128,7 +140,7 @@ int main(int argc, char **argv)
 	
 	i = 0;
 
-	while (i < 10) {
+	while (i < 12) {
 		ros::Duration(1).sleep();
 		set_walls();
 		pub.publish(walls);
