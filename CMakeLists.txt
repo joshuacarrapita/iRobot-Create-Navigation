@@ -134,3 +134,7 @@ add_executable(walls_alt src/walls_alt.cpp)
 target_link_libraries(walls_alt ${catkin_LIBRARIES})
 add_dependencies(walls_alt create_fundamentals_generate_messages_cpp)
 
+add_executable(test_sound src/test_sound.cpp)
+target_link_libraries(test_sound ${catkin_LIBRARIES})
+add_dependencies(test_sound create_fundamentals_generate_messages_cpp)
+

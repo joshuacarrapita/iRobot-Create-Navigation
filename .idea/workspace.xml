@@ -13,9 +13,9 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 5
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 5
+}</component>
   <component name="ProjectId" id="2hBNJW9RPEFghq8Y1LPLCp4q3ip" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -24,7 +24,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "16-refining-centering",
+    "git-widget-placeholder": "25-localization-algorithm",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/home/thekla/Dokumente/Robotics/red_fundamentals",
     "node.js.detected.package.eslint": "true",
@@ -35,6 +35,21 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+  <component name="RunManager">
+    <configuration default="true" type="JetRunConfigurationType">
+      <module name="red_fundamentals" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <module name="red_fundamentals" />
+      <option name="filePath" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -52,6 +67,7 @@
       <option name="presentableId" value="Default" />
       <updated>1717063438534</updated>
       <workItem from="1717063439570" duration="753000" />
+      <workItem from="1717158444712" duration="42000" />
     </task>
     <servers />
   </component>
