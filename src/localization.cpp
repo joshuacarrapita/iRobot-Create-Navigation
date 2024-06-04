@@ -33,7 +33,7 @@ double laserCallback(){
 void mapCallback() {
     while(ros::ok()){
 	    const red_fundamentals::Grid::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::Grid>("map",
-                                                                                                    ros::Duration(0.2));
+                                                                                                    ros::Duration(1.0));
 
 	    if(msg != nullptr){
             	map_cur = *msg;
@@ -159,10 +159,10 @@ void localization() {
             ROS_INFO("No wall at %d", no_wall);
             switch (no_wall) {
                 // rotate so that no_wall becomes BACK and update walls
-                case 0: // no wall on the right BEFORE 180 turn -> turn 90 to the left
-                    ROS_INFO("Turn 90 degrees to the left");
+                case 0: // no wall on the right BEFORE 180 turn -> turn 90 to the right
+                    ROS_INFO("Turn 90 degrees to the right");
                     // driver.turn(90);
-		    mover.turnRA(0);
+		    mover.turnRA(1);
                     walls[0] = walls[1];
                     walls[1] = walls[2];
                     walls[2] = true;
@@ -172,10 +172,10 @@ void localization() {
                     swap(walls[0], walls[2]);
                     walls[1] = true;
                     break;
-                case 2: // no wall on the left BEFORE 180 turn -> turn 90 to the right
-                    ROS_INFO("Turn 90 degrees to the right");
+                case 2: // no wall on the left BEFORE 180 turn -> turn 90 to the left
+                    ROS_INFO("Turn 90 degrees to the left");
                     // driver.turn(-90);
-		    mover.turnRA(1);
+		    mover.turnRA(0);
                     walls[2] = walls[1];
                     walls[1] = walls[0];
                     walls[0] = true;
@@ -254,7 +254,6 @@ void localization() {
             for (size_t i = 0; i < potential_positions.size(); ++i) {
                 ROS_INFO("(%d, %d), (%d)", potential_positions[i].first.first, potential_positions[i].first.second, potential_positions[i].second);
             }
-            return;
         }
 
 
