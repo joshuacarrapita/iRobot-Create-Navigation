@@ -8,6 +8,7 @@
 #include "red_fundamentals/Pose.h"
 #include "red_fundamentals/Walls.h"
 #include "paradriver.hpp"
+#include "moving.hpp"
 
 using namespace std;
 
@@ -129,17 +130,20 @@ void localization() {
     // after centering, we have to rotate and check if there is a wall behind the robot
     // rotate so that we do not have a wall behind us
     // maybe we can put this part outside of this function
-    DiffDriving driver;
+    // DiffDriving driver;
+    Moving mover;
     if(!ready){
         // Rotate 180
-        driver.turn(180);
+        // driver.turn(180);
+	mover.turnAround();
         // check if there is a wall
         double dist = laserCallback();
         ROS_INFO("Distace = %f", dist);
         // if not, rotate 180
         if(isnan(dist) || dist > 0.4){
             ROS_INFO("No wall behind detected! Turning back again");
-            driver.turn(180);
+            // driver.turn(180);
+	    mover.turnAround();
             
         }
         // else rotate so that we do not have a wall behind us -> how?
@@ -157,7 +161,8 @@ void localization() {
                 // rotate so that no_wall becomes BACK and update walls
                 case 0: // no wall on the right BEFORE 180 turn -> turn 90 to the left
                     ROS_INFO("Turn 90 degrees to the left");
-                    driver.turn(90);
+                    // driver.turn(90);
+		    mover.turnRA(0);
                     walls[0] = walls[1];
                     walls[1] = walls[2];
                     walls[2] = true;
@@ -169,7 +174,8 @@ void localization() {
                     break;
                 case 2: // no wall on the left BEFORE 180 turn -> turn 90 to the right
                     ROS_INFO("Turn 90 degrees to the right");
-                    driver.turn(-90);
+                    // driver.turn(-90);
+		    mover.turnRA(1);
                     walls[2] = walls[1];
                     walls[1] = walls[0];
                     walls[0] = true;
@@ -344,20 +350,24 @@ void localization() {
 
         switch (move_direction) {
             case 0:
-                driver.drive(0, 800, 0, 0, 1);
+                // driver.drive(0, 800, 0, 0, 1);
+		mover.turnRA(1);
                 break;
             case 1:
-                driver.drive(0, 0, 800, 0, 1);
+                // driver.drive(0, 0, 800, 0, 1);
                 break;
             case 2:
-                driver.drive(0, -800, 0, 0, 1);
+                // driver.drive(0, -800, 0, 0, 1);
+		mover.turnRA(0);
                 break;
             case 3:
-                driver.drive(0, 0, -800, 0, 1);
+                // driver.drive(0, 0, -800, 0, 1);
+		mover.turnAround();
                 break;
             default:
                 ROS_INFO("Wrong Direction");
         }
+	mover.moveDist(0.8);
 
 
         // get walls

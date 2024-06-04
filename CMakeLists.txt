@@ -127,7 +127,7 @@ add_dependencies(smooth_server create_fundamentals_generate_messages_cpp)
 
 add_executable(localization src/localization.cpp)
 add_library(paradriver src/paradriver.cpp)
-target_link_libraries(localization paradriver ${catkin_LIBRARIES})
+target_link_libraries(localization moving paradriver ${catkin_LIBRARIES})
 add_dependencies(localization create_fundamentals_generate_messages_cpp)
 
 add_executable(walls_alt src/walls_alt.cpp)
