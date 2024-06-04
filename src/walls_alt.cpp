@@ -190,7 +190,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			//ROS_INFO("Wall %d has angle: %lf",i,ang);
 			if (ang > 120) {
 				//ROS_INFO("Left wall found");
-				if (winners[i][0].y < 0.25) {
+				if (winners[i][0].y < 0.05) {
 					wall.walls[2] = true;
 				}
 				wall.L_A[0] = winners[i][0].x;
@@ -199,7 +199,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 				wall.L_B[1] = winners[i][1].y;
 			} else if (ang < 60) {
 				//ROS_INFO("Right wall found");
-				if (winners[i][1].y < 0.25) {
+				if (winners[i][1].y < 0.05) {
 					wall.walls[0] = true;
 				}
 				wall.R_A[0] = winners[i][0].x;

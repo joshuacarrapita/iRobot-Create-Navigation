@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include "paradriver.hpp"
 
-#define MAXSPEED 15.0
+#define MAXSPEED 12.0
 #define MINSPEED 0.3
 #define CORRECTIONMARGIN 3.0
 #define WHEELBASE 260		//mm
@@ -17,7 +17,9 @@
 #define THETACORRECTION 1.0
 #define DISTTOLERANCE 50	//mm
 #define ANGLETOLERANCE 1.5
-#define KP 0.20
+
+#define KP 0.20		//proportional gain factor
+#define KD 1		//derivative gain factor
 
 using namespace std;
 
@@ -31,6 +33,7 @@ DiffDriving::DiffDriving()
 	xcord = 0;
 	ycord = 0;
 	theta = 0;
+	clock = ros::Time::now().toSec();
 	this->resetOdometer();
 	this->odomInit();
 }
@@ -116,7 +119,7 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 	} else {
 		double distL = encoderToDist(msg->encoderLeft - encLeft);
 		double distR = encoderToDist(msg->encoderRight - encRight);
-		
+
 		double dist = centDist(distL, distR);
 		double deltaTheta = thetaDiff(distL, distR);
 		this->xcord += dist * sin((theta*M_PI/180) + deltaTheta/2);
@@ -124,6 +127,7 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 		this->theta += deltaTheta * 180/M_PI * THETACORRECTION;
 		this->encLeft = msg->encoderLeft;
 		this->encRight = msg->encoderRight;
+		this->clock = ros::Time::now().toSec();
 	}
 }
 
@@ -161,14 +165,20 @@ void DiffDriving::turn(double targetTheta)
 {
 	ros::spinOnce();
 	double goal = theta + targetTheta;
-	double err = targetTheta;
+	double err = abs(targetTheta);
 	double speed;
+	double lasterr = err;
+	double dt;
+	double derr;
 	//double accel = ACCELTIME;
-	while (abs(err) > ANGLETOLERANCE) {
+	while (err > ANGLETOLERANCE) {
 		//ROS_INFO("turning with err: %lf", err);
+		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
-		err = goal - theta;
-		speed = min(MAXSPEED, abs(err * KP));
+		err = abs(goal - theta);
+		derr = lasterr - err;
+		lasterr = err;
+		speed = min(MAXSPEED, err * KP) + KD * (derr/dt);
 		if (theta > goal) {
 			//turn left
 			this->pdsrv.request.left = -speed;
@@ -235,6 +245,14 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "diffdriving");
 	DiffDriving driver;
+
+	driver.turn(90);
+	ros::Duration(0.5).sleep();
+	driver.turn(-90);
+	ros::Duration(0.5).sleep();
+	driver.turn(-45);
+	ros::Duration(0.5).sleep();
+	driver.turn(135);
 	/*
 	ros::spinOnce();
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
@@ -248,11 +266,12 @@ int main(int argc, char **argv)
 	ros::spinOnce();
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
 	*/
-
+	/*
 	driver.drive(0, 0, 1000, 0, 1);
 	driver.drive(0, 1000, 1000, 0, 1);
 	driver.drive(0, 1000, 0, 0, 1);
 	driver.drive(0, 0, 0, 0, 0);
+	*/
 	/*
 	for (int i = 0; i < 2; i++) {
 		driver.turnAbs(-180);
