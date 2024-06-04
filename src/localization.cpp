@@ -130,20 +130,20 @@ void localization() {
     // after centering, we have to rotate and check if there is a wall behind the robot
     // rotate so that we do not have a wall behind us
     // maybe we can put this part outside of this function
-    // DiffDriving driver;
     Moving mover;
+    DiffDriving driver;
     if(!ready){
         // Rotate 180
-        // driver.turn(180);
-	mover.turnAround();
+        // mover.turnAround();
+	driver.turn(180);
         // check if there is a wall
         double dist = laserCallback();
         ROS_INFO("Distace = %f", dist);
         // if not, rotate 180
         if(isnan(dist) || dist > 0.4){
             ROS_INFO("No wall behind detected! Turning back again");
-            // driver.turn(180);
-	    mover.turnAround();
+            // mover.turnAround();
+	    driver.turn(180);
             
         }
         // else rotate so that we do not have a wall behind us -> how?
@@ -161,8 +161,8 @@ void localization() {
                 // rotate so that no_wall becomes BACK and update walls
                 case 0: // no wall on the right BEFORE 180 turn -> turn 90 to the right
                     ROS_INFO("Turn 90 degrees to the right");
-                    // driver.turn(90);
-		    mover.turnRA(1);
+                    // mover.turnRA(1);
+		    driver.turn(90);
                     walls[0] = walls[1];
                     walls[1] = walls[2];
                     walls[2] = true;
@@ -174,8 +174,8 @@ void localization() {
                     break;
                 case 2: // no wall on the left BEFORE 180 turn -> turn 90 to the left
                     ROS_INFO("Turn 90 degrees to the left");
-                    // driver.turn(-90);
-		    mover.turnRA(0);
+                    // mover.turnRA(0);
+		    driver.turn(-90);
                     walls[2] = walls[1];
                     walls[1] = walls[0];
                     walls[0] = true;
@@ -216,14 +216,33 @@ void localization() {
                 for (size_t j = 0; j < row.cells.size(); ++j) {
                     const red_fundamentals::Cell &cell = row.cells[j];
                     ROS_INFO("At coordinates (%lu, %lu), there are %lu walls", i, j, cell.walls.size());
-
                     // Same amount of walls get pushed back as potential position
                     // if NumWalls == 2 -> compare the difference of wall numbers
                     // since we do not know the orientation, save -1 for it
                     if (wall_nums.size() == cell.walls.size()) {
-                        if (wall_nums.size() != 2 ||
-                            abs(wall_nums[0] - wall_nums[1]) % 2 == abs(cell.walls[0] - cell.walls[1]) % 2) {
-                            potential_positions.emplace_back(make_pair(i, j), -1);
+                    	if (wall_nums.size() != 2 ||
+                    	abs(wall_nums[0] - wall_nums[1]) % 2 == abs(cell.walls[0] - cell.walls[1]) % 2) {
+                    		int orientation = -1;
+                            	if(wall_nums.size() == 1){
+			 // save orientation if we can (in case there is only ONE wall)
+			 		switch((wall_nums[0] + 4 - cell.walls[0]) % 4){
+			 			case 0:
+			 				orientation = 1;
+			 				break;
+			 			case 1:
+			 				orientation = 0;
+			 				break;
+			 			case 2:
+			 				orientation = 3;
+			 				break;
+			 			case 3:
+			 				orientation = 2;
+			 				break;
+			 			default:
+			 				break;
+			 		}
+				}	
+                        potential_positions.emplace_back(make_pair(i, j), orientation);
                         }
                     }
                 }
@@ -256,7 +275,7 @@ void localization() {
             }
         }
 
-
+	
 
         // if there is only one potential position left and the orientation is known ( != -1), return and publish it to /pose
         if (potential_positions.size() == 1 && potential_positions[0].second != -1) {
@@ -347,26 +366,28 @@ void localization() {
 
         // move into right direction
 
-        switch (move_direction) {
-            case 0:
-                // driver.drive(0, 800, 0, 0, 1);
-		mover.turnRA(1);
+        switch (move_direction) { // relative to the direction the robot is heading
+            case 0: // RIGHT
+                // mover.turnRA(1);
+		driver.turn(90);
+                mover.moveDist(0.8);
                 break;
-            case 1:
-                // driver.drive(0, 0, 800, 0, 1);
+            case 1: // UP
+                mover.moveDist(0.8);
                 break;
-            case 2:
-                // driver.drive(0, -800, 0, 0, 1);
-		mover.turnRA(0);
+            case 2: // LEFT
+            	// mover.turnRA(0);
+		driver.turn(-90);
+                mover.moveDist(0.8);
                 break;
-            case 3:
-                // driver.drive(0, 0, -800, 0, 1);
-		mover.turnAround();
+            case 3: // DOWN
+                // mover.turnAround();
+		driver.turn(180);
+                mover.moveDist(0.8);
                 break;
             default:
                 ROS_INFO("Wrong Direction");
         }
-	mover.moveDist(0.8);
 
 
         // get walls
