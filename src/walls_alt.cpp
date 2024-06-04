@@ -160,7 +160,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			for (int j = 0; j < coordinates.size(); j++) {
 				if (calcDist(candidate_a, candidate_b, coordinates[j]) < errThresh) {
 					curInliers++;
-					inliers.push_back(coordinates[j];
+					inliers.push_back(coordinates[j]);
 				} else {
 					outliers.push_back(coordinates[j]);
 				}

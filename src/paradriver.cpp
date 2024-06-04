@@ -14,12 +14,12 @@
 #define DISTPERROTATION 181.5	//mm
 
 #define ACCELTIME 30
-#define THETACORRECTION 1.0
+#define THETACORRECTION 0.97
 #define DISTTOLERANCE 50	//mm
-#define ANGLETOLERANCE 1.5
+#define ANGLETOLERANCE 1.0
 
 #define KP 0.20		//proportional gain factor
-#define KD 1		//derivative gain factor
+#define KD 0.90		//derivative gain factor
 
 using namespace std;
 
@@ -253,6 +253,8 @@ int main(int argc, char **argv)
 	driver.turn(-45);
 	ros::Duration(0.5).sleep();
 	driver.turn(135);
+	ros::Duration(0.5).sleep();
+	driver.turn(270);
 	/*
 	ros::spinOnce();
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
