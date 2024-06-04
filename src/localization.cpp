@@ -283,8 +283,13 @@ void localization() {
             pose.row = potential_positions[0].first.first;
             pose.column = potential_positions[0].first.second;
             pose.orientation = potential_positions[0].second;
-            pose_pub.publish(pose);
-            ROS_INFO("Pose message published");
+            
+	    // TODO play a song
+	    for(int i=0; i<3; i++){
+	    	pose_pub.publish(pose);
+            	ROS_INFO("Pose message %d time(s) published", i);
+		ros::Duration(1.0).sleep();
+	    }
             break;
         } else {
             // Let's go through the potential positions
