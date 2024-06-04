@@ -132,8 +132,8 @@ void playSong(){
     Song s;
 
     // define note constants
-    int c4 = 60;  // Middle C
-    int Q = 160 / 4;  // Quarter note length for a measure of 160
+    unsigned int c4 = 60;  // Middle C
+    unsigned int Q = 160 / 4;  // Quarter note length for a measure of 160
     s.uploadSong(0, {c4, Q});
 
     double duration = Q / 1000.0;

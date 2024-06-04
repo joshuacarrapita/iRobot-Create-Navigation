@@ -1,6 +1,6 @@
 #include "ros/ros.h"
-#include <create_fundamentals/StoreSong.h>
-#include <create_fundamentals/PlaySong.h>
+#include "create_fundamentals/StoreSong.h"
+#include "create_fundamentals/PlaySong.h"
 #include "song.hpp"
 
 Song::Song(){
@@ -15,14 +15,14 @@ Song::Song(){
     ROS_INFO("Ready!");
 }
 
-bool Song::uploadSong(int number, int song[]){
+bool Song::uploadSong(int number, std::vector<unsigned int> song){
     store_song_srv.request.number = number;
     store_song_srv.request.song = song;
     store_song_client.call(store_song_srv);
 
     ros::Duration(1).sleep();
 
-    return store_song_srv.response;
+    return store_song_srv.response.success;
 }
 
 bool Song::playSong(int number, double duration){
@@ -31,5 +31,5 @@ bool Song::playSong(int number, double duration){
 
     ros::Duration(duration).sleep();
 
-    return play_song_srv.response;
+    return play_song_srv.response.success;
 }

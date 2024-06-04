@@ -1,13 +1,13 @@
 #ifndef SONG_H
 #define SONG_H
 #include "ros/ros.h"
-#include <create_fundamentals/StoreSong.h>
-#include <create_fundamentals/PlaySong.h>
+#include "create_fundamentals/StoreSong.h"
+#include "create_fundamentals/PlaySong.h"
 
-class SONG
+class Song
 {
 	public:
-		bool uploadSong(int number, int song[]);
+		bool uploadSong(int number, std::vector<unsigned int> song);
         bool playSong(int number, double duration);
 
         ros::ServiceClient store_song_client;
