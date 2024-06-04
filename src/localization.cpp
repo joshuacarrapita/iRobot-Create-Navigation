@@ -9,6 +9,7 @@
 #include "red_fundamentals/Walls.h"
 #include "paradriver.hpp"
 #include "moving.hpp"
+#include "song.hpp"
 
 using namespace std;
 
@@ -124,6 +125,19 @@ bool compareWalls(red_fundamentals::Cell cell, int orientation){
     // it is not possible that there is a wall behind us
     if(walls_robot[3]) return false;
     return true;
+}
+
+void playSong(){
+    ROS_INFO("Play song");
+    Song s;
+
+    // define note constants
+    int c4 = 60;  // Middle C
+    int Q = 160 / 4;  // Quarter note length for a measure of 160
+    s.uploadSong(0, {c4, Q});
+
+    double duration = Q / 1000.0;
+    s.playSong(0, duration);
 }
 
 void localization() {
@@ -285,6 +299,7 @@ void localization() {
             pose.orientation = potential_positions[0].second;
             
 	    // TODO play a song
+        playSong();
 	    for(int i=0; i<3; i++){
 	    	pose_pub.publish(pose);
             	ROS_INFO("Pose message %d time(s) published", i);
