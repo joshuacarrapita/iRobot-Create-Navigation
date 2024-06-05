@@ -241,29 +241,28 @@ void localization() {
                     // if NumWalls == 2 -> compare the difference of wall numbers
                     // since we do not know the orientation, save -1 for it
                     if (wall_nums.size() == cell.walls.size()) {
-                    	if (wall_nums.size() != 2 ||
-                    	abs(wall_nums[0] - wall_nums[1]) % 2 == abs(cell.walls[0] - cell.walls[1]) % 2) {
+                    	if (wall_nums.size() != 2 || abs(wall_nums[0] - wall_nums[1]) % 2 == abs(cell.walls[0] - cell.walls[1]) % 2) {
                     		int orientation = -1;
-                            	if(wall_nums.size() == 1){
-			 // save orientation if we can (in case there is only ONE wall)
-			 		switch((wall_nums[0] + 4 - cell.walls[0]) % 4){
-			 			case 0:
-			 				orientation = 1;
-			 				break;
-			 			case 1:
-			 				orientation = 0;
-			 				break;
-			 			case 2:
-			 				orientation = 3;
-			 				break;
-			 			case 3:
-			 				orientation = 2;
-			 				break;
-			 			default:
-			 				break;
-			 		}
-				}	
-                        potential_positions.emplace_back(make_pair(i, j), orientation);
+                            if(wall_nums.size() == 1){
+                                // save orientation if we can (in case there is only ONE wall)
+                                switch((wall_nums[0] + 4 - cell.walls[0]) % 4){
+                                    case 0:
+                                        orientation = 1;
+                                        break;
+                                    case 1:
+                                        orientation = 0;
+                                        break;
+                                    case 2:
+                                        orientation = 3;
+                                        break;
+                                    case 3:
+                                        orientation = 2;
+                                        break;
+                                    default:
+                                        break;
+			 		            }
+				            }	
+                            potential_positions.emplace_back(make_pair(i, j), orientation);
                         }
                     }
                 }
@@ -498,7 +497,7 @@ bool execute_plan_callback(){
 
 		int next_action = exec_plan[i];
 		int turn_dir = robot_dir - next_action; // dynamically calculate the necessary turn amount based on current robot direction and desired cell
-		robot_dir = (drive_direction) next_action; // update robot direction
+		robot_dir = curr_pose.orientation; // update robot direction
 
 		switch(turn_dir){
 
@@ -532,7 +531,7 @@ bool execute_plan_callback(){
 				ROS_INFO("I couldn't find any laser message!");
 				return false;
 			}
-			//ROS_INFO("Almost hit a wall! Stopping!\n");
+		    ROS_INFO("Almost hit a wall!");
 			//lost = true;	// Are we automatically lost because we saw a wall?
             //ROS_INFO("We got lost");
 			//return true;
@@ -591,14 +590,7 @@ int main(int argc, char **argv)
   //ros::ServiceServer service = n.advertiseService("execute_plan", execute_plan_callback);
   ROS_INFO("Ready to run execute plan");
 
-  while(ros::ok()){
-	if(lost){
-		// TODO: Centering and Relocalizing
-		execute_plan_callback();
-	} else {
-		execute_plan_callback();
-	}
-  }
+  execute_plan_callback();
 
   return 0;
 }
