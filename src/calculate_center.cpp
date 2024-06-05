@@ -43,6 +43,7 @@ double* calculate_wall_center_simple(int dir) {
 double** get_line_param_form(double given_wall_points[2][2]) {
 
 	double** r = new double*[2];
+	for (int i = 0; i < 3; i++) r[i] = new double[2];
 	r[START] = given_wall_points[A];
 	r[DIRVEC][X] = given_wall_points[B][X]-given_wall_points[A][X];
 	r[DIRVEC][Y] = given_wall_points[B][Y]-given_wall_points[A][Y];
@@ -154,6 +155,7 @@ void calculate_center_coord() {
 					op_mode = SIMPLE;
 					calculate_center_coord();
 					op_mode = ADVANCED;
+
 					break;
 
 				}
@@ -186,17 +188,28 @@ void calculate_center_coord() {
 						res_center_coord.y = diagonal[START][Y] + 0.5 * diagonal[DIRVEC][Y];
 
 					}
+
+					break;
+
 				}
 
 				case 3: {
 
 					// TODO: calculation for all 3 walls using intersection and intersection
+					ROS_INFO("AMT_POINTS: %d", amt_walls);
+					ROS_INFO("Calculating for L_A = (%lf,%lf), L_B = (%lf,%lf)\n F_A = (%lf,%lf), F_B = (%lf,%lf)\n, R_A = (%lf,%lf), R_B = (%lf,%lf)\n", wall_points[LEFT][A][X], wall_points[LEFT][A][Y], wall_points[LEFT][B][X], wall_points[LEFT][B][Y], wall_points[FRONT][A][X], wall_points[FRONT][A][Y], wall_points[FRONT][B][X], wall_points[FRONT][B][Y], wall_points[RIGHT][A][X], wall_points[RIGHT][A][Y], wall_points[RIGHT][B][X], wall_points[RIGHT][B][Y]);
+					ROS_INFO("Calculating L_F diagonal for 3 walls.");
 					double** d_L_F = calculate_diagonal(wall_points[LEFT],wall_points[FRONT]);
+					ROS_INFO("Calculating F_R diagonal for 3 walls.");
 					double** d_F_R = calculate_diagonal(wall_points[FRONT],wall_points[RIGHT]);
+					ROS_INFO("Calculating diagonal intersection for 3 walls.");
 					double* center = calculate_intersection(d_L_F,d_F_R);
-
+					ROS_INFO("Setting result center for 3 walls.");
+					ROS_INFO("Result = (%lf,%lf)\n", center[X],center[Y]);
 					res_center_coord.x = center[X];
 					res_center_coord.y = center[Y];
+
+					break;
 
 				}
 
@@ -224,6 +237,9 @@ void parse_wall_message(const red_fundamentals::NewWalls::ConstPtr& msg) {
 
 	// Just parses the wall message content into an array for further processing
 	amt_walls = 0;
+	res_center_coord.x = 0;
+	res_center_coord.y = 0;
+
 	for (int dir = LEFT; dir < BACK; dir++) exists_wall[dir] = true;
 
 	if((wall_points[LEFT][A][X] = msg->L_A[X]) == 0) exists_wall[LEFT] = false;
@@ -241,7 +257,7 @@ void parse_wall_message(const red_fundamentals::NewWalls::ConstPtr& msg) {
 
 	for (int dir = LEFT; dir < BACK; dir++) if (exists_wall[dir]) amt_walls++;
 
-	// ROS_INFO("AMT_WALLS: %d", amt_walls);
+	ROS_INFO("AMT_WALLS: %d", amt_walls);
 
 	calculate_center_coord();
 	new_arrival = true;
