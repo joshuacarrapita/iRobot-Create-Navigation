@@ -12,9 +12,9 @@ bool is_free(std::vector<int> walls, int direction){
 	return true;
 }
 
-bool is_executable(int row_tmp, int col_tmp, std::vector<int> plan, Map *map){
+bool is_executable(int row_tmp, int col_tmp, std::vector<int> plan, red_fundamentals::Grid map){
 	for(int p : plan){
-  		red_fundamentals::Cell tmp = map->map.rows[row_tmp].cells[col_tmp];
+  		red_fundamentals::Cell tmp = map.rows[row_tmp].cells[col_tmp];
   		// check if there is a wall in the direction we want to move according to the plan
   		if(!is_free(tmp.walls, p)) return false;
   		
@@ -22,19 +22,19 @@ bool is_executable(int row_tmp, int col_tmp, std::vector<int> plan, Map *map){
   		switch(p){
   			case 0:
   				col_tmp += 1;
-  				if(col_tmp < 0 || col_tmp > map->num_columns) return false;
+  				if(col_tmp < 0 || col_tmp > map.rows[0].cells.size()) return false;
   				break;
   			case 1:
   				row_tmp -= 1;
-  				if(row_tmp < 0 || row_tmp > map->num_rows) return false;
+  				if(row_tmp < 0 || row_tmp > map.rows.size()) return false;
   				break;
   			case 2:
   				col_tmp -= 1;
-  				if(col_tmp < 0 || col_tmp > map->num_columns) return false;
+  				if(col_tmp < 0 || col_tmp > map.rows[0].cells.size()) return false;
   				break;
   			case 3:
   				row_tmp += 1;
-  				if(row_tmp < 0 || row_tmp > map->num_rows) return false;
+  				if(row_tmp < 0 || row_tmp > map.rows.size()) return false;
   				break;
   			default:
   				break;

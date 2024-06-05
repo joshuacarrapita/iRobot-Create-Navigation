@@ -10,6 +10,7 @@ class DiffDriving
 	public:
 		void stop();
 		void resetOdometer();
+		void resetOdometer(double x, double y, double theta);
 		int odomInit();
 		double calcAngle(double x, double y);
 		double calcDist(double x, double y);

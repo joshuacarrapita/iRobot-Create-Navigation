@@ -56,6 +56,17 @@ void DiffDriving::resetOdometer()
 	ROS_INFO("encoders reset");
 }
 
+void DiffDriving::resetOdometer(double x, double y, double theta)
+{
+	ros::ServiceClient resetEncoders = n.serviceClient<create_fundamentals::ResetEncoders>("reset_encoders");
+	create_fundamentals::ResetEncoders srv;
+	resetEncoders.call(srv);
+	this->xcord = x;
+	this->ycord = y;
+	this->theta = theta;
+	ROS_INFO("encoders reset with x: %f, y: %f, theta: %f", this->xcord, this->ycord, this->theta);
+}
+
 int DiffDriving::odomInit()
 {
 	ROS_INFO("initialising odometer");
@@ -244,10 +255,7 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "diffdriving");
-	DiffDriving driver;
-
-	driver.drive(0, 0, -800, 0, 1);
-	driver.drive(0, 0, 800, 0, 1);
+	// DiffDriving driver;
 	return 0;
 }
 
