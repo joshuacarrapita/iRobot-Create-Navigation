@@ -84,11 +84,6 @@ void wallCallback(){
     ROS_INFO("]");
 }
 
-/* bool contains(int arr[], int size, int value) {
-    // Use std::find to search for the value in the array
-    return std::find(arr, arr + size, value) != arr + size;
-} */
-
 bool contains(const std::vector<int>& vec, int value) {
     // Use std::find to search for the value in the vector
     return std::find(vec.begin(), vec.end(), value) != vec.end();
@@ -298,13 +293,13 @@ void localization() {
             pose.column = potential_positions[0].first.second;
             pose.orientation = potential_positions[0].second;
             
-	    // TODO play a song
-        playSong();
-	    for(int i=0; i<3; i++){
-	    	pose_pub.publish(pose);
-            	ROS_INFO("Pose message %d time(s) published", i);
-		ros::Duration(1.0).sleep();
-	    }
+	        // TODO play a song
+            playSong();
+            for(int i=0; i<3; i++){
+                pose_pub.publish(pose);
+                ROS_INFO("Pose message %d time(s) published", i);
+                ros::Duration(1.0).sleep();
+	        }
             break;
         } else {
             // Let's go through the potential positions
@@ -414,6 +409,7 @@ void localization() {
         wallCallback();
     }
 }
+
 int main(int argc, char **argv){
     ros::init(argc, argv, "localization");
     ros::NodeHandle n;
