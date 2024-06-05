@@ -38,6 +38,16 @@ double* calculate_wall_center_simple(int dir) {
 
 }
 
+double** calculate_diagonal(double left_wall_points[2][2],double front_wall_points[2][2]){
+	double** r = new double*[2];
+	return r;
+}
+
+double* calculate_intersection(double** left_line,double** right_line){
+	double* r = new double[2];
+	return r;
+}
+
 void calculate_center_coord() {
 
 	switch (op_mode) {
@@ -105,10 +115,17 @@ void calculate_center_coord() {
 
 						// TODO: calculation for LEFT and FRONT wall using intersection
 
+						double** diagonal = calculate_diagonal(wall_points[LEFT],wall_points[FRONT]);
+						res_center_coord.x = diagonal[0][X] + 0.5 * diagonal[1][X];
+						res_center_coord.y = diagonal[0][Y] + 0.5 * diagonal[1][Y];
+						
 
 					} else if (exists_wall[FRONT] && exists_wall[RIGHT]){
 
 						// TODO: calculation for FRONT and RIGHT wall using intersection and middle
+						double** diagonal = calculate_diagonal(wall_points[FRONT],wall_points[RIGHT]);
+						res_center_coord.x = diagonal[0][X] + 0.5 * diagonal[1][X];
+						res_center_coord.y = diagonal[0][Y] + 0.5 * diagonal[1][Y];
 
 					}
 				}
@@ -116,6 +133,12 @@ void calculate_center_coord() {
 				case 3: {
 
 					// TODO: calculation for all 3 walls using intersection and intersection
+					double** d_L_F = calculate_diagonal(wall_points[LEFT],wall_points[FRONT]);
+					double** d_F_R = calculate_diagonal(wall_points[FRONT],wall_points[RIGHT]);
+					double* center = calculate_intersection(d_L_F,d_F_R);
+
+					res_center_coord.x = center[X];
+					res_center_coord.y = center[Y];
 
 				}
 
