@@ -105,7 +105,9 @@ add_dependencies(stopper create_fundamentals_generate_messages_cpp)
 
 add_executable(execute_plan_server src/execute_plan_server.cpp)
 add_library(moving src/moving.cpp)
-target_link_libraries(execute_plan_server moving ${catkin_LIBRARIES})
+add_library(paradriver src/paradriver.cpp)
+add_library(song src/song.cpp)
+target_link_libraries(execute_plan_server moving paradriver song ${catkin_LIBRARIES})
 add_dependencies(execute_plan_server create_fundamentals_generate_messages_cpp)
 
 add_executable(corridor src/corridor.cpp)
@@ -126,8 +128,6 @@ add_dependencies(smooth_server create_fundamentals_generate_messages_cpp)
 #add_dependencies(paradriver create_fundamentals_generate_messages_cpp)
 
 add_executable(localization src/localization.cpp)
-add_library(paradriver src/paradriver.cpp)
-add_library(song src/song.cpp)
 target_link_libraries(localization moving paradriver song ${catkin_LIBRARIES})
 add_dependencies(localization create_fundamentals_generate_messages_cpp)
 

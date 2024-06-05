@@ -5,6 +5,13 @@
 #include "create_fundamentals/DiffDrive.h"
 #include "sensor_msgs/LaserScan.h"
 #include "moving.hpp"
+#include "red_fundamentals/Grid.h"
+#include "red_fundamentals/Row.h"
+#include "red_fundamentals/Cell.h"
+#include "red_fundamentals/Pose.h"
+#include "red_fundamentals/Walls.h"
+#include "paradriver.hpp"
+#include "song.hpp"
 
 using namespace std;
 
@@ -304,6 +311,7 @@ void localization() {
                 ROS_INFO("Pose message %d time(s) published", i);
                 ros::Duration(1.0).sleep();
 	        }
+            ROS_INFO("We are now at (%d, %d) looking %d", curr_pose.row, curr_pose.column, curr_pose.orientation);
 			lost = false;
             break;
         } else {
@@ -439,12 +447,49 @@ double wall_distance_check(){
 	return dist; // otherwise we return the distance for comparison
 }
 
-bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
-          red_fundamentals::ExecutePlan::Response &res){
+void getNextPose(int next_action){
+	
+	switch(next_action){
+		// RIGHT
+		case 0:
+			next_pose.row = curr_pose.row;
+			next_pose.column = curr_pose.column + 1;
+			break;
+		// UP
+		case 1:
+			next_pose.row = curr_pose.row - 1;
+			next_pose.column = curr_pose.column;
+			break;
+		// LEFT
+		case 2:
+			next_pose.row = curr_pose.row;
+			next_pose.column = curr_pose.column - 1;
+			break;
+		// DOWN
+		case 3:
+			next_pose.row = curr_pose.row + 1;
+			next_pose.column = curr_pose.column;
+			break;
+		default:
+			ROS_INFO("Not a correct action. Cant get next pose");
+            return;
+	}
 
+	next_pose.orientation = next_action;
+	return;
+}
+
+//bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
+//          red_fundamentals::ExecutePlan::Response &res){
+
+bool execute_plan_callback(){
+    
+    ROS_INFO("Wir sind so lala");
 	// Initialize and reset variables between callbacks
-	vector<int> exec_plan = req.plan;
-	res.success = false;
+	//vector<int> exec_plan = req.plan;
+    // Testing manually
+    vector<int> exec_plan = {3};
+	//res.success = false;
 	drive_direction robot_dir = UP;
 	Moving mover;
 	
@@ -487,14 +532,18 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 				ROS_INFO("I couldn't find any laser message!");
 				return false;
 			}
-			ROS_INFO("Almost hit a wall! Stopping!\n");
-			lost = true;	// Are we automatically lost because we saw a wall?
-			return true;
+			//ROS_INFO("Almost hit a wall! Stopping!\n");
+			//lost = true;	// Are we automatically lost because we saw a wall?
+            //ROS_INFO("We got lost");
+			//return true;
 		}
 		
 		// before moving checking the cell we would be in
+        ROS_INFO("Get next pose");
 		getNextPose(next_action);
+        ROS_INFO("Next Pose would be at (%d, %d) looking %d", next_pose.row, next_pose.column, next_pose.orientation);
 
+        ROS_INFO("We are moving");
 		mover.moveDist(0.8);
 
 		// after moving we check if the walls we see match the walls in the map
@@ -504,6 +553,7 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 		if (!compareWalls(cell, next_pose.orientation)) {
 			// We got lost!
 			// TODO: Play a different(!) Sound
+            ROS_INFO("The walls dont match. We got lost");
 			lost = true;
 			return true;
 		} else {
@@ -515,47 +565,15 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
                 ROS_INFO("Pose message %d time(s) published", i);
                 ros::Duration(1.0).sleep();
 	        }
+            ROS_INFO("We are now at (%d, %d) looking %d", curr_pose.row, curr_pose.column, curr_pose.orientation);
 			lost = false;
 		}
 
 	}
 
-	res.success = true;
+	//res.success = true;
 	return true;
 }
-
-void getNextPose(int next_action){
-	
-	switch(next_action){
-		// RIGHT
-		case 0:
-			next_pose.row = curr_pose.row;
-			next_pose.column = curr_pose.column + 1;
-			break;
-		// UP
-		case 1:
-			next_pose.row = curr_pose.row - 1;
-			next_pose.column = curr_pose.column;
-			break;
-		// LEFT
-		case 2:
-			next_pose.row = curr_pose.row;
-			next_pose.column = curr_pose.column - 1;
-			break;
-		// DOWN
-		case 3:
-			next_pose.row = curr_pose.row + 1;
-			next_pose.column = curr_pose.column;
-			break;
-		default:
-			ROS_INFO("Not a correct action. Cant get next pose")
-            return;
-	}
-
-	next_pose.orientation = next_action;
-	return;
-}
-
 
 
 int main(int argc, char **argv)
@@ -570,15 +588,15 @@ int main(int argc, char **argv)
   localization();	// Localize
 
   // Execute Plan
-  ros::ServiceServer service = n.advertiseService("execute_plan", execute_plan_callback);
+  //ros::ServiceServer service = n.advertiseService("execute_plan", execute_plan_callback);
   ROS_INFO("Ready to run execute plan");
 
   while(ros::ok()){
 	if(lost){
 		// TODO: Centering and Relocalizing
-		ros::spinOnce();
+		execute_plan_callback();
 	} else {
-		ros::spinOnce();
+		execute_plan_callback();
 	}
   }
 
