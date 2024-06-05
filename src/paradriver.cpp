@@ -135,14 +135,20 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 void DiffDriving::turnAbs(double targetTheta)
 {
 	ros::spinOnce();
-	double err = targetTheta - theta;
+	double err = abs(targetTheta - theta);
 	double speed;
-	ROS_INFO("turning to heading %lf", targetTheta);
-	while (abs(err) > ANGLETOLERANCE) {
+	double lasterr = err;
+	double dt;
+	double derr;
+	//ROS_INFO("turning to heading %lf", targetTheta);
+	while (err > ANGLETOLERANCE) {
 		//ROS_INFO("err: %lf", err);
+		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
-		err = targetTheta - theta;
-		speed = min(MAXSPEED, abs(err * KP));
+		err = abstargetTheta - theta);
+		derr = lasterr - err;
+		lasterr = err;
+		speed = min(MAXSPEED, err * KP + KD * (derr/dt));
 		if (theta > targetTheta) {
 			//ROS_INFO("turning left");
 			this->pdsrv.request.left = -speed;
@@ -178,7 +184,7 @@ void DiffDriving::turn(double targetTheta)
 		err = abs(goal - theta);
 		derr = lasterr - err;
 		lasterr = err;
-		speed = min(MAXSPEED, err * KP) + KD * (derr/dt);
+		speed = min(MAXSPEED, err * KP + KD * (derr/dt));
 		if (theta > goal) {
 			//turn left
 			this->pdsrv.request.left = -speed;
@@ -215,15 +221,21 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 	//double err = (errX + errY)/2;
 	//double vecAngle = calcAngle(x,y);
 	double err = calcDist(x, y);
+	double lasterr = err;
+	double derr;
+	double dt;
 	switch(mode)
 	{
 		case 0:
 			double speed;
 			turnAbs(calcAngle(x - this->xcord, y - this->ycord));
 			while (err > DISTTOLERANCE) {
+				dt = ros::Time::now().toSec() - this->clock;
 				ros::spinOnce();
 				err = calcDist(x, y);
-				speed = min(MAXSPEED, (err * KP + MINSPEED));
+				derr = lasterr - err;
+				lasterr = err;
+				speed = min(MAXSPEED, err * KP + KD * (derr/dt));
 				this->pdsrv.request.left = speed;
 				this->pdsrv.request.right = speed;
 				diffDrive.call(pdsrv);
