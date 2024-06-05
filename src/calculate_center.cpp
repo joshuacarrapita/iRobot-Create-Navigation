@@ -2,6 +2,7 @@
 #include "ros/ros.h"
 #include "red_fundamentals/NewWalls.h"
 #include "red_fundamentals/CalculateCenter.h"
+#include <Eigen/Dense>
 
 using namespace std;
 
@@ -9,6 +10,7 @@ enum CoordinateAxis { X = 0, Y = 1, Z = 2};
 enum Point { A = 0, B = 1, C = 2};
 enum WallDirection { LEFT = 0, FRONT = 1, RIGHT = 2, BACK = 3};
 enum OperationMode { SIMPLE = 0, ADVANCED = 1 };
+enum ParamForm { START = 0, DIRVEC = 1 };
 OperationMode op_mode = ADVANCED;
 
 red_fundamentals::CalculateCenter res_center_coord;
@@ -38,14 +40,71 @@ double* calculate_wall_center_simple(int dir) {
 
 }
 
-double** calculate_diagonal(double left_wall_points[2][2],double front_wall_points[2][2]){
+double** get_line_param_form(double given_wall_points[2][2]) {
+
 	double** r = new double*[2];
+	r[START] = given_wall_points[A];
+	r[DIRVEC][X] = given_wall_points[B][X]-given_wall_points[A][X];
+	r[DIRVEC][Y] = given_wall_points[B][Y]-given_wall_points[A][Y];
 	return r;
+
 }
 
-double* calculate_intersection(double** left_line,double** right_line){
+double* get_line_point(double** param_form_line, double lambda) {
+
 	double* r = new double[2];
+	r[X] = param_form_line[START][X] + lambda * param_form_line[DIRVEC][X];
+	r[Y] = param_form_line[START][Y] + lambda * param_form_line[DIRVEC][Y];
 	return r;
+
+}
+
+double* calculate_intersection(double** left_line, double** right_line){
+
+	Eigen::Matrix2d A;
+	A(0,0) = left_line[DIRVEC][X];
+	A(1,0) = left_line[DIRVEC][Y];
+	A(0,1) = -1*right_line[DIRVEC][X];
+	A(1,1) = -1*right_line[DIRVEC][Y];
+
+	Eigen::Vector2d b;
+	b(0) = right_line[START][X] - left_line[START][X];
+	b(1) = right_line[START][Y] - left_line[START][Y];
+
+	Eigen::Vector2d x = A.colPivHouseholderQr().solve(b);
+
+
+	double* r = get_line_point(left_line, x(0));
+	return r;
+
+}
+
+
+double** calculate_diagonal(double left_wall_points[2][2], double right_wall_points[2][2]){
+
+	double** left_wall_model = get_line_param_form(left_wall_points);
+	double** right_wall_model = get_line_param_form(right_wall_points);
+
+	// find new intersection point and recalculate the line models
+	double* intersection = calculate_intersection(left_wall_model, right_wall_model);
+	left_wall_points[B][X] = intersection[X];
+	left_wall_points[B][Y] = intersection[Y];
+	right_wall_points[A][X] = intersection[X];
+	right_wall_points[A][Y] = intersection[Y];
+	left_wall_model = get_line_param_form(left_wall_points);
+	right_wall_model = get_line_param_form(right_wall_points);
+
+	double* d_A = get_line_point(left_wall_model, 0.8);
+	double* d_B = get_line_point(right_wall_model, 0.8);
+	double diagonal_points[2][2];
+	diagonal_points[A][X] = d_A[X];
+	diagonal_points[A][Y] = d_A[Y];
+	diagonal_points[B][X] = d_B[X];
+	diagonal_points[B][Y] = d_B[Y];
+	
+	double** diagonal_line_param_form = get_line_param_form(diagonal_points);
+	return diagonal_line_param_form;
+
 }
 
 void calculate_center_coord() {
@@ -116,16 +175,16 @@ void calculate_center_coord() {
 						// TODO: calculation for LEFT and FRONT wall using intersection
 
 						double** diagonal = calculate_diagonal(wall_points[LEFT],wall_points[FRONT]);
-						res_center_coord.x = diagonal[0][X] + 0.5 * diagonal[1][X];
-						res_center_coord.y = diagonal[0][Y] + 0.5 * diagonal[1][Y];
+						res_center_coord.x = diagonal[START][X] + 0.5 * diagonal[DIRVEC][X];
+						res_center_coord.y = diagonal[START][Y] + 0.5 * diagonal[DIRVEC][Y];
 						
 
 					} else if (exists_wall[FRONT] && exists_wall[RIGHT]){
 
 						// TODO: calculation for FRONT and RIGHT wall using intersection and middle
 						double** diagonal = calculate_diagonal(wall_points[FRONT],wall_points[RIGHT]);
-						res_center_coord.x = diagonal[0][X] + 0.5 * diagonal[1][X];
-						res_center_coord.y = diagonal[0][Y] + 0.5 * diagonal[1][Y];
+						res_center_coord.x = diagonal[START][X] + 0.5 * diagonal[DIRVEC][X];
+						res_center_coord.y = diagonal[START][Y] + 0.5 * diagonal[DIRVEC][Y];
 
 					}
 				}
