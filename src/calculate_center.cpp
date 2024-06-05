@@ -73,7 +73,6 @@ double* calculate_intersection(double** left_line, double** right_line){
 
 	Eigen::Vector2d x = A.colPivHouseholderQr().solve(b);
 
-
 	double* r = get_line_point(left_line, x(0));
 	return r;
 
