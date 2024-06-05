@@ -36,7 +36,6 @@ class DiffDriving
 		double xcord;
 		double ycord;
 		double theta;
-		double clock;
 		DiffDriving();
 };
 

@@ -108,6 +108,7 @@ bool execute_plan(red_fundamentals::ExecutePlan::Request  &req,
 	double theta_tmp = -M_PI/2 + (M_PI/2) * orientation;
 	if(orientation % 2 == 0) theta_tmp *= -1;
 	
+	// TODO correct the values (x, y in mm, theta in degree)	
 	driver.resetOdometer(0.4 + 0.8 * column, -(0.4 + 0.8 * row), theta_tmp);
 	
 	// use paradriver to execute a plan
@@ -134,6 +135,7 @@ bool execute_plan(red_fundamentals::ExecutePlan::Request  &req,
 	driver.stop(); // This is so it doesn't keep driving after the very last
 	
 	res.success = true;
+	// TODO reset pose (row, column, orientation)
 	ROS_INFO("Executed smooth plan! Ready to run another one!");
 	return true;
 }

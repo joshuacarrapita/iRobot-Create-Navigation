@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include "paradriver.hpp"
 
-#define MAXSPEED 12.0
+#define MAXSPEED 15.0
 #define MINSPEED 0.3
 #define CORRECTIONMARGIN 3.0
 #define WHEELBASE 260		//mm
@@ -14,12 +14,10 @@
 #define DISTPERROTATION 181.5	//mm
 
 #define ACCELTIME 30
-#define THETACORRECTION 0.97
+#define THETACORRECTION 1.0
 #define DISTTOLERANCE 50	//mm
-#define ANGLETOLERANCE 1.0
-
-#define KP 0.20		//proportional gain factor
-#define KD 0.90		//derivative gain factor
+#define ANGLETOLERANCE 1.5
+#define KP 0.20
 
 using namespace std;
 
@@ -33,7 +31,6 @@ DiffDriving::DiffDriving()
 	xcord = 0;
 	ycord = 0;
 	theta = 0;
-	clock = ros::Time::now().toSec();
 	this->resetOdometer();
 	this->odomInit();
 }
@@ -130,7 +127,7 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 	} else {
 		double distL = encoderToDist(msg->encoderLeft - encLeft);
 		double distR = encoderToDist(msg->encoderRight - encRight);
-
+		
 		double dist = centDist(distL, distR);
 		double deltaTheta = thetaDiff(distL, distR);
 		this->xcord += dist * sin((theta*M_PI/180) + deltaTheta/2);
@@ -138,7 +135,6 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 		this->theta += deltaTheta * 180/M_PI * THETACORRECTION;
 		this->encLeft = msg->encoderLeft;
 		this->encRight = msg->encoderRight;
-		this->clock = ros::Time::now().toSec();
 	}
 }
 
@@ -176,20 +172,14 @@ void DiffDriving::turn(double targetTheta)
 {
 	ros::spinOnce();
 	double goal = theta + targetTheta;
-	double err = abs(targetTheta);
+	double err = targetTheta;
 	double speed;
-	double lasterr = err;
-	double dt;
-	double derr;
 	//double accel = ACCELTIME;
-	while (err > ANGLETOLERANCE) {
+	while (abs(err) > ANGLETOLERANCE) {
 		//ROS_INFO("turning with err: %lf", err);
-		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
-		err = abs(goal - theta);
-		derr = lasterr - err;
-		lasterr = err;
-		speed = min(MAXSPEED, err * KP) + KD * (derr/dt);
+		err = goal - theta;
+		speed = min(MAXSPEED, abs(err * KP));
 		if (theta > goal) {
 			//turn left
 			this->pdsrv.request.left = -speed;
@@ -255,7 +245,6 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "diffdriving");
-	// DiffDriving driver;
 	return 0;
 }
 
