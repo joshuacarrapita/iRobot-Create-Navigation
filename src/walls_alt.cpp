@@ -208,7 +208,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 				wall.R_B[1] = winners[i][1].y;
 			} else {
 				//ROS_INFO("Front wall found");
-				if (winners[i][0].y < 0.4) {
+				if (winners[i][0].y < 0.5) {
 					wall.walls[1] = true;
 				}
 				wall.F_A[0] = winners[i][0].x;

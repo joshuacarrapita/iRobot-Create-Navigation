@@ -134,16 +134,51 @@ bool compareWalls(red_fundamentals::Cell cell, int orientation){
     return true;
 }
 
-void playSong(){
-    ROS_INFO("Play song");
+void playLocalizedSound(){
+    ROS_INFO("Localized!");
     Song s;
 
-    // define note constants
-    unsigned int c4 = 60;  // Middle C
-    unsigned int Q = 160 / 4;  // Quarter note length for a measure of 160
-    s.uploadSong(0, {c4, Q});
+    // Define note constants (example notes to mimic R2D2)
+    unsigned int a4 = 69;
+    unsigned int c5 = 72; 
+    unsigned int e5 = 76;
+    unsigned int g5 = 79; 
+    unsigned int a5 = 81;  
+    unsigned int c6 = 84;  
 
-    double duration = Q / 1000.0;
+    // Define note durations
+    unsigned int Q = 160 / 4;
+    unsigned int E = Q / 2;
+    unsigned int S = Q / 4;   
+
+    // Upload the song 
+    s.uploadSong(0, {a4, S, c5, S, e5, E, g5, S, a5, S, c6, Q});
+
+    // Play the song 
+    double duration = (S + S + E + S + S + Q) / 1000.0;
+    s.playSong(0, duration);
+}
+
+void playLostSound(){
+    ROS_INFO("Play lost sound");
+    Song s;
+
+    // Define note constants
+    unsigned int e4 = 64;
+    unsigned int d4 = 62; 
+    unsigned int c4 = 60; 
+    unsigned int a3 = 57; 
+    unsigned int g3 = 55;  
+
+    // Define note durations
+    unsigned int Q = 160 / 4;
+    unsigned int H = Q * 2; 
+
+    // Upload the song
+    s.uploadSong(0, {e4, Q, d4, Q, c4, Q, a3, Q, g3, H});
+
+    // Play the song
+    double duration = (Q * 4 + H) / 1000.0;
     s.playSong(0, duration);
 }
 
@@ -304,7 +339,7 @@ void localization() {
             curr_pose.orientation = potential_positions[0].second;
             
 	        // TODO play a song
-            playSong();
+            playLocalizedSound();
             for(int i=0; i<3; i++){
                 pose_pub.publish(curr_pose);
                 ROS_INFO("Pose message %d time(s) published", i);
@@ -487,17 +522,17 @@ bool execute_plan_callback(){
 	// Initialize and reset variables between callbacks
 	//vector<int> exec_plan = req.plan;
     // Testing manually
-    vector<int> exec_plan = {3};
+    vector<int> exec_plan = {1,3,0};
 	//res.success = false;
-	drive_direction robot_dir = UP;
+	drive_direction robot_dir = static_cast<drive_direction>(curr_pose.orientation);
 	Moving mover;
 	
 	// go over the whole execution plan
 	for (int i = 0; i < exec_plan.size(); i++){
 
 		int next_action = exec_plan[i];
+		robot_dir = static_cast<drive_direction>(curr_pose.orientation); // update robot direction
 		int turn_dir = robot_dir - next_action; // dynamically calculate the necessary turn amount based on current robot direction and desired cell
-		robot_dir = curr_pose.orientation; // update robot direction
 
 		switch(turn_dir){
 
@@ -532,8 +567,9 @@ bool execute_plan_callback(){
 				return false;
 			}
 		    ROS_INFO("Almost hit a wall!");
-			//lost = true;	// Are we automatically lost because we saw a wall?
-            //ROS_INFO("We got lost");
+			lost = true;	// Are we automatically lost because we saw a wall?
+			playLostSound();
+            ROS_INFO("We got lost");
 			//return true;
 		}
 		
@@ -546,19 +582,20 @@ bool execute_plan_callback(){
 		mover.moveDist(0.8);
 
 		// after moving we check if the walls we see match the walls in the map
+		ros::Duration(1.0).sleep();
 		wallCallback();	// Get walls
 
 		red_fundamentals::Cell cell = map_cur.rows[next_pose.row].cells[next_pose.column];
 		if (!compareWalls(cell, next_pose.orientation)) {
 			// We got lost!
-			// TODO: Play a different(!) Sound
+			playLostSound();
             ROS_INFO("The walls dont match. We got lost");
 			lost = true;
 			return true;
 		} else {
 			// We know where we are and publish
 			curr_pose = next_pose;
-			playSong();
+			playLocalizedSound();
             for(int i=0; i<3; i++){
                 pose_pub.publish(curr_pose);
                 ROS_INFO("Pose message %d time(s) published", i);
