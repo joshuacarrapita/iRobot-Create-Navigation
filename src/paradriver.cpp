@@ -23,8 +23,6 @@
 
 using namespace std;
 
-enum dir = {right = 0, up, left, down}
-
 DiffDriving::DiffDriving()
 {
 	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
@@ -203,53 +201,64 @@ void DiffDriving::turn(double targetTheta)
 	this->stop();
 }
 
-void DiffDriving::moveDist(double dist, enum dir)
+void DiffDriving::moveDist(double dist, dir direction)
 {
 	ros::spinOnce();
 	double speed;
 	double err;
 	double setpoint;
-	switch(dir)
+	switch(direction)
 	{
-		case right:
+		case dr:
 			setpoint = this->xcord + dist;
 			err = setpoint - this->xcord;
-		case up:
+			break;
+		case du:
 			setpoint = this->ycord + dist;
 			err = setpoint - this->ycord;
-		case left:
+			break;
+		case dl:
 			setpoint = this->xcord - dist;
 			err = setpoint - this->xcord;
-		case down:
+			break;
+		case dd:
 			setpoint = this->ycord - dist;
 			err = setpoint - this->ycord;
+			break;
 	}
 	double lasterr = err;
 	double derr;
 	double dt;
 	while (abs(err) > DISTTOLERANCE) {
-		dt = ros::Time::now().toSec() - this->clock
+		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
-		switch(dir)
+		switch(direction)
 		{
-			case right:
+			case dr:
 				err = setpoint - this->xcord;
-			case up:
+				break;
+			case du:
 				err = setpoint - this->ycord;
-			case left:
+				break;
+			case dl:
 				err = setpoint - this->xcord;
-			case down:
+				break;
+			case dd:
 				err = setpoint - this->ycord;
+				break;
 		}
 		derr = lasterr - err;
-		speed = min(MAXSPEED, abs(err) * KP + KD * (derr/dt));
+		speed = min(MAXSPEED, abs(err) * KP * 300+ KD * (derr/dt) * 300);
 		if (abs(lasterr) < abs(err)) {
 			speed = -speed;
 		}
 		this->pdsrv.request.left = speed;
 		this->pdsrv.request.right = speed;
 		lasterr = err;
+		diffDrive.call(pdsrv);
 	}
+	this->stop();
+	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	return;
 }
 
@@ -317,16 +326,23 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "diffdriving");
 	DiffDriving driver;
-	
-	driver.turn(90);
+	dir di;
+	driver.turn(180);
 	ros::Duration(0.5).sleep();
+	driver.moveDist(0.85, dd);
+	
 	driver.turn(-90);
 	ros::Duration(0.5).sleep();
-	driver.turn(-45);
+	driver.moveDist(0.85, dr);
+	
+	driver.turn(-90);
 	ros::Duration(0.5).sleep();
-	driver.turn(135);
+	driver.moveDist(0.85, du);
+	
+	driver.turn(180);
 	ros::Duration(0.5).sleep();
-	driver.turn(270);
+	driver.moveDist(0.85, dd);
+
 	/*
 	ros::spinOnce();
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
