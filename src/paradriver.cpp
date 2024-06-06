@@ -8,14 +8,14 @@
 #define MAXSPEED 12.0
 #define MINSPEED 0.3
 #define CORRECTIONMARGIN 3.0
-#define WHEELBASE 260		//mm
-#define WHEELRADIUS 33		//mm
+#define WHEELBASE 0.260		//m
+#define WHEELRADIUS 0.033	//m
 #define RADIANSPERROTATION 5.5
-#define DISTPERROTATION 181.5	//mm
+#define DISTPERROTATION 0.1815	//m
 
 #define ACCELTIME 30
 #define THETACORRECTION 0.97
-#define DISTTOLERANCE 50	//mm
+#define DISTTOLERANCE 0.050	//mm
 #define ANGLETOLERANCE 1.0
 
 #define KP 0.20		//proportional gain factor
@@ -202,6 +202,13 @@ void DiffDriving::turn(double targetTheta)
 	this->stop();
 }
 
+void moveDist(double dist)
+{
+	ros::spinOnce();
+	double goal = calcDist(this->xcord + n * 
+
+}
+
 
 
 void DiffDriving::smoothTurn(double x, double y, double targetTheta)
@@ -218,8 +225,6 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 	ros::spinOnce();
 	double errX = x - this->xcord;
 	double errY = y - this->ycord;
-	//double err = (errX + errY)/2;
-	//double vecAngle = calcAngle(x,y);
 	double err = calcDist(x, y);
 	double lasterr = err;
 	double derr;
