@@ -34,7 +34,7 @@ double* calculate_wall_center_simple(int dir) {
 	double BA_scaled[2] = {BA[X]*cell_width/BA_len,BA[Y]*cell_width/BA_len};
 	double BA_rt_ctr_cw[2] = {-1*BA_scaled[Y],BA_scaled[X]};
 	double BA_mid[2] = {B_[X]+BA[X]/2,B_[Y]+BA[Y]/2};
-	double* wall_center_coord = new double[2];
+	double* wall_center_coord = new double[2]; // DONE: Pointer memory deletion checked
 	wall_center_coord[X] = BA_mid[X]+BA_rt_ctr_cw[X];
 	wall_center_coord[Y] = BA_mid[Y]+BA_rt_ctr_cw[Y];
 	//ROS_INFO("Result = (%lf,%lf)\n", wall_center_coord[X],wall_center_coord[Y]);
@@ -44,8 +44,9 @@ double* calculate_wall_center_simple(int dir) {
 
 double** get_line_param_form(double given_wall_points[2][2], bool normalize = false) {
 
-	double** r = new double*[2];
-	for (int i = 0; i < 3; i++) r[i] = new double[2];
+	double** r = new double*[2]; // DONE: Pointer memory deletion checked
+	for (int i = 0; i < 3; i++) r[i] = new double[2]; // DONE: Pointer memory deletion checked
+
 
 	r[START][X] = given_wall_points[A][X];
 	r[START][Y] = given_wall_points[A][Y];
@@ -67,7 +68,7 @@ double** get_line_param_form(double given_wall_points[2][2], bool normalize = fa
 
 double* get_line_point(double** param_form_line, double lambda) {
 
-	double* r = new double[2];
+	double* r = new double[2]; // DONE: Pointer memory deletion checked
 	r[X] = param_form_line[START][X] + lambda * param_form_line[DIRVEC][X];
 	r[Y] = param_form_line[START][Y] + lambda * param_form_line[DIRVEC][Y];
 	return r;
@@ -116,6 +117,13 @@ double** calculate_diagonal(double left_wall_points[2][2], double right_wall_poi
 	l_w_p[A][Y] = intersection[Y];
 	r_w_p[A][X] = intersection[X];
 	r_w_p[A][Y] = intersection[Y];
+	for (int i = 0; i < 3; i++) {
+		delete left_wall_model[i];
+		delete right_wall_model[i];
+	}
+	delete intersection;
+	delete left_wall_model;
+	delete right_wall_model;
 	left_wall_model = get_line_param_form(l_w_p, NORMALIZE);
 	right_wall_model = get_line_param_form(r_w_p, NORMALIZE);
 	//ROS_INFO("LEFT WALL ParamForm | StartPoint = (%lf,%lf), DirectionalVector = (%lf,%lf)\n", left_wall_model[START][X], left_wall_model[START][Y], left_wall_model[DIRVEC][X], left_wall_model[DIRVEC][Y]);
@@ -123,11 +131,19 @@ double** calculate_diagonal(double left_wall_points[2][2], double right_wall_poi
 
 	double* d_A = get_line_point(left_wall_model, 0.8);
 	double* d_B = get_line_point(right_wall_model, 0.8);
+	for (int i = 0; i < 3; i++) {
+		delete left_wall_model[i];
+		delete right_wall_model[i];
+	}
+	delete left_wall_model;
+	delete right_wall_model;
 	double diagonal_points[2][2];
 	diagonal_points[A][X] = d_A[X];
 	diagonal_points[A][Y] = d_A[Y];
 	diagonal_points[B][X] = d_B[X];
 	diagonal_points[B][Y] = d_B[Y];
+	delete d_A;
+	delete d_B;
 	//ROS_INFO("DIAGONAL POINTS: A = (%lf,%lf), B = (%lf,%lf)\n", diagonal_points[A][X], diagonal_points[A][Y], diagonal_points[B][X], diagonal_points[B][Y]);
 	
 	double** diagonal_line_param_form = get_line_param_form(diagonal_points);
@@ -150,14 +166,17 @@ void calculate_center_coord() {
 			//ROS_INFO("R_A: (%lf,%lf)\n", wall_points[RIGHT][A][X], wall_points[RIGHT][A][Y]);
 			//ROS_INFO("R_B: (%lf,%lf)\n", wall_points[RIGHT][B][X], wall_points[RIGHT][B][Y]);
 			// go over all wall directions and calculate the center coordinate for each wall in each direction if a wall was found there
+			
+			double* wall_center_coord;
 			for (int dir = LEFT; dir < BACK; dir++){
 				if (exists_wall[dir]) {
-					double* wall_center_coord = calculate_wall_center_simple(dir);
+					wall_center_coord = calculate_wall_center_simple(dir);
 					// sum up the axis of all center wall coords step by step to calculate average later
 					avg_center_coord[X] += wall_center_coord[X]; 
 					avg_center_coord[Y] += wall_center_coord[Y]; 
 				}
 			}
+			delete wall_center_coord;	
 
 			// if we had more than one wall we need to average
 			if (amt_walls > 1) {
@@ -219,6 +238,9 @@ void calculate_center_coord() {
 						double* center = get_line_point(diagonal, 0.5);
 						res_center_coord.x = center[X];
 						res_center_coord.y = center[Y];
+						for (int i = 0; i < 3; i++) delete diagonal[i];
+						delete diagonal;
+						delete center;
 
 					} else if (exists_wall[FRONT] && exists_wall[RIGHT]){
 
@@ -227,6 +249,9 @@ void calculate_center_coord() {
 						double* center = get_line_point(diagonal, 0.5);
 						res_center_coord.x = center[X];
 						res_center_coord.y = center[Y];
+						for (int i = 0; i < 3; i++) delete diagonal[i];
+						delete diagonal;
+						delete center;
 						
 					}
 
@@ -249,6 +274,13 @@ void calculate_center_coord() {
 					//ROS_INFO("Result = (%lf,%lf)\n", center[X],center[Y]);
 					res_center_coord.x = center[X];
 					res_center_coord.y = center[Y];
+					for (int i = 0; i < 3; i++) {
+						delete d_L_F[i];
+						delete d_F_R[i];
+					}
+					delete d_L_F;
+					delete d_F_R;
+					delete center;
 
 					break;
 
