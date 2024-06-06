@@ -62,9 +62,6 @@ void wallCallback(){
                     wall_nums.push_back(i);
                 }
             }
-            /* for (int i = 0; i < 6; ++i) {
-                coords[i] = msg->coords[i];
-            } */
             break;
         }
 
@@ -151,19 +148,6 @@ bool duplicate_check(){
         }
     }
     return false;
-}
-
-void playSong(){
-    ROS_INFO("Play song");
-    Song s;
-
-    // define note constants
-    unsigned int c4 = 60;  // Middle C
-    unsigned int Q = 160 / 4;  // Quarter note length for a measure of 160
-    s.uploadSong(0, {c4, Q});
-
-    double duration = Q / 1000.0;
-    s.playSong(0, duration);
 }
 
 void localization() {
@@ -319,7 +303,8 @@ void localization() {
             pose.row = potential_positions.begin()->first.first;
             pose.column = potential_positions.begin()->first.second;
             pose.orientation = potential_positions.begin()->second;
-            playSong();
+            Song s;
+            s.playLocalizedSound();
             for(int i=0; i<3; i++){
                 pose_pub.publish(pose);
                 ROS_INFO("Pose message %d time(s) published", i);
@@ -424,7 +409,6 @@ void localization() {
             default:
                 ROS_INFO("Wrong Direction");
         }
-
 
         // get walls
         wallCallback();

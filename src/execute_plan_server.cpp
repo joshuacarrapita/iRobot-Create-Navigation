@@ -26,7 +26,11 @@ red_fundamentals::Grid map_cur;
 ros::Publisher pose_pub;
 
 bool ready = false;
-vector<pair<pair<int, int>, int>> potential_positions;	// <row, column>, orientation
+bool need_change = false;
+
+// <row, column>, orientation
+set<pair<pair<int, int>, int>> potential_positions;
+set<set<pair<pair<int,int>, int>>> candidates_seen;
 
 bool walls[3] = {false,};
 vector<int> wall_nums;
@@ -34,7 +38,9 @@ vector<int> wall_nums;
 red_fundamentals::Pose curr_pose;
 red_fundamentals::Pose next_pose;
 
+Song s;
 double lost = true;
+
 
 
 double laserCallback(){
@@ -45,25 +51,25 @@ double laserCallback(){
 
 void mapCallback() {
     while(ros::ok()){
-	    const red_fundamentals::Grid::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::Grid>("map",
-                                                                                                    ros::Duration(1.0));
+        const red_fundamentals::Grid::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::Grid>("map",
+                                                                                                        ros::Duration(1.0));
 
-	    if(msg != nullptr){
-            	map_cur = *msg;
-            	// receivedMap = true;
-        	ROS_INFO("Received map");
-		break;
-    	    }
-    	else{
-        	ROS_INFO("Waiting for the map information");
-    	}
+        if(msg != nullptr){
+            map_cur = *msg;
+            // receivedMap = true;
+            ROS_INFO("Received map");
+            break;
+        }
+        else{
+            ROS_INFO("Waiting for the map information");
+        }
     }
 }
 
 void wallCallback(){
     while(ros::ok()) {
         const red_fundamentals::Walls::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::Walls>("walls_topic",
-                                                                                                    ros::Duration(0.2));
+                                                                                                          ros::Duration(0.2));
         if(msg != nullptr) {
             wall_nums.clear();
             for (int i = 0; i < 3; ++i) {
@@ -72,9 +78,6 @@ void wallCallback(){
                     wall_nums.push_back(i);
                 }
             }
-            /* for (int i = 0; i < 6; ++i) {
-                coords[i] = msg->coords[i];
-            } */
             break;
         }
 
@@ -134,52 +137,33 @@ bool compareWalls(red_fundamentals::Cell cell, int orientation){
     return true;
 }
 
-void playLocalizedSound(){
-    ROS_INFO("Localized!");
-    Song s;
-
-    // Define note constants
-    unsigned int a4 = 69;
-    unsigned int c5 = 72; 
-    unsigned int e5 = 76;
-    unsigned int g5 = 79; 
-    unsigned int a5 = 81;  
-    unsigned int c6 = 84;  
-
-    // Define note durations
-    unsigned int Q = 160 / 4;
-    unsigned int E = Q / 2;
-    unsigned int S = Q / 4;   
-
-    // Upload the song 
-    s.uploadSong(0, {a4, S, c5, S, e5, E, g5, S, a5, S, c6, Q});
-
-    // Play the song 
-    double duration = (S + S + E + S + S + Q) / 1000.0;
-    s.playSong(0, duration);
+int get_next_direction(){
+    sort(wall_nums.begin(), wall_nums.end());
+    set<int> no_wall = {0, 1, 2};
+    for(int wall : wall_nums){
+        no_wall.erase(wall);
+    }
+    if(no_wall.empty()) return 3;
+    if(no_wall.size() == 1 || !need_change) return *no_wall.begin();
+    return *no_wall.rbegin();
 }
 
-void playLostSound(){
-    ROS_INFO("Play lost sound");
-    Song s;
+bool is_contained(const set<pair<pair<int, int>, int>>& positions_old, const set<pair<pair<int, int>, int>>& positions) {
+    for (const auto& pos : positions_old) {
+        if (positions.find(pos) == positions.end()) {
+            return false;
+        }
+    }
+    return true;
+}
 
-    // Define note constants
-    unsigned int e4 = 64;
-    unsigned int d4 = 62; 
-    unsigned int c4 = 60; 
-    unsigned int a3 = 57; 
-    unsigned int g3 = 55;  
-
-    // Define note durations
-    unsigned int Q = 160 / 4;
-    unsigned int H = Q * 2; 
-
-    // Upload the song
-    s.uploadSong(0, {e4, Q, d4, Q, c4, Q, a3, Q, g3, H});
-
-    // Play the song
-    double duration = (Q * 4 + H) / 1000.0;
-    s.playSong(0, duration);
+bool duplicate_check(){
+    for(const auto& candidates_old : candidates_seen){
+        if(candidates_old == potential_positions || is_contained(candidates_old, potential_positions)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void localization() {
@@ -190,19 +174,17 @@ void localization() {
     DiffDriving driver;
     if(!ready){
         // Rotate 180
-        // mover.turnAround();
-	driver.turn(180);
+       driver.turn(180);
         // check if there is a wall
         double dist = laserCallback();
         ROS_INFO("Distace = %f", dist);
         // if not, rotate 180
         if(isnan(dist) || dist > 0.4){
             ROS_INFO("No wall behind detected! Turning back again");
-            // mover.turnAround();
-	    driver.turn(180);
-            
+            driver.turn(180);
+
         }
-        // else rotate so that we do not have a wall behind us -> how?
+            // else rotate so that we do not have a wall behind us -> how?
         else{
             ROS_INFO("Wall behind detected!");
             int no_wall = 0;
@@ -217,8 +199,7 @@ void localization() {
                 // rotate so that no_wall becomes BACK and update walls
                 case 0: // no wall on the right BEFORE 180 turn -> turn 90 to the right
                     ROS_INFO("Turn 90 degrees to the right");
-                    // mover.turnRA(1);
-		    driver.turn(90);
+                    driver.turn(90);
                     walls[0] = walls[1];
                     walls[1] = walls[2];
                     walls[2] = true;
@@ -230,8 +211,7 @@ void localization() {
                     break;
                 case 2: // no wall on the left BEFORE 180 turn -> turn 90 to the left
                     ROS_INFO("Turn 90 degrees to the left");
-                    // mover.turnRA(0);
-		    driver.turn(-90);
+                    driver.turn(-90);
                     walls[2] = walls[1];
                     walls[1] = walls[0];
                     walls[0] = true;
@@ -276,8 +256,9 @@ void localization() {
                     // if NumWalls == 2 -> compare the difference of wall numbers
                     // since we do not know the orientation, save -1 for it
                     if (wall_nums.size() == cell.walls.size()) {
-                    	if (wall_nums.size() != 2 || abs(wall_nums[0] - wall_nums[1]) % 2 == abs(cell.walls[0] - cell.walls[1]) % 2) {
-                    		int orientation = -1;
+                        if (wall_nums.size() != 2 ||
+                            abs(wall_nums[0] - wall_nums[1]) % 2 == abs(cell.walls[0] - cell.walls[1]) % 2) {
+                            int orientation = -1;
                             if(wall_nums.size() == 1){
                                 // save orientation if we can (in case there is only ONE wall)
                                 switch((wall_nums[0] + 4 - cell.walls[0]) % 4){
@@ -295,9 +276,9 @@ void localization() {
                                         break;
                                     default:
                                         break;
-			 		            }
-				            }	
-                            potential_positions.emplace_back(make_pair(i, j), orientation);
+                                }
+                            }
+                            potential_positions.insert(make_pair(make_pair(i, j), orientation));
                         }
                     }
                 }
@@ -305,8 +286,8 @@ void localization() {
 
             //Output of all the potential positions:
             ROS_INFO("Potential Positions: ");
-            for (size_t i = 0; i < potential_positions.size(); ++i) {
-                ROS_INFO("(%d, %d)", potential_positions[i].first.first, potential_positions[i].first.second);
+            for (auto pos : potential_positions) {
+                ROS_INFO("(%d, %d)", pos.first.first, pos.first.second);
             }
 
         }
@@ -325,34 +306,37 @@ void localization() {
             }
 
             ROS_INFO("Potential Positions (After compareWalls: ");
-            for (size_t i = 0; i < potential_positions.size(); ++i) {
-                ROS_INFO("(%d, %d), (%d)", potential_positions[i].first.first, potential_positions[i].first.second, potential_positions[i].second);
+            for (auto pos : potential_positions) {
+                ROS_INFO("(%d, %d), (%d)", pos.first.first, pos.first.second, pos.second);
             }
         }
 
-	
+
 
         // if there is only one potential position left and the orientation is known ( != -1), return and publish it to /pose
-        if (potential_positions.size() == 1 && potential_positions[0].second != -1) {
-            curr_pose.row = potential_positions[0].first.first;
-            curr_pose.column = potential_positions[0].first.second;
-            curr_pose.orientation = potential_positions[0].second;
-            
-	        // TODO play a song
-            playLocalizedSound();
+        if (potential_positions.size() == 1 && potential_positions.begin()->second != -1) {
+            red_fundamentals::Pose pose;
+            pose.row = potential_positions.begin()->first.first;
+            pose.column = potential_positions.begin()->first.second;
+            pose.orientation = potential_positions.begin()->second;
+            s.playLocalizedSound();
             for(int i=0; i<3; i++){
-                pose_pub.publish(curr_pose);
+                pose_pub.publish(pose);
                 ROS_INFO("Pose message %d time(s) published", i);
                 ros::Duration(1.0).sleep();
-	        }
-            ROS_INFO("We are now at (%d, %d) looking %d", curr_pose.row, curr_pose.column, curr_pose.orientation);
-			lost = false;
+            }
             break;
         } else {
+
+            // if we enter a cell with the same orientation, we have to choose another direction (?)
+            // TODO instead of this, we can choose the move direction completely randomly -> delete this part and modify get_next_direction function!!
+            if(!need_change) {
+                if (duplicate_check()) need_change = true;
+                candidates_seen.insert(potential_positions);
+            }
             // Let's go through the potential positions
             // Looking at a potential position: Which cells can I reach from here?
-
-            vector<pair<pair<int, int>, int>> reachable_cells;
+            set<pair<pair<int, int>, int>> reachable_cells;
 
             for (auto potential_position: potential_positions) {
 
@@ -368,7 +352,7 @@ void localization() {
                         ROS_INFO("map_cur.rows[0].cells.size() = %lu", map_cur.rows[0].cells.size());
                         ROS_INFO("Map Error ?");
                     } else {
-                        reachable_cells.emplace_back(std::make_pair(row, col + 1), 0);
+                        reachable_cells.insert(make_pair(make_pair(row, col + 1), 0));
                     }
 
                 }
@@ -378,7 +362,7 @@ void localization() {
                     if (0 > row - 1) {
                         ROS_INFO("Map Error ?");
                     } else {
-                        reachable_cells.emplace_back(std::make_pair(row - 1, col), 1);
+                        reachable_cells.insert(make_pair(make_pair(row - 1, col), 1));
                     }
                 }
 
@@ -387,7 +371,7 @@ void localization() {
                     if (0 > col - 1) {
                         ROS_INFO("Map Error ?");
                     } else {
-                        reachable_cells.emplace_back(std::make_pair(row, col - 1), 2);
+                        reachable_cells.insert(make_pair(make_pair(row, col - 1), 2));
                     }
                 }
 
@@ -397,7 +381,7 @@ void localization() {
                         ROS_INFO("map_cur.rows.size() = %lu", map_cur.rows.size());
                         ROS_INFO("Map Error ?");
                     } else {
-                        reachable_cells.emplace_back(std::make_pair(row + 1, col), 3);
+                        reachable_cells.insert(make_pair(make_pair(row + 1, col), 3));
                     }
                 }
             }
@@ -408,21 +392,14 @@ void localization() {
 
             //Output of all the potential positions:
             ROS_INFO("Potential Positions (Reachable Cells): ");
-            for (size_t i = 0; i < potential_positions.size(); ++i) {
-                ROS_INFO("(%d, %d), (%d)", potential_positions[i].first.first, potential_positions[i].first.second, potential_positions[i].second);
+            for (auto pos : potential_positions) {
+                ROS_INFO("(%d, %d), (%d)", pos.first.first, pos.first.second, pos.second);
             }
         }
 
         // compute the direction in which we want to move
         // we just choose the smallest possible direction (where we couldn't find a wall)
-        int move_direction = 0;
-
-        for (int i = 0; i < 4; i++) {
-            if (!contains(wall_nums, i)) {
-                move_direction = i;
-                break;
-            }
-        }
+        int move_direction = get_next_direction();
 
         ROS_INFO("Move in direction %d", move_direction);
 
@@ -430,34 +407,29 @@ void localization() {
 
         switch (move_direction) { // relative to the direction the robot is heading
             case 0: // RIGHT
-                // mover.turnRA(1);
-		driver.turn(90);
+                driver.turn(90);
                 mover.moveDist(0.8);
                 break;
             case 1: // UP
                 mover.moveDist(0.8);
                 break;
             case 2: // LEFT
-            	// mover.turnRA(0);
-		driver.turn(-90);
+                driver.turn(-90);
                 mover.moveDist(0.8);
                 break;
             case 3: // DOWN
-                // mover.turnAround();
-		driver.turn(180);
+                driver.turn(180);
                 mover.moveDist(0.8);
                 break;
             default:
                 ROS_INFO("Wrong Direction");
         }
 
-
         // get walls
         ros::Duration(1.0).sleep();
         wallCallback();
     }
 }
-
 
 double wall_distance_check(){
 	sensor_msgs::LaserScan::ConstPtr laser_message = ros::topic::waitForMessage<sensor_msgs::LaserScan>("scan_filtered", ros::Duration(wait_wall_msg));
@@ -575,7 +547,7 @@ bool execute_plan_callback(){
 			}
 		    ROS_INFO("Almost hit a wall!");
 			lost = true;	// Are we automatically lost because we saw a wall?
-			playLostSound();
+			s.playLostSound();
             ROS_INFO("We got lost, because we almost hit a wall");
 			//return true;
 		}
@@ -595,14 +567,14 @@ bool execute_plan_callback(){
 		red_fundamentals::Cell cell = map_cur.rows[next_pose.row].cells[next_pose.column];
 		if (!compareWalls(cell, next_pose.orientation)) {
 			// We got lost!
-			playLostSound();
+			s.playLostSound();
             ROS_INFO("The walls dont match. We got lost");
 			lost = true;
 			return true;
 		} else {
 			// We know where we are and publish
 			curr_pose = next_pose;
-			playLocalizedSound();
+			s.playLocalizedSound();
             for(int i=0; i<3; i++){
                 pose_pub.publish(curr_pose);
                 ROS_INFO("Pose message %d time(s) published", i);
@@ -627,7 +599,6 @@ int main(int argc, char **argv)
   pose_pub = n.advertise<red_fundamentals::Pose>("/pose", 1);
   // TODO: Centering ?
   mapCallback();	// Get map
-  ros::Duration(1.0).sleep();
   wallCallback();	// Get walls
   localization();	// Localize
 
