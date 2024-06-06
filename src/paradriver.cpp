@@ -23,6 +23,7 @@
 
 using namespace std;
 
+enum dir = {right = 0, up, left, down}
 
 DiffDriving::DiffDriving()
 {
@@ -145,7 +146,7 @@ void DiffDriving::turnAbs(double targetTheta)
 		//ROS_INFO("err: %lf", err);
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
-		err = abstargetTheta - theta);
+		err = abs(targetTheta - theta);
 		derr = lasterr - err;
 		lasterr = err;
 		speed = min(MAXSPEED, err * KP + KD * (derr/dt));
@@ -202,11 +203,44 @@ void DiffDriving::turn(double targetTheta)
 	this->stop();
 }
 
-void moveDist(double dist)
+void DiffDriving::moveDist(double dist, enum dir)
 {
 	ros::spinOnce();
-	double goal = calcDist(this->xcord + n * 
-
+	double speed;
+	double err;
+	double setpoint;
+	switch(dir)
+	{
+		case right:
+			setpoint = this->xcord + dist;
+			err = setpoint - this->xcord;
+		case up:
+			setpoint = this->ycord + dist;
+			err = setpoint - this->ycord;
+		case left:
+			setpoint = this->xcord - dist;
+			err = setpoint - this->xcord;
+		case down:
+			setpoint = this->ycord - dist;
+			err = setpoint - this->ycord;
+	}
+	double lasterr = err;
+	double derr;
+	double dt;
+	while (abs(err) > DISTTOLERANCE) {
+		dt = ros::Time::now().toSec() - this->clock
+		ros::spinOnce();
+	switch(dir)
+	{
+		case right:
+			err = setpoint - this->xcord;
+		case up:
+			err = setpoint - this->ycord;
+		case left:
+			err = setpoint - this->xcord;
+		case down:
+			err = setpoint - this->ycord;
+	}
 }
 
 
@@ -251,8 +285,19 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			if (stay) { return 1; }
 			this->turnAbs(targetTheta);
 			return 1;
-		
+		//idea for smooth driving:
+		/*-Use local coordinate system with y axis always being robot heading
+		  -Each step calculate delta theta,x,y to target point
+		  -First drive according to delta theta (=angle of vector to target point from current robot position)
+			->if d_theta < 0 -> turn left by using higher speed for right wheel
+			->if d_theta > 0 -> turn right by using higher speed for left wheel
+		  -Then drive according to delta x and y
+			->
+
+		*/
+		case 1:
 			
+			return 1;
 	}
 	return 0;
 }
