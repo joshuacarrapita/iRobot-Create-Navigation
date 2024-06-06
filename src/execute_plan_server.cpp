@@ -138,7 +138,7 @@ void playLocalizedSound(){
     ROS_INFO("Localized!");
     Song s;
 
-    // Define note constants (example notes to mimic R2D2)
+    // Define note constants
     unsigned int a4 = 69;
     unsigned int c5 = 72; 
     unsigned int e5 = 76;
@@ -453,6 +453,7 @@ void localization() {
 
 
         // get walls
+        ros::Duration(1.0).sleep();
         wallCallback();
     }
 }
@@ -517,10 +518,16 @@ void getNextPose(int next_action){
 //          red_fundamentals::ExecutePlan::Response &res){
 
 bool execute_plan_callback(){
-    
-    ROS_INFO("Wir sind so lala");
+    if(lost == true){
+        //Recenter
+        mapCallback();	// Get map
+        ros::Duration(1.0).sleep();
+        wallCallback();	// Get walls
+        localization();	// Localize
+    }
+
 	// Initialize and reset variables between callbacks
-	//vector<int> exec_plan = req.plan;
+	// vector<int> exec_plan = req.plan;
     // Testing manually
     vector<int> exec_plan = {1,3,0};
 	//res.success = false;
@@ -569,7 +576,7 @@ bool execute_plan_callback(){
 		    ROS_INFO("Almost hit a wall!");
 			lost = true;	// Are we automatically lost because we saw a wall?
 			playLostSound();
-            ROS_INFO("We got lost");
+            ROS_INFO("We got lost, because we almost hit a wall");
 			//return true;
 		}
 		
@@ -620,6 +627,7 @@ int main(int argc, char **argv)
   pose_pub = n.advertise<red_fundamentals::Pose>("/pose", 1);
   // TODO: Centering ?
   mapCallback();	// Get map
+  ros::Duration(1.0).sleep();
   wallCallback();	// Get walls
   localization();	// Localize
 
