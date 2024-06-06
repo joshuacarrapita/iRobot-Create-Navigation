@@ -123,6 +123,10 @@ add_library(smooth_plan src/smooth_plan.cpp)
 target_link_libraries(smooth_server moving smooth_plan ${catkin_LIBRARIES})
 add_dependencies(smooth_server create_fundamentals_generate_messages_cpp)
 
+add_executable(walls_alt src/walls_alt.cpp)
+target_link_libraries(walls_alt ${catkin_LIBRARIES})
+add_dependencies(walls_alt create_fundamentals_generate_messages_cpp)
+
 add_executable(paradriver src/paradriver.cpp)
 target_link_libraries(paradriver ${catkin_LIBRARIES})
 add_dependencies(paradriver create_fundamentals_generate_messages_cpp)
