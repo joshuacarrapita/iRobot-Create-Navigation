@@ -15,7 +15,7 @@
 
 #define ACCELTIME 30
 #define THETACORRECTION 0.97
-#define DISTTOLERANCE 0.050	//mm
+#define DISTTOLERANCE 0.050	//m
 #define ANGLETOLERANCE 1.0
 
 #define KP 0.20		//proportional gain factor
@@ -230,17 +230,27 @@ void DiffDriving::moveDist(double dist, enum dir)
 	while (abs(err) > DISTTOLERANCE) {
 		dt = ros::Time::now().toSec() - this->clock
 		ros::spinOnce();
-	switch(dir)
-	{
-		case right:
-			err = setpoint - this->xcord;
-		case up:
-			err = setpoint - this->ycord;
-		case left:
-			err = setpoint - this->xcord;
-		case down:
-			err = setpoint - this->ycord;
+		switch(dir)
+		{
+			case right:
+				err = setpoint - this->xcord;
+			case up:
+				err = setpoint - this->ycord;
+			case left:
+				err = setpoint - this->xcord;
+			case down:
+				err = setpoint - this->ycord;
+		}
+		derr = lasterr - err;
+		speed = min(MAXSPEED, abs(err) * KP + KD * (derr/dt));
+		if (abs(lasterr) < abs(err)) {
+			speed = -speed;
+		}
+		this->pdsrv.request.left = speed;
+		this->pdsrv.request.right = speed;
+		lasterr = err;
 	}
+	return;
 }
 
 
@@ -307,7 +317,7 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "diffdriving");
 	DiffDriving driver;
-
+	
 	driver.turn(90);
 	ros::Duration(0.5).sleep();
 	driver.turn(-90);
