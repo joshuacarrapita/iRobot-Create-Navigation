@@ -145,7 +145,7 @@ void DiffDriving::turnAbs(double targetTheta)
 		//ROS_INFO("err: %lf", err);
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
-		err = abstargetTheta - theta);
+		err = abs(targetTheta - theta);
 		derr = lasterr - err;
 		lasterr = err;
 		speed = min(MAXSPEED, err * KP + KD * (derr/dt));

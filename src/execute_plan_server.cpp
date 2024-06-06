@@ -38,10 +38,7 @@ vector<int> wall_nums;
 red_fundamentals::Pose curr_pose;
 red_fundamentals::Pose next_pose;
 
-Song s;
 double lost = true;
-
-
 
 double laserCallback(){
     sensor_msgs::LaserScan::ConstPtr msg = ros::topic::waitForMessage<sensor_msgs::LaserScan>("scan_filtered", ros::Duration(1));
@@ -182,7 +179,6 @@ void localization() {
         if(isnan(dist) || dist > 0.4){
             ROS_INFO("No wall behind detected! Turning back again");
             driver.turn(180);
-
         }
             // else rotate so that we do not have a wall behind us -> how?
         else{
@@ -315,16 +311,17 @@ void localization() {
 
         // if there is only one potential position left and the orientation is known ( != -1), return and publish it to /pose
         if (potential_positions.size() == 1 && potential_positions.begin()->second != -1) {
-            red_fundamentals::Pose pose;
-            pose.row = potential_positions.begin()->first.first;
-            pose.column = potential_positions.begin()->first.second;
-            pose.orientation = potential_positions.begin()->second;
+            curr_pose.row = potential_positions.begin()->first.first;
+            curr_pose.column = potential_positions.begin()->first.second;
+            curr_pose.orientation = potential_positions.begin()->second;
+			Song s;
             s.playLocalizedSound();
             for(int i=0; i<3; i++){
-                pose_pub.publish(pose);
+                pose_pub.publish(curr_pose);
                 ROS_INFO("Pose message %d time(s) published", i);
                 ros::Duration(1.0).sleep();
             }
+			ROS_INFO("We are now at (%d, %d) looking %d", curr_pose.row, curr_pose.column, curr_pose.orientation);
             break;
         } else {
 
@@ -464,8 +461,11 @@ void getNextPose(int next_action){
 			break;
 		// UP
 		case 1:
+			ROS_INFO("case 1");
 			next_pose.row = curr_pose.row - 1;
+			ROS_INFO("next_pose.row = curr_pose.row - 1 = %d - 1", curr_pose.row);
 			next_pose.column = curr_pose.column;
+			ROS_INFO("next_pose.column = curr_pose.column = %d", curr_pose.column);
 			break;
 		// LEFT
 		case 2:
@@ -495,6 +495,8 @@ bool execute_plan_callback(){
         mapCallback();	// Get map
         ros::Duration(1.0).sleep();
         wallCallback();	// Get walls
+		potential_positions.clear();
+		candidates_seen.clear();
         localization();	// Localize
     }
 
@@ -537,6 +539,8 @@ bool execute_plan_callback(){
 				break;
 		
 		}
+
+		Song s;
 		
 		// before moving, check for wall; this also catches the case of trying to move up after centering
 		double dist = wall_distance_check();
@@ -599,6 +603,7 @@ int main(int argc, char **argv)
   pose_pub = n.advertise<red_fundamentals::Pose>("/pose", 1);
   // TODO: Centering ?
   mapCallback();	// Get map
+  ros::Duration(1.0).sleep();
   wallCallback();	// Get walls
   localization();	// Localize
 
