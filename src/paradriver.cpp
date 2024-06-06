@@ -135,6 +135,7 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 		this->theta += deltaTheta * 180/M_PI * THETACORRECTION;
 		this->encLeft = msg->encoderLeft;
 		this->encRight = msg->encoderRight;
+		ROS_INFO("x: %f, y: %f, theta: %f", this->xcord, this->ycord, this->theta);
 	}
 }
 
@@ -245,6 +246,10 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "diffdriving");
+	/* DiffDriving driver;
+	driver.resetOdometer(1200, 1200, 180);
+	driver.drive(0, 800, 1200, 0, 1);
+	driver.drive(0, 800, 2000, 0, 1); */
 	return 0;
 }
 

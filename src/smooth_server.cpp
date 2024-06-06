@@ -108,7 +108,7 @@ bool execute_plan(red_fundamentals::ExecutePlan::Request  &req,
 	double theta_tmp = -90 + 90 * orientation;
 	if(orientation % 2 == 0) theta_tmp *= -1;
 		
-	driver.resetOdometer(400 + 800 * column, -(400 + 800 * row), theta_tmp);
+	driver.resetOdometer(400 + 800 * column, 800 * map_cur.rows.size() - (400 + 800 * row), theta_tmp);
 	
 	// use paradriver to execute a plan
 	for(size_t i = 0; i < req.plan.size(); i++){
@@ -119,7 +119,7 @@ bool execute_plan(red_fundamentals::ExecutePlan::Request  &req,
   				break;
   			case UP:
   				row -= 1;
-  				driver.drive(0, driver.xcord, driver.ycord - 800, 0, 1);
+  				driver.drive(0, driver.xcord, driver.ycord + 800, 0, 1);
   				break;
   			case LEFT:
   				column -= 1;
@@ -127,7 +127,7 @@ bool execute_plan(red_fundamentals::ExecutePlan::Request  &req,
   				break;
   			case DOWN:
   				row += 1;
-  				driver.drive(0, driver.xcord, driver.ycord + 800, 0, 1);
+  				driver.drive(0, driver.xcord, driver.ycord - 800, 0, 1);
   				break;
   			default:
   				break;
@@ -136,9 +136,10 @@ bool execute_plan(red_fundamentals::ExecutePlan::Request  &req,
   
 	
 	driver.stop(); // This is so it doesn't keep driving after the very last
-	
+	orientation = floor((int)((driver.theta + 405) / 90) % 4);	
 	res.success = true;
 	ROS_INFO("Executed smooth plan! Ready to run another one!");
+	ROS_INFO("current pose:  row: %d, column: %d, orientation: %d", row, column, orientation);
 	return true;
 }
 
