@@ -6,6 +6,8 @@
 
 using namespace std;
 
+#define NORMALIZE true
+
 enum CoordinateAxis { X = 0, Y = 1, Z = 2};
 enum Point { A = 0, B = 1, C = 2};
 enum WallDirection { LEFT = 0, FRONT = 1, RIGHT = 2, BACK = 3};
@@ -26,7 +28,7 @@ double* calculate_wall_center_simple(int dir) {
 
 	double A_[2] = {wall_points[dir][A][X],wall_points[dir][A][Y]};
 	double B_[2] = {wall_points[dir][B][X],wall_points[dir][B][Y]};
-	ROS_INFO("Calculating for A = (%lf,%lf), B = (%lf,%lf)\n", A_[X],A_[Y],B_[X],B_[Y]);
+	//ROS_INFO("Calculating for A = (%lf,%lf), B = (%lf,%lf)\n", A_[X],A_[Y],B_[X],B_[Y]);
 	double BA[2] = {A_[X]-B_[X],A_[Y]-B_[Y]};
 	double BA_len = sqrt(pow(BA[X],2) + pow(BA[Y],2));
 	double BA_scaled[2] = {BA[X]*cell_width/BA_len,BA[Y]*cell_width/BA_len};
@@ -35,18 +37,30 @@ double* calculate_wall_center_simple(int dir) {
 	double* wall_center_coord = new double[2];
 	wall_center_coord[X] = BA_mid[X]+BA_rt_ctr_cw[X];
 	wall_center_coord[Y] = BA_mid[Y]+BA_rt_ctr_cw[Y];
-	ROS_INFO("Result = (%lf,%lf)\n", wall_center_coord[X],wall_center_coord[Y]);
+	//ROS_INFO("Result = (%lf,%lf)\n", wall_center_coord[X],wall_center_coord[Y]);
 	return wall_center_coord;
 
 }
 
-double** get_line_param_form(double given_wall_points[2][2]) {
+double** get_line_param_form(double given_wall_points[2][2], bool normalize = false) {
 
 	double** r = new double*[2];
 	for (int i = 0; i < 3; i++) r[i] = new double[2];
-	r[START] = given_wall_points[A];
+
+	r[START][X] = given_wall_points[A][X];
+	r[START][Y] = given_wall_points[A][Y];
 	r[DIRVEC][X] = given_wall_points[B][X]-given_wall_points[A][X];
 	r[DIRVEC][Y] = given_wall_points[B][Y]-given_wall_points[A][Y];
+
+	if (normalize) {
+		Eigen::Vector2d dirvec;
+		dirvec(X) = r[DIRVEC][X];
+		dirvec(Y) = r[DIRVEC][Y];
+		dirvec.normalize();
+		r[DIRVEC][X] = dirvec(X);
+		r[DIRVEC][Y] = dirvec(Y);
+	}
+
 	return r;
 
 }
@@ -69,8 +83,8 @@ double* calculate_intersection(double** left_line, double** right_line){
 	A(1,1) = -1*right_line[DIRVEC][Y];
 
 	Eigen::Vector2d b;
-	b(0) = right_line[START][X] - left_line[START][X];
-	b(1) = right_line[START][Y] - left_line[START][Y];
+	b(X) = right_line[START][X] - left_line[START][X];
+	b(Y) = right_line[START][Y] - left_line[START][Y];
 
 	Eigen::Vector2d x = A.colPivHouseholderQr().solve(b);
 
@@ -79,20 +93,33 @@ double* calculate_intersection(double** left_line, double** right_line){
 
 }
 
-
 double** calculate_diagonal(double left_wall_points[2][2], double right_wall_points[2][2]){
 
-	double** left_wall_model = get_line_param_form(left_wall_points);
-	double** right_wall_model = get_line_param_form(right_wall_points);
+	double l_w_p[2][2];
+	copy(&left_wall_points[0][0], &left_wall_points[0][0]+2*2, &l_w_p[0][0]);
+	double r_w_p[2][2];
+	copy(&right_wall_points[0][0], &right_wall_points[0][0]+2*2, &r_w_p[0][0]);
+
+	double** left_wall_model = get_line_param_form(l_w_p);
+	double** right_wall_model = get_line_param_form(r_w_p);
+	//ROS_INFO("LEFT WALL ParamForm | StartPoint = (%lf,%lf), DirectionalVector = (%lf,%lf)\n", left_wall_model[START][X], left_wall_model[START][Y], left_wall_model[DIRVEC][X], left_wall_model[DIRVEC][Y]);
+	//ROS_INFO("RIGHT WALL ParamForm | StartPoint = (%lf,%lf), DirectionalVector = (%lf,%lf)\n", right_wall_model[START][X], right_wall_model[START][Y], right_wall_model[DIRVEC][X], right_wall_model[DIRVEC][Y]);
 
 	// find new intersection point and recalculate the line models
 	double* intersection = calculate_intersection(left_wall_model, right_wall_model);
-	left_wall_points[B][X] = intersection[X];
-	left_wall_points[B][Y] = intersection[Y];
-	right_wall_points[A][X] = intersection[X];
-	right_wall_points[A][Y] = intersection[Y];
-	left_wall_model = get_line_param_form(left_wall_points);
-	right_wall_model = get_line_param_form(right_wall_points);
+	//ROS_INFO("INTERSECTION = (%lf,%lf)\n", intersection[X], intersection[Y]);
+
+	// Set new start vector for left and right walls and change direction of model
+	l_w_p[B][X] = l_w_p[A][X];
+	l_w_p[B][Y] = l_w_p[A][Y];
+	l_w_p[A][X] = intersection[X];
+	l_w_p[A][Y] = intersection[Y];
+	r_w_p[A][X] = intersection[X];
+	r_w_p[A][Y] = intersection[Y];
+	left_wall_model = get_line_param_form(l_w_p, NORMALIZE);
+	right_wall_model = get_line_param_form(r_w_p, NORMALIZE);
+	//ROS_INFO("LEFT WALL ParamForm | StartPoint = (%lf,%lf), DirectionalVector = (%lf,%lf)\n", left_wall_model[START][X], left_wall_model[START][Y], left_wall_model[DIRVEC][X], left_wall_model[DIRVEC][Y]);
+	//ROS_INFO("RIGHT WALL ParamForm | StartPoint = (%lf,%lf), DirectionalVector = (%lf,%lf)\n", right_wall_model[START][X], right_wall_model[START][Y], right_wall_model[DIRVEC][X], right_wall_model[DIRVEC][Y]);
 
 	double* d_A = get_line_point(left_wall_model, 0.8);
 	double* d_B = get_line_point(right_wall_model, 0.8);
@@ -101,6 +128,7 @@ double** calculate_diagonal(double left_wall_points[2][2], double right_wall_poi
 	diagonal_points[A][Y] = d_A[Y];
 	diagonal_points[B][X] = d_B[X];
 	diagonal_points[B][Y] = d_B[Y];
+	//ROS_INFO("DIAGONAL POINTS: A = (%lf,%lf), B = (%lf,%lf)\n", diagonal_points[A][X], diagonal_points[A][Y], diagonal_points[B][X], diagonal_points[B][Y]);
 	
 	double** diagonal_line_param_form = get_line_param_form(diagonal_points);
 	return diagonal_line_param_form;
@@ -115,12 +143,12 @@ void calculate_center_coord() {
 
 			double avg_center_coord[2] = {0,0}; // the avg over all walls' center coords
 
-			ROS_INFO("L_A: (%lf,%lf)\n", wall_points[LEFT][A][X], wall_points[LEFT][A][Y]);
-			ROS_INFO("L_B: (%lf,%lf)\n", wall_points[LEFT][B][X], wall_points[LEFT][B][Y]);
-			ROS_INFO("F_A: (%lf,%lf)\n", wall_points[FRONT][A][X], wall_points[FRONT][A][Y]);
-			ROS_INFO("F_B: (%lf,%lf)\n", wall_points[FRONT][B][X], wall_points[FRONT][B][Y]);
-			ROS_INFO("R_A: (%lf,%lf)\n", wall_points[RIGHT][A][X], wall_points[RIGHT][A][Y]);
-			ROS_INFO("R_B: (%lf,%lf)\n", wall_points[RIGHT][B][X], wall_points[RIGHT][B][Y]);
+			//ROS_INFO("L_A: (%lf,%lf)\n", wall_points[LEFT][A][X], wall_points[LEFT][A][Y]);
+			//ROS_INFO("L_B: (%lf,%lf)\n", wall_points[LEFT][B][X], wall_points[LEFT][B][Y]);
+			//ROS_INFO("F_A: (%lf,%lf)\n", wall_points[FRONT][A][X], wall_points[FRONT][A][Y]);
+			//ROS_INFO("F_B: (%lf,%lf)\n", wall_points[FRONT][B][X], wall_points[FRONT][B][Y]);
+			//ROS_INFO("R_A: (%lf,%lf)\n", wall_points[RIGHT][A][X], wall_points[RIGHT][A][Y]);
+			//ROS_INFO("R_B: (%lf,%lf)\n", wall_points[RIGHT][B][X], wall_points[RIGHT][B][Y]);
 			// go over all wall directions and calculate the center coordinate for each wall in each direction if a wall was found there
 			for (int dir = LEFT; dir < BACK; dir++){
 				if (exists_wall[dir]) {
@@ -147,7 +175,7 @@ void calculate_center_coord() {
 
 		case ADVANCED: {
 
-			// TODO Implement advanced mode
+			// DONE Implement advanced mode
 			switch (amt_walls) {
 
 				case 1: {
@@ -155,6 +183,13 @@ void calculate_center_coord() {
 					op_mode = SIMPLE;
 					calculate_center_coord();
 					op_mode = ADVANCED;
+
+					if (exists_wall[LEFT] || exists_wall[RIGHT]) {
+						res_center_coord.y = 0; // set y to 0 because we can only adjust with x since y is not realiably calculated
+					} else if (exists_wall[FRONT]) {
+						res_center_coord.x = 0; // set y to 0 because we can only adjust with x since y is not realiably calculated
+					}
+
 
 					break;
 
@@ -164,29 +199,35 @@ void calculate_center_coord() {
 
 					if (exists_wall[LEFT] && exists_wall[RIGHT]) {
 						
-						// TODO: calculate both centers like 1 and average them
+						// DONE: calculate both centers like 1 and average them
 						op_mode = SIMPLE;
 						calculate_center_coord();
 						op_mode = ADVANCED;
+
+						res_center_coord.y = 0; // set y to 0 because we can only adjust with x since y is not realiably calculated
+
 						break;
 
 
 					} else if (exists_wall[LEFT] && exists_wall[FRONT]){
 
-						// TODO: calculation for LEFT and FRONT wall using intersection
+						// DONE: calculation for LEFT and FRONT wall using intersection
 
 						double** diagonal = calculate_diagonal(wall_points[LEFT],wall_points[FRONT]);
-						res_center_coord.x = diagonal[START][X] + 0.5 * diagonal[DIRVEC][X];
-						res_center_coord.y = diagonal[START][Y] + 0.5 * diagonal[DIRVEC][Y];
-						
+						//ROS_INFO("DIAGONAL | StartPoint = (%lf,%lf), DirectionalVector = (%lf,%lf)\n", diagonal[START][X], diagonal[START][Y], diagonal[DIRVEC][X], diagonal[DIRVEC][Y]);
+
+						double* center = get_line_point(diagonal, 0.5);
+						res_center_coord.x = center[X];
+						res_center_coord.y = center[Y];
 
 					} else if (exists_wall[FRONT] && exists_wall[RIGHT]){
 
-						// TODO: calculation for FRONT and RIGHT wall using intersection and middle
+						// DONE: calculation for FRONT and RIGHT wall using intersection and middle
 						double** diagonal = calculate_diagonal(wall_points[FRONT],wall_points[RIGHT]);
-						res_center_coord.x = diagonal[START][X] + 0.5 * diagonal[DIRVEC][X];
-						res_center_coord.y = diagonal[START][Y] + 0.5 * diagonal[DIRVEC][Y];
-
+						double* center = get_line_point(diagonal, 0.5);
+						res_center_coord.x = center[X];
+						res_center_coord.y = center[Y];
+						
 					}
 
 					break;
@@ -195,17 +236,17 @@ void calculate_center_coord() {
 
 				case 3: {
 
-					// TODO: calculation for all 3 walls using intersection and intersection
-					ROS_INFO("AMT_POINTS: %d", amt_walls);
-					ROS_INFO("Calculating for L_A = (%lf,%lf), L_B = (%lf,%lf)\n F_A = (%lf,%lf), F_B = (%lf,%lf)\n, R_A = (%lf,%lf), R_B = (%lf,%lf)\n", wall_points[LEFT][A][X], wall_points[LEFT][A][Y], wall_points[LEFT][B][X], wall_points[LEFT][B][Y], wall_points[FRONT][A][X], wall_points[FRONT][A][Y], wall_points[FRONT][B][X], wall_points[FRONT][B][Y], wall_points[RIGHT][A][X], wall_points[RIGHT][A][Y], wall_points[RIGHT][B][X], wall_points[RIGHT][B][Y]);
-					ROS_INFO("Calculating L_F diagonal for 3 walls.");
+					// DONE: calculation for all 3 walls using intersection and intersection
+					//ROS_INFO("AMT_POINTS: %d", amt_walls);
+					//ROS_INFO("Calculating for L_A = (%lf,%lf), L_B = (%lf,%lf)\n F_A = (%lf,%lf), F_B = (%lf,%lf)\n, R_A = (%lf,%lf), R_B = (%lf,%lf)\n", wall_points[LEFT][A][X], wall_points[LEFT][A][Y], wall_points[LEFT][B][X], wall_points[LEFT][B][Y], wall_points[FRONT][A][X], wall_points[FRONT][A][Y], wall_points[FRONT][B][X], wall_points[FRONT][B][Y], wall_points[RIGHT][A][X], wall_points[RIGHT][A][Y], wall_points[RIGHT][B][X], wall_points[RIGHT][B][Y]);
+					//ROS_INFO("Calculating L_F diagonal for 3 walls.");
 					double** d_L_F = calculate_diagonal(wall_points[LEFT],wall_points[FRONT]);
-					ROS_INFO("Calculating F_R diagonal for 3 walls.");
+					//ROS_INFO("Calculating F_R diagonal for 3 walls.");
 					double** d_F_R = calculate_diagonal(wall_points[FRONT],wall_points[RIGHT]);
-					ROS_INFO("Calculating diagonal intersection for 3 walls.");
+					//ROS_INFO("Calculating diagonal intersection for 3 walls.");
 					double* center = calculate_intersection(d_L_F,d_F_R);
-					ROS_INFO("Setting result center for 3 walls.");
-					ROS_INFO("Result = (%lf,%lf)\n", center[X],center[Y]);
+					//ROS_INFO("Setting result center for 3 walls.");
+					//ROS_INFO("Result = (%lf,%lf)\n", center[X],center[Y]);
 					res_center_coord.x = center[X];
 					res_center_coord.y = center[Y];
 
@@ -257,7 +298,7 @@ void parse_wall_message(const red_fundamentals::NewWalls::ConstPtr& msg) {
 
 	for (int dir = LEFT; dir < BACK; dir++) if (exists_wall[dir]) amt_walls++;
 
-	ROS_INFO("AMT_WALLS: %d", amt_walls);
+	//ROS_INFO("AMT_WALLS: %d", amt_walls);
 
 	calculate_center_coord();
 	new_arrival = true;
