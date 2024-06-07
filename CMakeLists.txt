@@ -139,3 +139,7 @@ add_executable(test_sound src/test_sound.cpp)
 target_link_libraries(test_sound ${catkin_LIBRARIES})
 add_dependencies(test_sound create_fundamentals_generate_messages_cpp)
 
+add_executable(center src/center.cpp)
+target_link_libraries(center ${catkin_LIBRARIES})
+add_dependencies(center create_fundamentals_generate_messages_cpp)
+
