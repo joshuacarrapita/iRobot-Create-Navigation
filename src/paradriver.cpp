@@ -276,7 +276,7 @@ void DiffDriving::moveDistEnc(double dist)
 	double speedL;
 	double speedR;
 	double setpointL = dist*32 + this->encLeft;
-	double setointR = dist*32 + this->encRight;
+	double setpointR = dist*32 + this->encRight;
 	double errL = setpointL - this->encLeft;
 	double errR = setpointR - this->encRight;
 	double lasterrL = errL;
@@ -299,11 +299,11 @@ void DiffDriving::moveDistEnc(double dist)
 		if (abs(lasterrR) < abs(errR)) {
 			speedR = -speedR;
 		}
-		ddsrv.request.left = speedL;
-		ddsrv.request.right = speedR;
+		pdsrv.request.left = speedL;
+		pdsrv.request.right = speedR;
 		lasterrL = errL;
 		lasterrR = errR;
-		diffDrive.call(ddsrv);
+		diffDrive.call(pdsrv);
 	}
 	this->stop();
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
@@ -327,7 +327,7 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 	double dt;
 	switch(mode)
 	{
-		case 0:
+		case 0: {
 			double speed;
 			turnAbs(calcAngle(x - this->xcord, y - this->ycord));
 			/*
@@ -362,7 +362,8 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			->
 
 		*/
-		case 1:
+		}
+		case 1: {
 			double speed;
 			turnAbs(calcAngle(x, y));
 			/*
@@ -384,6 +385,7 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			if (stay) { return 1; }
 			this->turnAbs(targetTheta);
 			return 1;
+		}
 	}
 	return 0;
 }
