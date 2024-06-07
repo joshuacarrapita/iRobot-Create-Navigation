@@ -100,6 +100,9 @@ void resetMSG()
 	wall.L_A[1] = 0.0;
 	wall.L_B[0] = 0.0;
 	wall.L_B[1] = 0.0;
+	// reset distance and angle to front wall
+	wall.angle_f = 0.0;
+	wall.dist_f = 0.0;
 	return;
 }
 
@@ -215,6 +218,12 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 				wall.F_A[1] = winners[i][0].y;
 				wall.F_B[0] = winners[i][1].x;
 				wall.F_B[1] = winners[i][1].y;
+
+				//angle to front wall
+				wall.angle_f = calcAngle(winners[i][0], winners[i][1]);
+				
+				//distance to front wall
+				wall.dist_f = calcDist(winners[i][0], winners[i][1], robotpos);
 			}
 
 		}

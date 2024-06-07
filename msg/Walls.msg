@@ -6,5 +6,8 @@ float64[2] F_A
 float64[2] F_B
 float64[2] R_A
 float64[2] R_B
+float64 dist_f
+float64 angle_f
+
  
 
