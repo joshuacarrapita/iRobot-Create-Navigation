@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include "paradriver.hpp"
 
-#define MAXSPEED 12.0
+#define MAXSPEED 10.0
 #define MINSPEED 0.3
 #define CORRECTIONMARGIN 3.0
 #define WHEELBASE 0.260		//m
@@ -15,8 +15,8 @@
 
 #define ACCELTIME 30
 #define THETACORRECTION 0.97
-#define DISTTOLERANCE 0.050	//m
-#define ANGLETOLERANCE 1.0
+#define DISTTOLERANCE 0.01	//m
+#define ANGLETOLERANCE 0.5
 
 #define KP 0.20		//proportional gain factor
 #define KD 0.90		//derivative gain factor
@@ -347,9 +347,9 @@ int main(int argc, char **argv)
 	ros::Duration(0.5).sleep();
 	driver.moveDist(0.85, du);
 	
-	driver.turn(180);
+	driver.turn(90);
 	ros::Duration(0.5).sleep();
-	driver.moveDist(0.85, dd);
+	driver.moveDist(0.85, dr);
 
 	return 0;
 }
