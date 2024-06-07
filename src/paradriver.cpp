@@ -16,7 +16,8 @@
 #define ACCELTIME 30
 #define THETACORRECTION 0.97
 #define DISTTOLERANCE 0.01	//m
-#define ANGLETOLERANCE 0.5
+#define ANGLETOLERANCE 0.5	//deg
+#define ENCTOLERANCE 0.1	//rad
 
 #define KP 0.20		//proportional gain factor
 #define KD 0.90		//derivative gain factor
@@ -269,6 +270,30 @@ void DiffDriving::moveDist(double dist, dir direction)
 	return;
 }
 
+void DiffDriving::moveDistEnc(double dist)
+{
+	double speedL;
+	double speedR;
+	double setpointL = dist*32 + this->encLeft;
+	double setointR = dist*32 + this->encRight;
+	double errL = setpointL - this->encLeft;
+	double errR = setpointR - this->encRight;
+	double lasterrL = errL;
+	double lasterrR = errR;
+	double dt;
+	double derrL;
+	double derrR;
+	while (abs(errL) + abs(errL) > 0.1) {
+		speedL = min(MAXSPEED, errL * KP * 300 + KD * (derrL/dt) * 300) + MINSPEED;
+		speedR = min(MAXSPEED, errR * KP * 300 + KD * (derrR/dt) * 300) + MINSPEED;
+		ddsrv.request.left = speed;
+		ddsrv.request.right = speed;
+		diffDrive.call(ddsrv);
+	}
+
+
+}
+
 
 
 void DiffDriving::smoothTurn(double x, double y, double targetTheta)
@@ -335,6 +360,7 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "diffdriving");
 	DiffDriving driver;
 	dir di;
+	/*
 	driver.turn(180);
 	ros::Duration(0.5).sleep();
 	driver.moveDist(0.85, dd);
@@ -347,9 +373,15 @@ int main(int argc, char **argv)
 	ros::Duration(0.5).sleep();
 	driver.moveDist(0.85, du);
 	
+	driver.turn(180);
+	ros::Duration(0.5).sleep();
+	driver.moveDist(1.65, dd);
+
 	driver.turn(90);
 	ros::Duration(0.5).sleep();
-	driver.moveDist(0.85, dr);
-
+	driver.moveDist(0.85, dl);
+	*/
+	
+	
 	return 0;
 }
