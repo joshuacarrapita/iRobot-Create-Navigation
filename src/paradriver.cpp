@@ -201,17 +201,10 @@ void DiffDriving::turn(double targetTheta)
 	this->stop();
 }
 
-<<<<<<< HEAD
-=======
 void moveDist(double dist)
 {
-	ros::spinOnce();
-	double goal = calcDist(this->xcord + n * 
 
 }
-
->>>>>>> origin/16-refining-centering
-
 
 void DiffDriving::smoothTurn(double x, double y, double targetTheta)
 {
