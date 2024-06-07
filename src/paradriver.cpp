@@ -164,7 +164,7 @@ void DiffDriving::turnAbs(double targetTheta)
 		}
 		diffDrive.call(pdsrv);
 	}
-	ROS_INFO("stopping...");
+	//ROS_INFO("stopping...");
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	this->stop();
 }
@@ -201,7 +201,7 @@ void DiffDriving::turn(double targetTheta)
 		diffDrive.call(pdsrv);
 		//if (accel > 0) {accel--;}
 	}
-	ROS_INFO("stopping...");
+	//ROS_INFO("stopping...");
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	this->stop();
 }
@@ -272,6 +272,7 @@ void DiffDriving::moveDist(double dist, dir direction)
 
 void DiffDriving::moveDistEnc(double dist)
 {
+	ros::spinOnce();
 	double speedL;
 	double speedR;
 	double setpointL = dist*32 + this->encLeft;
@@ -283,23 +284,32 @@ void DiffDriving::moveDistEnc(double dist)
 	double dt;
 	double derrL;
 	double derrR;
-	while (abs(errL) + abs(errL) > 0.1) {
+	while (abs(errL) + abs(errL) > ENCTOLERANCE) {
+		dt = ros::Time::now().toSec() - this->clock;
+		ros::spinOnce();
+		errL = setpointL - this->encLeft;
+		errR = setpointR - this->encRight;
+		derrL = lasterrL - errL;
+		derrR = lasterrR - errR;
 		speedL = min(MAXSPEED, errL * KP * 300 + KD * (derrL/dt) * 300) + MINSPEED;
 		speedR = min(MAXSPEED, errR * KP * 300 + KD * (derrR/dt) * 300) + MINSPEED;
-		ddsrv.request.left = speed;
-		ddsrv.request.right = speed;
+		if (abs(lasterrL) < abs(errL)) {
+			speedL = -speedL;
+		}
+		if (abs(lasterrR) < abs(errR)) {
+			speedR = -speedR;
+		}
+		ddsrv.request.left = speedL;
+		ddsrv.request.right = speedR;
+		lasterrL = errL;
+		lasterrR = errR;
 		diffDrive.call(ddsrv);
 	}
-
-
-}
-
-
-
-void DiffDriving::smoothTurn(double x, double y, double targetTheta)
-{
+	this->stop();
+	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	return;
 }
+
 
 /*Idea:
  *mode 0: Turn to face goalpoint, Drive until at goalpoint, Turn to meet targetTheta
@@ -319,6 +329,7 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 		case 0:
 			double speed;
 			turnAbs(calcAngle(x - this->xcord, y - this->ycord));
+			/*
 			while (err > DISTTOLERANCE) {
 				dt = ros::Time::now().toSec() - this->clock;
 				ros::spinOnce();
@@ -330,7 +341,8 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 				this->pdsrv.request.right = speed;
 				diffDrive.call(pdsrv);
 			}
-			this->stop();
+			this->stop();*/
+			this->moveDistEnc(err);
 			ros::Duration(0.5).sleep();
 			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 			if (stay) { return 1; }
