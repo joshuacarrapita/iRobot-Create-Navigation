@@ -313,7 +313,8 @@ void DiffDriving::moveDistEnc(double dist)
 
 /*Idea:
  *mode 0: Turn to face goalpoint, Drive until at goalpoint, Turn to meet targetTheta
- *mode 1: Do a smooth turn until goalpoint is hit, adjust theta to meet targetTheta
+ *mode 1: Turn to face relative goalpoint, drive until reached, turn to meet targetTheta
+ *mode 2: Do a smooth turn until goalpoint is hit, adjust theta to meet targetTheta
 */
 int DiffDriving::drive(int mode, double x, double y, double targetTheta, int stay)
 {
@@ -343,6 +344,8 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			}
 			this->stop();*/
 			this->moveDistEnc(err);
+			this->xcord = x;
+			this->ycord = y;
 			ros::Duration(0.5).sleep();
 			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 			if (stay) { return 1; }
@@ -360,7 +363,26 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 
 		*/
 		case 1:
-			
+			double speed;
+			turnAbs(calcAngle(x, y));
+			/*
+			while (err > DISTTOLERANCE) {
+				dt = ros::Time::now().toSec() - this->clock;
+				ros::spinOnce();
+				err = calcDist(x, y);
+				derr = lasterr - err;
+				lasterr = err;
+				speed = min(MAXSPEED, err * KP * 300 + KD * (derr/dt) * 300) + MINSPEED;
+				this->pdsrv.request.left = speed;
+				this->pdsrv.request.right = speed;
+				diffDrive.call(pdsrv);
+			}
+			this->stop();*/
+			this->moveDistEnc(err);
+			ros::Duration(0.5).sleep();
+			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
+			if (stay) { return 1; }
+			this->turnAbs(targetTheta);
 			return 1;
 	}
 	return 0;
