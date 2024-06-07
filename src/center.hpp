@@ -30,6 +30,7 @@ class Center
         void perpendicularise(const red_fundamentals::Walls::ConstPtr& msg);
         void correctDist(const red_fundamentals::Walls::ConstPtr& msg);
         void center(const red_fundamentals::Walls::ConstPtr& msg);
+        void centering();
 
         Center();
 };

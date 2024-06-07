@@ -9,7 +9,7 @@
 Center::Center()
 {
     diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
-    sub = n.subscribe("walls_topic", 1, center);
+    sub = n.subscribe("walls_topic", 1, &Center::center, this);
 
     this->tolerance = 0.03;
     this->speed = 4;
@@ -172,7 +172,7 @@ void Center::center(const red_fundamentals::Walls::ConstPtr& msg)
 			return;
 		}
 		//if found move on to phase 2
-		if (heading == 1 && msg->dist_f < 0.8 && msg->angle > 75 && msg->angle < 105) {
+		if (heading == 1 && msg->dist_f < 0.8 && msg->angle_f > 75 && msg->angle_f < 105) {
 			ROS_INFO("second wall found at heading 1");
 			isPerpendicular = 0;
 			distCorrect = 0;
@@ -188,8 +188,8 @@ void Center::center(const red_fundamentals::Walls::ConstPtr& msg)
 			return;
 		}
 		//if found move on to phase 2
-		if (msg->dist_f < 0.8 && heading == 3 && msg->angle > 75 && msg->angle < 105) {
-			ROS_INFO("second wall found at heading 3 with dist: %f and angle %f", msg->dist_f, msg->angle);
+		if (msg->dist_f < 0.8 && heading == 3 && msg->angle_f > 75 && msg->angle_f < 105) {
+			ROS_INFO("second wall found at heading 3 with dist: %f and angle %f", msg->dist_f, msg->angle_f);
 			stop();
 			isPerpendicular = 0;
 			distCorrect = 0;
@@ -216,11 +216,18 @@ void Center::center(const red_fundamentals::Walls::ConstPtr& msg)
 	return;
 }
 
+void Center::centering(){
+	while (ros::ok() && centeringPhase != 2) {
+		ros::spinOnce();
+	}
+	ROS_INFO("centering finished");
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "center");
 	ros::NodeHandle n;
 	Center c;
 
-    c.center();
+    c.centering();
 }
