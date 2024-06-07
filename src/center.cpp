@@ -215,3 +215,12 @@ void Center::center(const red_fundamentals::Walls::ConstPtr& msg)
 	}
 	return;
 }
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, "center");
+	ros::NodeHandle n;
+	Center c;
+
+    c.center();
+}
