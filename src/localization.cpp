@@ -18,7 +18,6 @@ using namespace std;
 red_fundamentals::Grid map_cur;
 ros::Publisher pose_pub;
 
-bool ready = false;
 bool need_change = false;
 
 // <row, column>, orientation
@@ -156,9 +155,10 @@ bool localization(red_fundamentals::SimpleCall::Request &req,
     // after centering, we have to rotate and check if there is a wall behind the robot
     // rotate so that we do not have a wall behind us
     // maybe we can put this part outside of this function
-    Moving mover;
+    wallCallback();
+	Moving mover;
     DiffDriving driver;
-    if(!ready){
+ 
         // Rotate 180
        driver.turn(180);
         // check if there is a wall
@@ -222,8 +222,7 @@ bool localization(red_fundamentals::SimpleCall::Request &req,
             }
             ROS_INFO("]");
         }
-        ready = true;
-    }
+        
 
     // First, we compare the current candidates with the walls we received
     // if potential_positions is empty, compare the number of walls

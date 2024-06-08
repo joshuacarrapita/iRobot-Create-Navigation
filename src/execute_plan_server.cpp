@@ -131,6 +131,8 @@ void set_pose(int moved){
   			break;
   	}
   	orientation = moved;
+	ROS_INFO("current position:");
+	ROS_INFO("row: %d, column:%d, orientation:%d", row, column, orientation);
 }
 
 bool execute_plan(red_fundamentals::ExecutePlan::Request  &req,
@@ -172,6 +174,7 @@ bool execute_plan(red_fundamentals::ExecutePlan::Request  &req,
   		mover.moveDist(0.8);
   		set_pose(req.plan[i]);
   		
+		wallCallback();	
   		if(!compareWalls(map_cur.rows[row].cells[column], orientation)){
   			s.playLostSound();
   			ROS_INFO("Lost! We have to relocalize ourselves...");
@@ -210,7 +213,8 @@ int main(int argc, char **argv)
   	if(need_localization){
   	// TODO Call centering
   	ROS_INFO("Waiting for the pose message from localization node...");
-  	requestloc.call(srv);
+	ros::Duration(3.0).sleep();
+	requestloc.call(srv);
   	get_current_pose();
   	need_localization = false;
   	ROS_INFO("Ready to execute plan");
