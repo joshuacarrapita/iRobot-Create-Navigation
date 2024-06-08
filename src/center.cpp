@@ -201,7 +201,7 @@ void Center::center(const red_fundamentals::Walls::ConstPtr& msg)
 			srv.request.left = 5;
 			srv.request.right = 5;
 			diffDrive.call(srv);
-			//ros::Duration(moveIncrement).sleep();
+			ros::Duration(moveIncrement).sleep();
 			//stop();
 			return;
 		}
