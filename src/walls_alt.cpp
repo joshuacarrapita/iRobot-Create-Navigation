@@ -372,7 +372,7 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "walls");
 	ros::NodeHandle n;
 	ros::Subscriber sub = n.subscribe("scan_filtered", 1, extendedSransac);
-	pub = n.advertise<red_fundamentals::Walls>("walls_topic", 1);
+	pub = n.advertise<red_fundamentals::Walls>("walls_alt_topic", 1);
 	ROS_INFO("start detecting walls");
 	while(ros::ok()) {
 		ros::spinOnce();
