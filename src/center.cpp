@@ -6,14 +6,11 @@
 #include "center.hpp"
 
 
-Center::Center()
+Center::Center() : isPerpendicular(0), distCorrect(0), turnCtr(0), noPerp(0), centeringPhase(0), heading(0),
+                   tolerance(0.03), speed(4.0), moveIncrement(0.1)
 {
     diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
     sub = n.subscribe("walls_topic", 1, &Center::center, this);
-
-    this->tolerance = 0.03;
-    this->speed = 4;
-    this->moveIncrement = 0.1;
 }
 
 //stop robot
@@ -201,7 +198,7 @@ void Center::center(const red_fundamentals::Walls::ConstPtr& msg)
 			srv.request.left = 5;
 			srv.request.right = 5;
 			diffDrive.call(srv);
-			ros::Duration(moveIncrement).sleep();
+			//ros::Duration(moveIncrement).sleep();
 			//stop();
 			return;
 		}

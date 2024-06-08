@@ -100,9 +100,6 @@ void resetMSG()
 	wall.L_A[1] = 0.0;
 	wall.L_B[0] = 0.0;
 	wall.L_B[1] = 0.0;
-	// reset distance and angle to front wall
-	wall.angle_f = 0.0;
-	wall.dist_f = 0.0;
 	return;
 }
 
@@ -222,8 +219,6 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 
 		}
 	}
-	//sransac(msg);
-	houghTransform(msg);
 	
 	pub.publish(wall);
 }
@@ -243,7 +238,7 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "walls_alt");
 	ros::NodeHandle n;
 	ros::Subscriber sub = n.subscribe("scan_filtered", 1, extendedSransac);
-	pub = n.advertise<red_fundamentals::WsllsAlt>("walls_alt_topic", 1);
+	pub = n.advertise<red_fundamentals::WallsAlt>("walls_alt_topic", 1);
 	ROS_INFO("start detecting walls");
 	while(ros::ok()) {
 		ros::spinOnce();

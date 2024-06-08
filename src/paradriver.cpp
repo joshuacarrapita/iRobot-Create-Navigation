@@ -5,24 +5,24 @@
 #include <cstdlib>
 #include "paradriver.hpp"
 
-#define MAXSPEED 12.0
+#define MAXSPEED 10.0
 #define MINSPEED 0.3
 #define CORRECTIONMARGIN 3.0
-#define WHEELBASE 260		//mm
-#define WHEELRADIUS 33		//mm
+#define WHEELBASE 0.260		//m
+#define WHEELRADIUS 0.033	//m
 #define RADIANSPERROTATION 5.5
-#define DISTPERROTATION 181.5	//mm
+#define DISTPERROTATION 0.1815	//m
 
 #define ACCELTIME 30
 #define THETACORRECTION 0.97
-#define DISTTOLERANCE 50	//mm
-#define ANGLETOLERANCE 1.0
+#define DISTTOLERANCE 0.01	//m
+#define ANGLETOLERANCE 0.5	//deg
+#define ENCTOLERANCE 0.1	//rad
 
 #define KP 0.20		//proportional gain factor
 #define KD 0.90		//derivative gain factor
 
 using namespace std;
-
 
 DiffDriving::DiffDriving()
 {
@@ -38,6 +38,7 @@ DiffDriving::DiffDriving()
 	this->odomInit();
 }
 
+//stop motors
 void DiffDriving::stop()
 {
 	this->pdsrv.request.left = 0;
@@ -45,6 +46,7 @@ void DiffDriving::stop()
 	diffDrive.call(pdsrv);
 }
 
+//reset encoders and odometry values to 0
 void DiffDriving::resetOdometer()
 {
 	ros::ServiceClient resetEncoders = n.serviceClient<create_fundamentals::ResetEncoders>("reset_encoders");
@@ -56,6 +58,7 @@ void DiffDriving::resetOdometer()
 	ROS_INFO("encoders reset");
 }
 
+//initialise the odometer by making sure we get correct values
 int DiffDriving::odomInit()
 {
 	ROS_INFO("initialising odometer");
@@ -82,6 +85,7 @@ double DiffDriving::calcAngle(double x, double y)
 	return signer * (acos(y/sqrt(x*x+y*y)) * (180/M_PI));
 }
 
+//calculate euclidian distance between current position and given point
 double DiffDriving::calcDist(double x, double y)
 {
         return sqrt((x - this->xcord)*(x - this->xcord)+(y - this->ycord)*(y - this->ycord));
@@ -90,7 +94,7 @@ double DiffDriving::calcDist(double x, double y)
 
 
 
-//returns distance in mm
+//returns distance in m
 double DiffDriving::encoderToDist(double encDiff)
 {
 	return (encDiff/RADIANSPERROTATION)*DISTPERROTATION;
@@ -131,7 +135,7 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 	}
 }
 
-//Turn to specific absolute angle
+//Turn to specific absolute angle with PD-Control via odometer
 void DiffDriving::turnAbs(double targetTheta)
 {
 	ros::spinOnce();
@@ -148,7 +152,7 @@ void DiffDriving::turnAbs(double targetTheta)
 		err = abs(targetTheta - theta);
 		derr = lasterr - err;
 		lasterr = err;
-		speed = min(MAXSPEED, err * KP + KD * (derr/dt));
+		speed = min(MAXSPEED, err * KP + KD * (derr/dt)) + MINSPEED;
 		if (theta > targetTheta) {
 			//ROS_INFO("turning left");
 			this->pdsrv.request.left = -speed;
@@ -160,13 +164,13 @@ void DiffDriving::turnAbs(double targetTheta)
 		}
 		diffDrive.call(pdsrv);
 	}
-	ROS_INFO("stopping...");
+	//ROS_INFO("stopping...");
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	this->stop();
 }
 
 
-//Turn specific relative angles with P-Control via Odometer
+//Turn specific relative angles with PD-Control via odometer
 void DiffDriving::turn(double targetTheta)
 {
 	ros::spinOnce();
@@ -184,7 +188,7 @@ void DiffDriving::turn(double targetTheta)
 		err = abs(goal - theta);
 		derr = lasterr - err;
 		lasterr = err;
-		speed = min(MAXSPEED, err * KP + KD * (derr/dt));
+		speed = min(MAXSPEED, err * KP + KD * (derr/dt)) + MINSPEED;
 		if (theta > goal) {
 			//turn left
 			this->pdsrv.request.left = -speed;
@@ -197,110 +201,228 @@ void DiffDriving::turn(double targetTheta)
 		diffDrive.call(pdsrv);
 		//if (accel > 0) {accel--;}
 	}
-	ROS_INFO("stopping...");
+	//ROS_INFO("stopping...");
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	this->stop();
 }
 
-
-
-void DiffDriving::smoothTurn(double x, double y, double targetTheta)
+//function to move distances along only one axis of the global coordinate system
+//assuming we are aligned the directions are as specified for the execute_plan
+//requires turning in correct direction before moving
+void DiffDriving::moveDist(double dist, dir direction)
 {
+	ros::spinOnce();
+	double speed;
+	double err;
+	double setpoint;
+	switch(direction)
+	{
+		case dr:
+			setpoint = this->xcord + dist;
+			err = setpoint - this->xcord;
+			break;
+		case du:
+			setpoint = this->ycord + dist;
+			err = setpoint - this->ycord;
+			break;
+		case dl:
+			setpoint = this->xcord - dist;
+			err = setpoint - this->xcord;
+			break;
+		case dd:
+			setpoint = this->ycord - dist;
+			err = setpoint - this->ycord;
+			break;
+	}
+	double lasterr = err;
+	double derr;
+	double dt;
+	while (abs(err) > DISTTOLERANCE) {
+		dt = ros::Time::now().toSec() - this->clock;
+		ros::spinOnce();
+		switch(direction)
+		{
+			case dr:
+				err = setpoint - this->xcord;
+				break;
+			case du:
+				err = setpoint - this->ycord;
+				break;
+			case dl:
+				err = setpoint - this->xcord;
+				break;
+			case dd:
+				err = setpoint - this->ycord;
+				break;
+		}
+		derr = lasterr - err;
+		speed = min(MAXSPEED, abs(err) * KP * 300+ KD * (derr/dt) * 300) + MINSPEED;
+		if (abs(lasterr) < abs(err)) {
+			speed = -speed;
+		}
+		this->pdsrv.request.left = speed;
+		this->pdsrv.request.right = speed;
+		lasterr = err;
+		diffDrive.call(pdsrv);
+	}
+	this->stop();
+	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	return;
 }
 
+void DiffDriving::moveDistEnc(double dist)
+{
+	ros::spinOnce();
+	double speedL;
+	double speedR;
+	double setpointL = dist*32 + this->encLeft;
+	double setpointR = dist*32 + this->encRight;
+	double errL = setpointL - this->encLeft;
+	double errR = setpointR - this->encRight;
+	double lasterrL = errL;
+	double lasterrR = errR;
+	double dt;
+	double derrL;
+	double derrR;
+	while (abs(errL) + abs(errL) > ENCTOLERANCE) {
+		dt = ros::Time::now().toSec() - this->clock;
+		ros::spinOnce();
+		errL = setpointL - this->encLeft;
+		errR = setpointR - this->encRight;
+		derrL = lasterrL - errL;
+		derrR = lasterrR - errR;
+		speedL = min(MAXSPEED, errL * KP * 300 + KD * (derrL/dt) * 300) + MINSPEED;
+		speedR = min(MAXSPEED, errR * KP * 300 + KD * (derrR/dt) * 300) + MINSPEED;
+		if (abs(lasterrL) < abs(errL)) {
+			speedL = -speedL;
+		}
+		if (abs(lasterrR) < abs(errR)) {
+			speedR = -speedR;
+		}
+		pdsrv.request.left = speedL;
+		pdsrv.request.right = speedR;
+		lasterrL = errL;
+		lasterrR = errR;
+		diffDrive.call(pdsrv);
+	}
+	this->stop();
+	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
+	return;
+}
+
+
 /*Idea:
  *mode 0: Turn to face goalpoint, Drive until at goalpoint, Turn to meet targetTheta
- *mode 1: Do a smooth turn until goalpoint is hit, adjust theta to meet targetTheta
+ *mode 1: Turn to face relative goalpoint, drive until reached, turn to meet targetTheta
+ *mode 2: Do a smooth turn until goalpoint is hit, adjust theta to meet targetTheta
 */
 int DiffDriving::drive(int mode, double x, double y, double targetTheta, int stay)
 {
 	ros::spinOnce();
 	double errX = x - this->xcord;
 	double errY = y - this->ycord;
-	//double err = (errX + errY)/2;
-	//double vecAngle = calcAngle(x,y);
 	double err = calcDist(x, y);
 	double lasterr = err;
 	double derr;
 	double dt;
 	switch(mode)
 	{
-		case 0:
+		case 0: {
 			double speed;
 			turnAbs(calcAngle(x - this->xcord, y - this->ycord));
+			/*
 			while (err > DISTTOLERANCE) {
 				dt = ros::Time::now().toSec() - this->clock;
 				ros::spinOnce();
 				err = calcDist(x, y);
 				derr = lasterr - err;
 				lasterr = err;
-				speed = min(MAXSPEED, err * KP + KD * (derr/dt));
+				speed = min(MAXSPEED, err * KP * 300 + KD * (derr/dt) * 300) + MINSPEED;
 				this->pdsrv.request.left = speed;
 				this->pdsrv.request.right = speed;
 				diffDrive.call(pdsrv);
 			}
-			this->stop();
+			this->stop();*/
+			this->moveDistEnc(err);
+			this->xcord = x;
+			this->ycord = y;
 			ros::Duration(0.5).sleep();
 			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 			if (stay) { return 1; }
 			this->turnAbs(targetTheta);
 			return 1;
-		
-			
+		//idea for smooth driving:
+		/*-Use local coordinate system with y axis always being robot heading
+		  -Each step calculate delta theta,x,y to target point
+		  -First drive according to delta theta (=angle of vector to target point from current robot position)
+			->if d_theta < 0 -> turn left by using higher speed for right wheel
+			->if d_theta > 0 -> turn right by using higher speed for left wheel
+		  -The delta of the speeds should be governed with a factor derived from delta theta
+		  -Then drive according to delta x and y
+			->
+
+		*/
+		}
+		case 1: {
+			double speed;
+			turnAbs(calcAngle(x, y));
+			/*
+			while (err > DISTTOLERANCE) {
+				dt = ros::Time::now().toSec() - this->clock;
+				ros::spinOnce();
+				err = calcDist(x, y);
+				derr = lasterr - err;
+				lasterr = err;
+				speed = min(MAXSPEED, err * KP * 300 + KD * (derr/dt) * 300) + MINSPEED;
+				this->pdsrv.request.left = speed;
+				this->pdsrv.request.right = speed;
+				diffDrive.call(pdsrv);
+			}
+			this->stop();*/
+			this->moveDistEnc(err);
+			ros::Duration(0.5).sleep();
+			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
+			if (stay) { return 1; }
+			this->turnAbs(targetTheta);
+			return 1;
+		}
 	}
 	return 0;
 }
 
+void DiffDriving::correct_odometry_error(double x_dest, double y_dest, double x_center_rel_act, double y_center_rel_act)
+{
+	this->xcord = x_dest - x_center_rel_act;
+	this->ycord = y_dest - y_center_rel_act;
+}
 
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "diffdriving");
 	DiffDriving driver;
+	dir di;
+	/*
+	driver.turn(180);
+	ros::Duration(0.5).sleep();
+	driver.moveDist(0.85, dd);
+	
+	driver.turn(-90);
+	ros::Duration(0.5).sleep();
+	driver.moveDist(0.85, dr);
+	
+	driver.turn(-90);
+	ros::Duration(0.5).sleep();
+	driver.moveDist(0.85, du);
+	
+	driver.turn(180);
+	ros::Duration(0.5).sleep();
+	driver.moveDist(1.65, dd);
 
 	driver.turn(90);
 	ros::Duration(0.5).sleep();
-	driver.turn(-90);
-	ros::Duration(0.5).sleep();
-	driver.turn(-45);
-	ros::Duration(0.5).sleep();
-	driver.turn(135);
-	ros::Duration(0.5).sleep();
-	driver.turn(270);
-	/*
-	ros::spinOnce();
-	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
-	driver.turn(-90);
-	driver.moveDist(0.3);
-	ros::Duration(0.5).sleep();
-	ros::spinOnce();
-	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
-	driver.turn(180);
-	driver.moveDist(0.3);
-	ros::spinOnce();
-	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", driver.xcord, driver.ycord, driver.theta, driver.encLeft, driver.encRight);
+	driver.moveDist(0.85, dl);
 	*/
-	/*
-	driver.drive(0, 0, 1000, 0, 1);
-	driver.drive(0, 1000, 1000, 0, 1);
-	driver.drive(0, 1000, 0, 0, 1);
-	driver.drive(0, 0, 0, 0, 0);
-	*/
-	/*
-	for (int i = 0; i < 2; i++) {
-		driver.turnAbs(-180);
-		ros::Duration(0.5).sleep();
-		driver.turnAbs(0);
-		ros::Duration(0.5).sleep();
-	}
-	*/
-	/*
-	driver.turn(180);
-	ros::Duration(0.5).sleep();
-	driver.turn(180);
-	ros::Duration(0.5).sleep();
-	driver.turnAbs(0);
-	driver.stop();
-	*/
+	
+	
 	return 0;
 }

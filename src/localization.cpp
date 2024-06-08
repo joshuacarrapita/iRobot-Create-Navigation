@@ -52,7 +52,7 @@ void mapCallback() {
 
 void wallCallback(){
     while(ros::ok()) {
-        const red_fundamentals::WallsAlt::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::WallsAlt>("walls_topic",
+        const red_fundamentals::WallsAlt::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::WallsAlt>("walls_alt_topic",
                                                                                                           ros::Duration(0.2));
         if(msg != nullptr) {
             wall_nums.clear();
