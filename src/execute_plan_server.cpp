@@ -12,6 +12,7 @@
 #include "red_fundamentals/WallsAlt.h"
 #include "paradriver.hpp"
 #include "song.hpp"
+#include "center.hpp"
 
 using namespace std;
 
@@ -65,7 +66,7 @@ void mapCallback() {
 
 void wallCallback(){
     while(ros::ok()) {
-        const red_fundamentals::WallsAlt::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::WallsAlt>("walls_topic",
+        const red_fundamentals::WallsAlt::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::WallsAlt>("walls_alt_topic",
                                                                                                           ros::Duration(0.2));
         if(msg != nullptr) {
             wall_nums.clear();
@@ -167,6 +168,7 @@ void localization() {
     // after centering, we have to rotate and check if there is a wall behind the robot
     // rotate so that we do not have a wall behind us
     // maybe we can put this part outside of this function
+    ROS_INFO("We are here");
     Moving mover;
     DiffDriving driver;
     if(!ready){
@@ -489,24 +491,29 @@ void getNextPose(int next_action){
 //bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 //          red_fundamentals::ExecutePlan::Response &res){
 
-bool execute_plan_callback(){
+bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
+          red_fundamentals::ExecutePlan::Response &res){
+
+    Center* c = new Center();
     if(lost == true){
-        //Recenter
+        
+        c->centering();  // center
+        delete c;
         mapCallback();	// Get map
         ros::Duration(1.0).sleep();
         wallCallback();	// Get walls
-		potential_positions.clear();
+		
+        potential_positions.clear();
 		candidates_seen.clear();
         localization();	// Localize
     }
 
 	// Initialize and reset variables between callbacks
-	// vector<int> exec_plan = req.plan;
-    // Testing manually
-    vector<int> exec_plan = {1,3,0};
-	//res.success = false;
+    vector<int> exec_plan = req.plan;
+	res.success = false;
 	drive_direction robot_dir = static_cast<drive_direction>(curr_pose.orientation);
 	Moving mover;
+    DiffDriving driver;
 	
 	// go over the whole execution plan
 	for (int i = 0; i < exec_plan.size(); i++){
@@ -520,19 +527,19 @@ bool execute_plan_callback(){
 			case LEFT_TURN:
 			case ALSO_LEFT_TURN:
 				// do left 90° turn
-				mover.turnRA(0);
+				driver.turn(-90);
 				break;
 			
 			case RIGHT_TURN:
 			case ALSO_RIGHT_TURN:
 				// do right 90° turn
-				mover.turnRA(1);
+				driver.turn(90);
 				break;
 			
 			case BACK_TURN:
 			case ALSO_BACK_TURN:
 				// do right 180° turn
-				mover.turnAround();
+				driver.turn(180);
 				break;
 
 			default:
@@ -550,10 +557,10 @@ bool execute_plan_callback(){
 				return false;
 			}
 		    ROS_INFO("Almost hit a wall!");
-			lost = true;	// Are we automatically lost because we saw a wall?
+			lost = true;
 			s.playLostSound();
             ROS_INFO("We got lost, because we almost hit a wall");
-			//return true;
+			return true;
 		}
 		
 		// before moving checking the cell we would be in
@@ -571,9 +578,9 @@ bool execute_plan_callback(){
 		red_fundamentals::Cell cell = map_cur.rows[next_pose.row].cells[next_pose.column];
 		if (!compareWalls(cell, next_pose.orientation)) {
 			// We got lost!
-			s.playLostSound();
-            ROS_INFO("The walls dont match. We got lost");
 			lost = true;
+            s.playLostSound();
+            ROS_INFO("The walls dont match. We got lost");
 			return true;
 		} else {
 			// We know where we are and publish
@@ -590,7 +597,7 @@ bool execute_plan_callback(){
 
 	}
 
-	//res.success = true;
+	res.success = true;
 	return true;
 }
 
@@ -601,17 +608,15 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
 
   pose_pub = n.advertise<red_fundamentals::Pose>("/pose", 1);
-  // TODO: Centering ?
-  mapCallback();	// Get map
-  ros::Duration(1.0).sleep();
-  wallCallback();	// Get walls
-  localization();	// Localize
 
-  // Execute Plan
-  //ros::ServiceServer service = n.advertiseService("execute_plan", execute_plan_callback);
+  ros::init(argc, argv, "execute_plan_server");
+  ros::NodeHandle n;
+  
+  ros::ServiceServer service = n.advertiseService("execute_plan", execute_plan_callback);
+
   ROS_INFO("Ready to run execute plan");
 
-  execute_plan_callback();
-
+  ros::spin();
+  
   return 0;
 }

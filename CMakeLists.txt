@@ -43,6 +43,7 @@ add_message_files(FILES
 add_service_files(FILES
 	ExecutePlan.srv
 	StopSrv.srv
+	SimpleCall.srv
 )
 
 #common commands for building c++ executables and libraries
@@ -108,7 +109,8 @@ add_executable(execute_plan_server src/execute_plan_server.cpp)
 add_library(moving src/moving.cpp)
 add_library(paradriver src/paradriver.cpp)
 add_library(song src/song.cpp)
-target_link_libraries(execute_plan_server moving paradriver song ${catkin_LIBRARIES})
+add_library(center src/center.cpp)
+target_link_libraries(execute_plan_server moving paradriver song center ${catkin_LIBRARIES})
 add_dependencies(execute_plan_server create_fundamentals_generate_messages_cpp)
 
 #add_executable(corridor src/corridor.cpp)
@@ -140,7 +142,7 @@ add_executable(test_sound src/test_sound.cpp)
 target_link_libraries(test_sound ${catkin_LIBRARIES})
 add_dependencies(test_sound create_fundamentals_generate_messages_cpp)
 
-add_executable(center src/center.cpp)
-target_link_libraries(center ${catkin_LIBRARIES})
-add_dependencies(center create_fundamentals_generate_messages_cpp)
+#add_executable(center src/center.cpp)
+#target_link_libraries(center ${catkin_LIBRARIES})
+#add_dependencies(center create_fundamentals_generate_messages_cpp)
 

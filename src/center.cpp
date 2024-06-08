@@ -218,9 +218,10 @@ void Center::centering(){
 		ros::spinOnce();
 	}
 	ROS_INFO("centering finished");
+	return;
 }
 
-int main(int argc, char **argv)
+/* int main(int argc, char **argv)
 {
     ros::init(argc, argv, "center");
 	ros::NodeHandle n;
@@ -228,3 +229,4 @@ int main(int argc, char **argv)
 
     c.centering();
 }
+ */
