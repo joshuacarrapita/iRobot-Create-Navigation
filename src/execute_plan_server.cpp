@@ -3,6 +3,7 @@
 #include "red_fundamentals/ExecutePlan.h"
 #include <vector>
 #include "paradriver.hpp"
+#include "moving.hpp"
 #include "smooth_plan.hpp"
 #include "red_fundamentals/Pose.h"
 #include "red_fundamentals/Grid.h"
@@ -139,6 +140,7 @@ bool execute_plan(red_fundamentals::ExecutePlan::Request  &req,
   // initialize variables 
   res.success = false;
   DiffDriving driver;
+  Moving mover;
   Song s;
   // check if the plan is executable
   
@@ -167,7 +169,7 @@ bool execute_plan(red_fundamentals::ExecutePlan::Request  &req,
   				break;
   		}
   		
-  		driver.moveDist(0.8, static_cast<dir>(req.plan[i]));
+  		mover.moveDist(0.8);
   		set_pose(req.plan[i]);
   		
   		if(!compareWalls(map_cur.rows[row].cells[column], orientation)){

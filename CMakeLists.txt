@@ -110,7 +110,8 @@ add_library(moving src/moving.cpp)
 add_library(paradriver src/paradriver.cpp)
 add_library(song src/song.cpp)
 add_library(center src/center.cpp)
-target_link_libraries(execute_plan_server moving paradriver song center ${catkin_LIBRARIES})
+add_library(smooth_plan src/smooth_plan.cpp)
+target_link_libraries(execute_plan_server smooth_plan moving paradriver song center ${catkin_LIBRARIES})
 add_dependencies(execute_plan_server create_fundamentals_generate_messages_cpp)
 
 #add_executable(corridor src/corridor.cpp)
@@ -122,7 +123,6 @@ add_dependencies(execute_plan_server create_fundamentals_generate_messages_cpp)
 #add_dependencies(pd_control create_fundamentals_generate_messages_cpp)
 
 add_executable(smooth_server src/smooth_server.cpp)
-add_library(smooth_plan src/smooth_plan.cpp)
 target_link_libraries(smooth_server moving smooth_plan ${catkin_LIBRARIES})
 add_dependencies(smooth_server create_fundamentals_generate_messages_cpp)
 
