@@ -1,6 +1,6 @@
 #include "ros/ros.h"
 #include "sensor_msgs/LaserScan.h"
-#include "red_fundamentals/Walls.h"
+#include "red_fundamentals/WallsAlt.h"
 #include <cstdlib>
 
 #define LARRSIZE 726
@@ -20,14 +20,8 @@ double errThresh = 0.02;
 int candidateDist = 5;
 int winnerThresh = 70;
 
-const int num_rows = 360; // 0 bis 2pi entspricht 360 Grad
-const int num_cols = 1100;
-
-vector<vector<int>> houghRaum(num_rows, vector<int>(num_cols)); // Hough Raum
-
-
 ros::Publisher pub;
-red_fundamentals::Walls wall;
+red_fundamentals::WallsAlt wall;
 
 typedef struct Coords
 {
@@ -111,129 +105,6 @@ void resetMSG()
 	wall.dist_f = 0.0;
 	return;
 }
-
-/*
-//simplified RANSAC making use of environment constraints
-void sransac(const sensor_msgs::LaserScan::ConstPtr& msg)
-{
-	vector<coords> coordinates;
-	coords pol;
-	//int j = 0;
-	//get all valid measurements and convert to cartesian
-	for (int i = (TOTALOFFSET-1); i < LARRSIZE - (LARRUSEDOFFSET+1); i++) {
-		if (isnan(msg->ranges[i]) && msg->ranges[i] < msg->range_min) {
-			continue;
-		}
-		pol.x = msg->ranges[i];
-		pol.y = calcSensAngle(i - (TOTALOFFSET-1));
-		coordinates.push_back(polToCart(pol));
-		//ROS_INFO("Generated cartesian coordinate %i with (%f , %f)", j, coordinates[j].x, coordinates[j].y);
-		//j++;
-	}
-	//actual SRANSAC start
-	int maxInliers = 0;
-	coords winner_a;
-	coords winner_b;
-	//take candidates with fixed interval instead of random
-	for (int i = 0; i < coordinates.size()-(candidateDist+1); i+=candidateDist) {
-		int curInliers = 0;
-		coords candidate_a = coordinates[i];
-		coords candidate_b = coordinates[i+candidateDist];
-		//count number of inliers
-		for (int j = 0; j < coordinates.size(); j++) {
-			if (calcDist(candidate_a, candidate_b, coordinates[j]) < errThresh) {
-				curInliers++;
-			}
-		}
-		//update winner if current candidates have more inliers than previous best
-		if (curInliers > maxInliers) {
-			maxInliers = curInliers;
-			winner_a = candidate_a;
-			winner_b = candidate_b;
-			//ROS_INFO("winner found with %i inliers", curInliers);
-		}
-	}
-	wall.dist_f = calcDist(winner_a, winner_b, robotpos);
-	wall.angle_f = calcAngle(winner_a, winner_b) - 20;
-	//wall.angle = calcAngleAlt(calcLineEquation(winner_a, winner_b).x);
-	ROS_INFO("Best wall with %i inliers has dist: %.7lf angle: %.7lf", maxInliers, wall.dist_f, wall.angle_f);
-}*/
-
-
-// Funktion, um Indizes des größten Wertes zu finden
-pair<int, int> findMaxValueIndex(vector<vector<int>>& array) {
-    int maxVal = array[0][0]; // Annahme: Das erste Element ist der vorläufige größte Wert
-    pair<int, int> maxIndex = make_pair(0, 0); // Die Indizes des vorläufig größten Werts
-    
-    // Durchlaufe das gesamte Array
-    for (size_t i = 0; i < array.size(); ++i) {
-        for (size_t j = 0; j < array[i].size(); ++j) {
-            // Überprüfe, ob das aktuelle Element größer als der bisher größte Wert ist
-            if (array[i][j] > maxVal) {
-                maxVal = array[i][j]; // Aktualisiere den größten Wert
-                maxIndex = make_pair(i, j); // Aktualisiere die Indizes des größten Werts
-            }
-        }
-    }
-    
-    return maxIndex; 
-}
-
-
-void houghTransform(const sensor_msgs::LaserScan::ConstPtr& msg)
-{   
-  // Hough Raum auf 0 setzen
-  for (int i = 0; i < num_rows; ++i) {
-    for (int j = 0; j < num_cols; ++j) {
-        houghRaum[i][j] = 0;
-    }
-  }
-  
-  for(int i = 0; i < msg->ranges.size(); i++){
-    // Durch die Datenpunkte iterieren
-    if (!isnan(msg->ranges[i]) && msg->ranges[i] >= msg->range_min && msg->ranges[i] <= msg->range_max){
-
-      float angle = msg->angle_min + (msg->angle_increment * i);
-      
-      // Winkel positiv machen (z.B. -pi/2 (90) wird zu 3pi/2 (270))
-      if(angle < 0){
-        angle += 2 * M_PI;
-      }
-      
-      // Wir drehen den Winkel um 90 Grad 
-      angle += 0.5 * M_PI;
-      
-      float x = cos(angle) * msg->ranges[i];
-      float y = sin(angle) * msg->ranges[i];
-
-      for(int alpha = 0; alpha < num_rows; alpha ++){
-        
-        // Winkel umrechnen
-        double radians = (alpha * M_PI) / 180.0;
-
-        
-        // Abstand berechnen
-        double d = (x * cos(radians) + y * sin(radians)) * 1000;
-
-        // Index berechnen
-        int d_index = round(abs(d));
-        
-        houghRaum[alpha][d_index]++;
-      }
-    } else {
-      //ROS_INFO("Nicht betrachteter Datenpunkt: %f", msg->ranges[i]);
-    }
-  }
-
-  // Suche nach dem höchsten Wert im houghRaum
-  
-  pair<int, int> maxIndex = findMaxValueIndex(houghRaum);
-
-  wall.angle_f = maxIndex.first;
-  wall.dist_f =  maxIndex.second / 1000.0;
-  
-}
-
 
 //simplified RANSAC making use of environment constraints
 void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
@@ -372,7 +243,7 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "walls_alt");
 	ros::NodeHandle n;
 	ros::Subscriber sub = n.subscribe("scan_filtered", 1, extendedSransac);
-	pub = n.advertise<red_fundamentals::Walls>("walls_alt_topic", 1);
+	pub = n.advertise<red_fundamentals::WsllsAlt>("walls_alt_topic", 1);
 	ROS_INFO("start detecting walls");
 	while(ros::ok()) {
 		ros::spinOnce();

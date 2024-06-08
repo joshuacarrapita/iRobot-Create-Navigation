@@ -32,6 +32,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined messages
 add_message_files(FILES
 	Walls.msg
+	WallsAlt.msg
 	StopMsg.msg
 	Cell.msg 
 	Grid.msg
