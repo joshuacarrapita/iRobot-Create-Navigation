@@ -9,6 +9,8 @@ class Song
 	public:
 		bool uploadSong(int number, std::vector<unsigned int> song);
         bool playSong(int number, double duration);
+        void playLocalizedSound();
+        void playLostSound();
 
         ros::ServiceClient store_song_client;
         ros::ServiceClient play_song_client;
