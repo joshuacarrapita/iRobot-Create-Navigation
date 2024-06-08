@@ -369,7 +369,7 @@ int main(int argc, char **argv)
 		errThresh = atof(argv[2]);
 		winnerThresh = atoi(argv[3]);
 	}
-	ros::init(argc, argv, "walls");
+	ros::init(argc, argv, "walls_alt");
 	ros::NodeHandle n;
 	ros::Subscriber sub = n.subscribe("scan_filtered", 1, extendedSransac);
 	pub = n.advertise<red_fundamentals::Walls>("walls_alt_topic", 1);
