@@ -4,6 +4,44 @@
 // S: 00, 11, 22, 33 1
 // L: 01, 12, 23, 30 2
 // B: 02, 13, 20, 31 3
+bool is_free(std::vector<int> walls, int direction){
+	for(int w : walls){
+		if(w == direction) return false;
+	}
+	return true;
+}
+
+bool is_executable(int row_tmp, int col_tmp, std::vector<int> plan, red_fundamentals::Grid map){
+	for(int p : plan){
+  		red_fundamentals::Cell tmp = map.rows[row_tmp].cells[col_tmp];
+  		// check if there is a wall in the direction we want to move according to the plan
+  		if(!is_free(tmp.walls, p)) return false;
+  		
+  		// if free, change temporal row and column values to those of the next cell
+  		switch(p){
+  			case 0:
+  				col_tmp += 1;
+  				if(col_tmp < 0 || col_tmp > map.rows[0].cells.size()) return false;
+  				break;
+  			case 1:
+  				row_tmp -= 1;
+  				if(row_tmp < 0 || row_tmp > map.rows.size()) return false;
+  				break;
+  			case 2:
+  				col_tmp -= 1;
+  				if(col_tmp < 0 || col_tmp > map.rows[0].cells.size()) return false;
+  				break;
+  			case 3:
+  				row_tmp += 1;
+  				if(row_tmp < 0 || row_tmp > map.rows.size()) return false;
+  				break;
+  			default:
+  				break;
+  		}
+  	}
+  	return true;
+}
+
 
 std::vector<int> get_direction(std::vector<int> plan){
     std::vector<int> directions;
@@ -82,5 +120,6 @@ void merge_plan(std::vector<std::pair<int, double>> &plan) {
     }
     std::swap(plan, tmp);
 }
+
 
 

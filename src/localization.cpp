@@ -3,6 +3,7 @@
 #include <set>
 #include "ros/ros.h"
 #include "sensor_msgs/LaserScan.h"
+#include "red_fundamentals/SimpleCall.h"
 #include "red_fundamentals/Grid.h"
 #include "red_fundamentals/Row.h"
 #include "red_fundamentals/Cell.h"
@@ -150,7 +151,8 @@ bool duplicate_check(){
     return false;
 }
 
-void localization() {
+bool localization(red_fundamentals::SimpleCall::Request &req,
+                            red_fundamentals::SimpleCall::Response &res) {
     // after centering, we have to rotate and check if there is a wall behind the robot
     // rotate so that we do not have a wall behind us
     // maybe we can put this part outside of this function
@@ -305,11 +307,13 @@ void localization() {
             pose.orientation = potential_positions.begin()->second;
             Song s;
             s.playLocalizedSound();
-            for(int i=0; i<3; i++){
+            for(int i=0; i<5; i++){
                 pose_pub.publish(pose);
                 ROS_INFO("Pose message %d time(s) published", i);
                 ros::Duration(1.0).sleep();
             }
+            potential_positions.clear();
+            candidates_seen.clear();
             break;
         } else {
 
@@ -413,6 +417,9 @@ void localization() {
         // get walls
         wallCallback();
     }
+    
+    res.success = true;
+    return true;
 }
 
 int main(int argc, char **argv){
@@ -425,8 +432,10 @@ int main(int argc, char **argv){
 
     // Get walls
     wallCallback();
-    localization();
-
+    ros::ServiceServer service = n.advertiseService("localization_service", localization);
+    ROS_INFO("Ready to run localization");
+    
+    ros::spin();
     return 0;
 
 }

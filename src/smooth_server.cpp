@@ -204,7 +204,7 @@ bool execute_plan_smooth(red_fundamentals::ExecutePlan::Request  &req,
   }
   
   // plan the movements
-  vector<pair<int, double>> movements = compute_plan((get_direction(req.plan)));
+  vector<pair<int, double>> movements = compute_plan(get_direction(req.plan));
 
   
   // simplify the plan if needed
