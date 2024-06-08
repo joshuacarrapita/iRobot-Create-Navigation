@@ -608,10 +608,6 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
 
   pose_pub = n.advertise<red_fundamentals::Pose>("/pose", 1);
-
-  ros::init(argc, argv, "execute_plan_server");
-  ros::NodeHandle n;
-  
   ros::ServiceServer service = n.advertiseService("execute_plan", execute_plan_callback);
 
   ROS_INFO("Ready to run execute plan");
