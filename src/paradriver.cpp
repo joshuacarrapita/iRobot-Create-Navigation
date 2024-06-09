@@ -2,6 +2,7 @@
 #include "create_fundamentals/DiffDrive.h"
 #include "create_fundamentals/SensorPacket.h"
 #include "create_fundamentals/ResetEncoders.h"
+#include "red_fundamentals/StopMsg.h"
 #include <cstdlib>
 #include "paradriver.hpp"
 
@@ -37,6 +38,16 @@ DiffDriving::DiffDriving()
 	this->resetOdometer();
 	this->odomInit();
 }
+
+bool stop_check(){
+
+	red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(0.2));
+
+	if (stop_message && stop_message->content == "STOP") return true;
+	return false;
+
+}
+
 
 //stop motors
 void DiffDriving::stop()
@@ -238,6 +249,9 @@ void DiffDriving::moveDist(double dist, dir direction)
 	double derr;
 	double dt;
 	while (abs(err) > DISTTOLERANCE) {
+		if (stop_check()) {
+			break;
+		}
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
 		switch(direction)
@@ -285,6 +299,9 @@ void DiffDriving::moveDistEnc(double dist)
 	double derrL;
 	double derrR;
 	while (abs(errL) + abs(errL) > ENCTOLERANCE) {
+		if (stop_check()) {
+			break;
+		}
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
 		errL = setpointL - this->encLeft;
@@ -332,6 +349,9 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			turnAbs(calcAngle(x - this->xcord, y - this->ycord));
 			/*
 			while (err > DISTTOLERANCE) {
+				if (stop_check()) {
+					break;
+				}
 				dt = ros::Time::now().toSec() - this->clock;
 				ros::spinOnce();
 				err = calcDist(x, y);
@@ -368,6 +388,9 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			turnAbs(calcAngle(x, y));
 			/*
 			while (err > DISTTOLERANCE) {
+				if (stop_check()) {
+					break;
+				}
 				dt = ros::Time::now().toSec() - this->clock;
 				ros::spinOnce();
 				err = calcDist(x, y);
