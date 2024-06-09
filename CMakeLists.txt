@@ -115,6 +115,10 @@ add_library(center src/center.cpp)
 target_link_libraries(execute_plan_server moving paradriver song center ${catkin_LIBRARIES})
 add_dependencies(execute_plan_server create_fundamentals_generate_messages_cpp)
 
+add_executable(execute_plan_server_25 src/execute_plan_server_25.cpp)
+target_link_libraries(execute_plan_server_25 moving paradriver song center ${catkin_LIBRARIES})
+add_dependencies(execute_plan_server_25 create_fundamentals_generate_messages_cpp)
+
 #add_executable(corridor src/corridor.cpp)
 #target_link_libraries(corridor moving ${catkin_LIBRARIES})
 #add_dependencies(corridor create_fundamentals_generate_messages_cpp)
