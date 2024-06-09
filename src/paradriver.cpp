@@ -284,6 +284,7 @@ void DiffDriving::moveDist(double dist, dir direction)
 	return;
 }
 
+//PD-control func driving straight for certain distances
 void DiffDriving::moveDistEnc(double dist)
 {
 	ros::spinOnce();
@@ -347,7 +348,7 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 		case 0: {
 			double speed;
 			turnAbs(calcAngle(x - this->xcord, y - this->ycord));
-			/*
+			/* //old way with continuous euclidean distance calculation for error
 			while (err > DISTTOLERANCE) {
 				if (stop_check()) {
 					break;
@@ -363,9 +364,7 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 				diffDrive.call(pdsrv);
 			}
 			this->stop();*/
-			this->moveDistEnc(err);
-			this->xcord = x;
-			this->ycord = y;
+			this->moveDistEnc(err);	//only calculate euclidean distance once then drive straight for that amount of distance
 			ros::Duration(0.5).sleep();
 			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 			if (stay) { return 1; }
