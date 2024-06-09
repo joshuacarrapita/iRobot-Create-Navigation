@@ -283,7 +283,7 @@ void DiffDriving::moveDist(double dist, dir direction)
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	return;
 }
-
+/*
 //PD-control func driving straight for certain distances
 void DiffDriving::moveDistEnc(double dist)
 {
@@ -309,8 +309,8 @@ void DiffDriving::moveDistEnc(double dist)
 		errR = setpointR - this->encRight;
 		derrL = lasterrL - errL;
 		derrR = lasterrR - errR;
-		speedL = min(MAXSPEED, errL * KP * 300 + KD * (derrL/dt) * 300) + MINSPEED;
-		speedR = min(MAXSPEED, errR * KP * 300 + KD * (derrR/dt) * 300) + MINSPEED;
+		speedL = min(MAXSPEED, errL * KP * 2 + KD * (derrL/dt) * 2) + MINSPEED;
+		speedR = min(MAXSPEED, errR * KP * 2 + KD * (derrR/dt) * 2) + MINSPEED;
 		if (abs(lasterrL) < abs(errL)) {
 			speedL = -speedL;
 		}
@@ -327,6 +327,40 @@ void DiffDriving::moveDistEnc(double dist)
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	return;
 }
+*/
+
+void DiffDriving::moveDistEnc(double dist)
+{
+
+	double speed;
+	double errL = dist*32;
+	double errR = dist*32;
+	double errT = errL+errR/2;
+	ros::spinOnce();
+	double goalL = errL + this->encLeft;
+	double goalR = errR + this->encRight;
+	double derr;
+	double dt;
+	while (errT > ENCTOLERANCE) {
+		if (stop_check()) {
+			break;
+		}
+		dt = ros::Time::now().toSec() - this->clock;
+		ros::spinOnce();
+		errT = (goalL-this->encLeft)+(goalR-this->encRight)/2;
+		derr = lasterrT - errT;
+		speed = abs(min(10.0, (errT * KP + (derr/dt) * KD)));
+		ddsrv.request.left = speed;
+		ddsrv.request.right = speed;
+		lasterrT = errT;
+		diffDrive.call(ddsrv);
+	}
+	this->stop();
+	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
+	return;
+}
+
+
 
 
 /*Idea:
