@@ -10,6 +10,7 @@
 #include "red_fundamentals/Cell.h"
 #include "red_fundamentals/Pose.h"
 #include "red_fundamentals/WallsAlt.h"
+#include "red_fundamentals/CalculateCenter.h"
 #include "paradriver.hpp"
 #include "song.hpp"
 #include "center.hpp"
@@ -494,9 +495,12 @@ void getNextPose(int next_action){
 bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
           red_fundamentals::ExecutePlan::Response &res){
 
+	res.success = false;
+
     Center* c = new Center();
     if(lost == true){
-        
+  		ROS_INFO("Plan failed, we are lost!");
+  		ROS_INFO("Recentering!");
         c->centering();  // center
         delete c;
         mapCallback();	// Get map
@@ -505,12 +509,14 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 		
         potential_positions.clear();
 		candidates_seen.clear();
+  		ROS_INFO("Relocalizing!");
         localization();	// Localize
+  		ROS_INFO("Ready to run execute plan again!");
+		return true;
     }
 
 	// Initialize and reset variables between callbacks
     vector<int> exec_plan = req.plan;
-	res.success = false;
 	drive_direction robot_dir = static_cast<drive_direction>(curr_pose.orientation);
 	Moving mover;
     DiffDriving driver;
@@ -617,9 +623,11 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
         }
         //drive and correct odometry
         driver.drive(0, driver.xcord + delta_x, driver.ycord + delta_y, 0, 1); //does turning and set to mode stay so no turning after target coords reached
-        driver.correct_odometry_angle_error();
+		red_fundamentals::CalculateCenter::ConstPtr act_dest = ros::topic::waitForMessage<red_fundamentals::CalculateCenter>("calculate_center_topic", ros::Duration(1));
+        driver.correct_odometry_angle_error(driver.xcord + delta_x, driver.ycord + delta_y, act_dest->x,act_dest->y);
         driver.drive(0, driver.xcord + delta_x, driver.ycord + delta_y, 0, 1);
-        driver.correct_odometry_location_error();
+		act_dest = ros::topic::waitForMessage<red_fundamentals::CalculateCenter>("calculate_center_topic", ros::Duration(1));
+        driver.correct_odometry_location_error(driver.xcord + delta_x, driver.ycord + delta_y, act_dest->x,act_dest->y);
 		//mover.moveDist(0.8);
 
 		// after moving we check if the walls we see match the walls in the map
