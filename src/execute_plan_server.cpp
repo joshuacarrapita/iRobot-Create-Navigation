@@ -169,7 +169,7 @@ void localization() {
     // rotate so that we do not have a wall behind us
     // maybe we can put this part outside of this function
     ROS_INFO("We are here");
-    Moving mover;
+    //Moving mover; //not needed if we use driver funcs
     DiffDriving driver;
     if(!ready){
         // Rotate 180
@@ -407,18 +407,18 @@ void localization() {
         switch (move_direction) { // relative to the direction the robot is heading
             case 0: // RIGHT
                 driver.turn(90);
-                mover.moveDist(0.8);
+                driver.moveDistEnc(0.8);
                 break;
             case 1: // UP
-                mover.moveDist(0.8);
+                driver.moveDistEnc(0.8);
                 break;
             case 2: // LEFT
                 driver.turn(-90);
-                mover.moveDist(0.8);
+                driver.moveDistEnc(0.8);
                 break;
             case 3: // DOWN
                 driver.turn(180);
-                mover.moveDist(0.8);
+                driver.moveDistEnc(0.8);
                 break;
             default:
                 ROS_INFO("Wrong Direction");
