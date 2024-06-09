@@ -1,0 +1,10 @@
+<launch>
+	<node pkg="red_fundamentals" type="walls" name="walls" args="5 0.02" >
+	</node>
+	<node pkg="red_fundamentals" type="walls_alt" name="walls_alt" >
+	</node>
+	<node pkg="red_fundamentals" type="calculate_center" name="calculate_center" >
+	</node>
+	<node pkg="red_fundamentals" type="execute_plan_server" name="execute_plan_server" >
+	</node>
+</launch>
