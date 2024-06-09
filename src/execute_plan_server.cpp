@@ -514,7 +514,28 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 	drive_direction robot_dir = static_cast<drive_direction>(curr_pose.orientation);
 	Moving mover;
     DiffDriving driver;
-	
+
+    //set Odometry according to current pose
+    switch (curr_pose.orientation)
+    {
+        case 0:
+            driver.theta = 90;
+            break;
+        case 1:
+            driver.theta = 0;
+            break;
+        case 2:
+            driver.theta = -90;
+            break;
+        case 3:
+            driver.theta = 180;
+            break;
+        default:
+            break;
+    }
+    driver.xcord = curr_pose.row * 0.8;
+    driver.ycord = curr_pose.column * (-0.8);
+
 	// go over the whole execution plan
 	for (int i = 0; i < exec_plan.size(); i++){
 
@@ -522,6 +543,7 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 		robot_dir = static_cast<drive_direction>(curr_pose.orientation); // update robot direction
 		int turn_dir = robot_dir - next_action; // dynamically calculate the necessary turn amount based on current robot direction and desired cell
 
+        //TODO: this will no longer be necessary if we use global absolute position drive
 		switch(turn_dir){
 
 			case LEFT_TURN:
@@ -556,6 +578,7 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 				ROS_INFO("I couldn't find any laser message!");
 				return false;
 			}
+            //TODO: almost hitting a wall does not mean we are lost unless we precalculate the plan and determined it to be correct but since we do not do this we should not determine we are lost here
 		    ROS_INFO("Almost hit a wall!");
 			lost = true;
 			s.playLostSound();
@@ -569,7 +592,31 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
         ROS_INFO("Next Pose would be at (%d, %d) looking %d", next_pose.row, next_pose.column, next_pose.orientation);
 
         ROS_INFO("We are moving");
-		mover.moveDist(0.8);
+
+        //calculate target coordinates for absolute drive func
+        double delta_x;
+        double delta_y;
+        switch(next_action)
+        {
+            case 0:
+                delta_x = 0.8;
+                delta_y = 0;
+                break;
+            case 1:
+                delta_x = 0;
+                delta_y = 0.8;
+                break;
+            case 2:
+                delta_x = -0.8;
+                delta_y = 0;
+                break;
+            case 3:
+                delta_x = 0;
+                delta_y = -0.8;
+                break;
+        }
+        driver.drive(0, driver.xcord + delta_x, driver.ycord + delta_y, 0, 1); //does turning and set to mode stay so no turning after target coords reached
+		//mover.moveDist(0.8);
 
 		// after moving we check if the walls we see match the walls in the map
 		ros::Duration(1.0).sleep();
