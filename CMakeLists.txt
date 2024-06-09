@@ -33,11 +33,13 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 add_message_files(FILES
 	Walls.msg
 	WallsAlt.msg
+	NewWalls.msg
 	StopMsg.msg
 	Cell.msg 
 	Grid.msg
 	Pose.msg
 	Row.msg
+	CalculateCenter.msg
 )
 #uncomment if you have defined services
 add_service_files(FILES
@@ -146,3 +148,10 @@ add_dependencies(test_sound create_fundamentals_generate_messages_cpp)
 #target_link_libraries(center ${catkin_LIBRARIES})
 #add_dependencies(center create_fundamentals_generate_messages_cpp)
 
+add_executable(calculate_center src/calculate_center.cpp)
+target_link_libraries(calculate_center ${catkin_LIBRARIES})
+add_dependencies(calculate_center create_fundamentals_generate_messages_cpp)
+
+add_executable(new_walls src/new_walls.cpp)
+target_link_libraries(new_walls ${catkin_LIBRARIES})
+add_dependencies(new_walls create_fundamentals_generate_messages_cpp)

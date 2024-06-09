@@ -390,10 +390,26 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 	return 0;
 }
 
-void DiffDriving::correct_odometry_error(double x_dest, double y_dest, double x_center_rel_act, double y_center_rel_act)
+void DiffDriving::correct_odometry_location_error(double x_dest, double y_dest, double x_center_rel_act, double y_center_rel_act)
 {
-	this->xcord = x_dest - x_center_rel_act;
-	this->ycord = y_dest - y_center_rel_act;
+	//x_center_rel_act is the relative x coordinate of the actual center. The x,y-coordinates should always be the destination minus the actual offset from the destination.
+	if(x_center_rel_act != 0.0) {
+		this->xcord = x_dest - x_center_rel_act;
+	}
+	if(y_center_rel_act != 0.0) {
+		this->ycord = y_dest - y_center_rel_act;
+	}
+}
+
+void DiffDriving::correct_odometry_angle_error(double x_dest, double y_dest, double x_center_rel_act, double y_center_rel_act)
+{
+	// the angle correction is the supposed angle toward the center points minus the actual angle towards the center point
+	if (x_center_rel_act != 0.0 && y_center_rel_act != 0.0)
+	{
+		double theta_dest = calcAngle(x_dest, y_dest);
+		double theta_dest_act = calcAngle(this->xcord + x_center_rel_act, this->ycord + y_center_rel_act);
+		this->theta += theta_dest - theta_dest_act;
+	}
 }
 
 int main(int argc, char **argv)
