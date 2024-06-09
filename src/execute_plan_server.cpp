@@ -599,23 +599,27 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
         switch(next_action)
         {
             case 0:
-                delta_x = 0.8;
+                delta_x = 0.4;
                 delta_y = 0;
                 break;
             case 1:
                 delta_x = 0;
-                delta_y = 0.8;
+                delta_y = 0.4;
                 break;
             case 2:
-                delta_x = -0.8;
+                delta_x = -0.4;
                 delta_y = 0;
                 break;
             case 3:
                 delta_x = 0;
-                delta_y = -0.8;
+                delta_y = -0.4;
                 break;
         }
+        //drive and correct odometry
         driver.drive(0, driver.xcord + delta_x, driver.ycord + delta_y, 0, 1); //does turning and set to mode stay so no turning after target coords reached
+        driver.correct_odometry_angle_error();
+        driver.drive(0, driver.xcord + delta_x, driver.ycord + delta_y, 0, 1);
+        driver.correct_odometry_location_error();
 		//mover.moveDist(0.8);
 
 		// after moving we check if the walls we see match the walls in the map
