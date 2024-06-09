@@ -341,6 +341,7 @@ void DiffDriving::moveDistEnc(double dist)
 	double goalR = errR + this->encRight;
 	double derr;
 	double dt;
+	double lasterrT = errT;
 	while (errT > ENCTOLERANCE) {
 		if (stop_check()) {
 			break;
@@ -349,11 +350,11 @@ void DiffDriving::moveDistEnc(double dist)
 		ros::spinOnce();
 		errT = (goalL-this->encLeft)+(goalR-this->encRight)/2;
 		derr = lasterrT - errT;
-		speed = abs(min(10.0, (errT * KP + (derr/dt) * KD)));
-		ddsrv.request.left = speed;
-		ddsrv.request.right = speed;
+		speed = abs(min(10.0, (errT * KP + (derr/dt) * KD)))+MINSPEED;
+		pdsrv.request.left = speed;
+		pdsrv.request.right = speed;
 		lasterrT = errT;
-		diffDrive.call(ddsrv);
+		diffDrive.call(pdsrv);
 	}
 	this->stop();
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);

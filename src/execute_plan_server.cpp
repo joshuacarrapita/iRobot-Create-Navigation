@@ -495,8 +495,6 @@ void getNextPose(int next_action){
 bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
           red_fundamentals::ExecutePlan::Response &res){
 
-	res.success = false;
-
     Center* c = new Center();
     if(lost == true){
   		ROS_INFO("Plan failed, we are lost!");
@@ -511,12 +509,13 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 		candidates_seen.clear();
   		ROS_INFO("Relocalizing!");
         localization();	// Localize
+	lost = false;
   		ROS_INFO("Ready to run execute plan again!");
-		return true;
     }
 
 	// Initialize and reset variables between callbacks
     vector<int> exec_plan = req.plan;
+    res.success = false;
 	drive_direction robot_dir = static_cast<drive_direction>(curr_pose.orientation);
 	Moving mover;
     DiffDriving driver;
@@ -623,10 +622,12 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
         }
         //drive and correct odometry
         driver.drive(0, driver.xcord + delta_x, driver.ycord + delta_y, 0, 1); //does turning and set to mode stay so no turning after target coords reached
-		red_fundamentals::CalculateCenter::ConstPtr act_dest = ros::topic::waitForMessage<red_fundamentals::CalculateCenter>("calculate_center_topic", ros::Duration(1));
+	red_fundamentals::CalculateCenter::ConstPtr act_dest = ros::topic::waitForMessage<red_fundamentals::CalculateCenter>("calculate_center_topic", ros::Duration(1));
+	ROS_INFO("Correcting angle with %lf,%lf,%lf,%lf\n", driver.xcord + delta_x, driver.ycord + delta_y, act_dest->x,act_dest->y);
         driver.correct_odometry_angle_error(driver.xcord + delta_x, driver.ycord + delta_y, act_dest->x,act_dest->y);
         driver.drive(0, driver.xcord + delta_x, driver.ycord + delta_y, 0, 1);
-		act_dest = ros::topic::waitForMessage<red_fundamentals::CalculateCenter>("calculate_center_topic", ros::Duration(1));
+	act_dest = ros::topic::waitForMessage<red_fundamentals::CalculateCenter>("calculate_center_topic", ros::Duration(1));
+	ROS_INFO("Correcting location with %lf,%lf,%lf,%lf\n", driver.xcord + delta_x, driver.ycord + delta_y, act_dest->x,act_dest->y);
         driver.correct_odometry_location_error(driver.xcord + delta_x, driver.ycord + delta_y, act_dest->x,act_dest->y);
 		//mover.moveDist(0.8);
 
