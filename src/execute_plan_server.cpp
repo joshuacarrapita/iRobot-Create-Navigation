@@ -323,6 +323,7 @@ void localization() {
                 ROS_INFO("Pose message %d time(s) published", i);
                 ros::Duration(1.0).sleep();
             }
+            lost = false;
 			ROS_INFO("We are now at (%d, %d) looking %d", curr_pose.row, curr_pose.column, curr_pose.orientation);
             break;
         } else {
@@ -615,6 +616,7 @@ int main(int argc, char **argv){
         
         if(!lost){
             ros::spinOnce();
+        }
         else {
             
             Center* c = new Center();
