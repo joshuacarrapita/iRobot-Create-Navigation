@@ -34,8 +34,9 @@ add_message_files(FILES
 	Walls.msg
 	WallsAlt.msg
 	NewWalls.msg
+	WallsCombined.msg
 	StopMsg.msg
-	Cell.msg 
+	Cell.msg
 	Grid.msg
 	Pose.msg
 	Row.msg
@@ -159,3 +160,7 @@ add_dependencies(calculate_center create_fundamentals_generate_messages_cpp)
 add_executable(new_walls src/new_walls.cpp)
 target_link_libraries(new_walls ${catkin_LIBRARIES})
 add_dependencies(new_walls create_fundamentals_generate_messages_cpp)
+
+add_executable(walls_combined src/walls_combined.cpp)
+target_link_libraries(walls_combined ${catkin_LIBRARIES})
+add_dependencies(walls_combined create_fundamentals_generate_messages_cpp)
