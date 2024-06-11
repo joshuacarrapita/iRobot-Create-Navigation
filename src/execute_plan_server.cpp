@@ -10,6 +10,7 @@
 #include "red_fundamentals/Cell.h"
 #include "red_fundamentals/Pose.h"
 #include "red_fundamentals/WallsAlt.h"
+#include "red_fundamentals/WallsCombined.h"
 #include "red_fundamentals/CalculateCenter.h"
 #include "paradriver.hpp"
 #include "song.hpp"

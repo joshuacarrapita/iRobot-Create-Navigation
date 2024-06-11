@@ -1,0 +1,8 @@
+<launch>
+	<node pkg="red_fundamentals" type="walls_combined" name="walls_combined" >
+	</node>
+	<node pkg="red_fundamentals" type="calculate_center" name="calculate_center" >
+	</node>
+	<node pkg="red_fundamentals" type="execute_plan_server_25" name="execute_plan_server_25" >
+	</node>
+</launch>

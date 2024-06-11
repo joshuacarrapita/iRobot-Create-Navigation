@@ -21,7 +21,7 @@ int candidateDist = 5;
 int winnerThresh = 70;
 
 ros::Publisher pub;
-red_fundamentals::WallsAlt wall;
+red_fundamentals::WallsCombined wall;
 
 typedef struct Coords
 {
@@ -214,10 +214,6 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 				if (winners[i][0].y < 0.5) {
 					wall.walls[1] = true;
 				}
-				if (i = 0) {
-					wall.dist = calcDist(winners[i][0], winners[i][1], robotpos);
-					wall.angle = ang;
-				}
 				wall.F_A[0] = winners[i][0].x;
 				wall.F_A[1] = winners[i][0].y;
 				wall.F_B[0] = winners[i][1].x;
@@ -226,7 +222,10 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 
 		}
 	}
-	
+	if (winners[0][0].x) {
+		wall.dist = calcDist(winners[0][0], winners[0][1], robotpos);
+		wall.angle = calcAngle(winners[0][0], winners[0][1]);
+	}
 	pub.publish(wall);
 }
 
@@ -242,10 +241,10 @@ int main(int argc, char **argv)
 		errThresh = atof(argv[2]);
 		winnerThresh = atoi(argv[3]);
 	}
-	ros::init(argc, argv, "walls_alt");
+	ros::init(argc, argv, "walls_combined");
 	ros::NodeHandle n;
 	ros::Subscriber sub = n.subscribe("scan_filtered", 1, extendedSransac);
-	pub = n.advertise<red_fundamentals::WallsAlt>("walls_alt_topic", 1);
+	pub = n.advertise<red_fundamentals::WallsCombined>("walls_combined_topic", 1);
 	ROS_INFO("start detecting walls");
 	while(ros::ok()) {
 		ros::spinOnce();

@@ -10,6 +10,7 @@
 #include "red_fundamentals/Cell.h"
 #include "red_fundamentals/Pose.h"
 #include "red_fundamentals/WallsAlt.h"
+#include "red_fundamentals/WallsCombined.h"
 #include "paradriver.hpp"
 #include "song.hpp"
 #include "center.hpp"
@@ -506,6 +507,7 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
         potential_positions.clear();
 		candidates_seen.clear();
         localization();	// Localize
+	lost = false;
     }
 
 	// Initialize and reset variables between callbacks
