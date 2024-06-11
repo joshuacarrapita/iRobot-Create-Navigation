@@ -82,17 +82,17 @@ int main(int argc, char **argv)
 			should_stop_check();
 
 			if (should_stop) {
-				ROS_INFO("Publishing STOP");
+				//ROS_INFO("Publishing STOP");
 				msg.content = "STOP";
 				pub.publish(msg);
 			} else {
-				ROS_INFO("Publishing FINE");
+				//ROS_INFO("Publishing FINE");
 				msg.content = "FINE";
 				pub.publish(msg);
 			}
 
 		} else {
-			ROS_INFO("Publishing PAUSING");
+			//ROS_INFO("Publishing PAUSING");
 			msg.content = "PAUSING";
 			pub.publish(msg);
 		}

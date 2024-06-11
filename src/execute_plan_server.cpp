@@ -601,9 +601,9 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 
         ROS_INFO("We are moving");
         //calculate target coordinates for absolute drive func
-        double delta_x;
-        double delta_y;
-        switch(next_action)
+        double delta_x = 0;
+        double delta_y = 0.4;
+        /*switch(next_action)
         {
             case 0:
                 delta_x = 0.4;
@@ -621,7 +621,7 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
                 delta_x = 0;
                 delta_y = -0.4;
                 break;
-        }
+        }*/
         //drive and correct odometry
         driver.drive(0, driver.xcord + delta_x, driver.ycord + delta_y, 0, 1); //does turning and set to mode stay so no turning after target coords reached
 
