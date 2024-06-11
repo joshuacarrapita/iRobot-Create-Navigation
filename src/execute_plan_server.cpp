@@ -575,8 +575,10 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 		ros::Duration(1.0).sleep();
 		wallCallback();	// Get walls
 
+        // TODO: Check if next_pose.row und next_pose.column are outside of range
 		red_fundamentals::Cell cell = map_cur.rows[next_pose.row].cells[next_pose.column];
-		if (!compareWalls(cell, next_pose.orientation)) {
+		
+        if (!compareWalls(cell, next_pose.orientation)) {
 			// We got lost!
 			lost = true;
             s.playLostSound();
