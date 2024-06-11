@@ -28,9 +28,9 @@ class Center
         void moveDist(int direction, float distance);
         void turnRightAngle(int direction);
         void turnAngle(int direction, double angle);
-        void perpendicularise(const red_fundamentals::WallsCombined::ConstPtr& msg);
-        void correctDist(const red_fundamentals::WallsCombined::ConstPtr& msg);
-        void center(const red_fundamentals::WallsCombined::ConstPtr& msg);
+        void perpendicularise(const red_fundamentals::Walls::ConstPtr& msg);
+        void correctDist(const red_fundamentals::Walls::ConstPtr& msg);
+        void center(const red_fundamentals::Walls::ConstPtr& msg);
         void centering();
 
         Center();
