@@ -549,6 +549,16 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
             ros::Duration(1.0).sleep();
 		    wallCallback();	// Get walls
 
+            // Check if curr_pose.row and curr_pose.column are out of range
+            if (curr_pose.row < 0 || curr_pose.row >= map_cur.rows.size() ||
+                curr_pose.column < 0 || curr_pose.column >= map_cur.rows[curr_pose.row].cells.size()) {
+                // We got lost!
+                lost = true;
+                s.playLostSound();
+                ROS_INFO("Out of range of map! We got lost (1)");
+                return true;
+            }
+
             red_fundamentals::Cell cell = map_cur.rows[curr_pose.row].cells[curr_pose.column];
 		    
             if (!compareWalls(cell, next_action)) {
@@ -575,7 +585,16 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 		ros::Duration(1.0).sleep();
 		wallCallback();	// Get walls
 
-        // TODO: Check if next_pose.row und next_pose.column are outside of range
+        // Check if next_pose.row und next_pose.column are outside of range
+        if (next_pose.row < 0 || next_pose.row >= map_cur.rows.size() ||
+            next_pose.column < 0 || next_pose.column >= map_cur.rows[next_pose.row].cells.size()) {
+            // We got lost!
+			lost = true;
+            s.playLostSound();
+            ROS_INFO("Out of range of map! We got lost (2)");
+			return true;
+        }
+
 		red_fundamentals::Cell cell = map_cur.rows[next_pose.row].cells[next_pose.column];
 		
         if (!compareWalls(cell, next_pose.orientation)) {
