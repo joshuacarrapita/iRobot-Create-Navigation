@@ -10,6 +10,7 @@
 #include "red_fundamentals/Cell.h"
 #include "red_fundamentals/Pose.h"
 #include "red_fundamentals/WallsAlt.h"
+#include "red_fundamentals/CalculateCenter.h"
 #include "paradriver.hpp"
 #include "song.hpp"
 #include "center.hpp"
@@ -169,7 +170,6 @@ void localization() {
     // rotate so that we do not have a wall behind us
     // maybe we can put this part outside of this function
     ROS_INFO("We are here");
-    Moving mover;
     DiffDriving driver;
     if(!ready){
         // Rotate 180
@@ -408,18 +408,18 @@ void localization() {
         switch (move_direction) { // relative to the direction the robot is heading
             case 0: // RIGHT
                 driver.turn(90);
-                mover.moveDist(0.8);
+                driver.moveDistEnc(0.8);
                 break;
             case 1: // UP
-                mover.moveDist(0.8);
+                driver.moveDistEnc(0.8);
                 break;
             case 2: // LEFT
                 driver.turn(-90);
-                mover.moveDist(0.8);
+                driver.moveDistEnc(0.8);
                 break;
             case 3: // DOWN
                 driver.turn(180);
-                mover.moveDist(0.8);
+                driver.moveDistEnc(0.8);
                 break;
             default:
                 ROS_INFO("Wrong Direction");
@@ -501,7 +501,28 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 	drive_direction robot_dir = static_cast<drive_direction>(curr_pose.orientation);
 	Moving mover;
     DiffDriving driver;
-	
+
+	//set Odometry according to current pose
+	switch (curr_pose.orientation)
+	{
+		case 0:
+			driver.theta = 90;
+		    break;
+	    case 1:
+		    driver.theta = 0;
+		    break;
+	    case 2:
+		    driver.theta = -90;
+		    break;
+	    case 3:
+		    driver.theta = 180;
+		    break;
+	    default:
+		    break;
+	}
+	driver.xcord = curr_pose.row * 0.8;
+	driver.ycord = curr_pose.column * (-0.8);
+
 	// go over the whole execution plan
 	for (int i = 0; i < exec_plan.size(); i++){
 
@@ -579,7 +600,39 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
         ROS_INFO("Next Pose would be at (%d, %d) looking %d", next_pose.row, next_pose.column, next_pose.orientation);
 
         ROS_INFO("We are moving");
-		mover.moveDist(0.8);
+        //calculate target coordinates for absolute drive func
+        double delta_x;
+        double delta_y;
+        switch(next_action)
+        {
+            case 0:
+                delta_x = 0.4;
+                delta_y = 0;
+                break;
+            case 1:
+                delta_x = 0;
+                delta_y = 0.4;
+                break;
+            case 2:
+                delta_x = -0.4;
+                delta_y = 0;
+                break;
+            case 3:
+                delta_x = 0;
+                delta_y = -0.4;
+                break;
+        }
+        //drive and correct odometry
+        driver.drive(0, driver.xcord + delta_x, driver.ycord + delta_y, 0, 1); //does turning and set to mode stay so no turning after target coords reached
+
+        red_fundamentals::CalculateCenter::ConstPtr act_dest = ros::topic::waitForMessage<red_fundamentals::CalculateCenter>("calculate_center_topic", ros::Duration(1));
+        //ROS_INFO("Correcting angle with %lf,%lf,%lf,%lf\n", driver.xcord + delta_x, driver.ycord + delta_y, act_dest->x,act_dest->y);
+        driver.correct_odometry_angle_error(driver.xcord + delta_x, driver.ycord + delta_y, act_dest->x,act_dest->y);
+        driver.drive(0, driver.xcord + delta_x, driver.ycord + delta_y, 0, 1);
+
+        act_dest = ros::topic::waitForMessage<red_fundamentals::CalculateCenter>("calculate_center_topic", ros::Duration(1));
+        //ROS_INFO("Correcting location with %lf,%lf,%lf,%lf\n", driver.xcord + delta_x, driver.ycord + delta_y, act_dest->x,act_dest->y);
+        driver.correct_odometry_location_error(driver.xcord + delta_x, driver.ycord + delta_y, act_dest->x,act_dest->y);
 
 		// after moving we check if the walls we see match the walls in the map
 		ros::Duration(1.0).sleep();

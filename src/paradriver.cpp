@@ -2,6 +2,7 @@
 #include "create_fundamentals/DiffDrive.h"
 #include "create_fundamentals/SensorPacket.h"
 #include "create_fundamentals/ResetEncoders.h"
+#include "red_fundamentals/StopMsg.h"
 #include <cstdlib>
 #include "paradriver.hpp"
 
@@ -37,6 +38,16 @@ DiffDriving::DiffDriving()
 	this->resetOdometer();
 	this->odomInit();
 }
+
+bool stop_check(){
+
+	red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(0.2));
+
+	if (stop_message && stop_message->content == "STOP") return true;
+	return false;
+
+}
+
 
 //stop motors
 void DiffDriving::stop()
@@ -238,6 +249,9 @@ void DiffDriving::moveDist(double dist, dir direction)
 	double derr;
 	double dt;
 	while (abs(err) > DISTTOLERANCE) {
+		if (stop_check()) {
+			break;
+		}
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
 		switch(direction)
@@ -269,7 +283,8 @@ void DiffDriving::moveDist(double dist, dir direction)
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	return;
 }
-
+/*
+//PD-control func driving straight for certain distances
 void DiffDriving::moveDistEnc(double dist)
 {
 	ros::spinOnce();
@@ -285,14 +300,17 @@ void DiffDriving::moveDistEnc(double dist)
 	double derrL;
 	double derrR;
 	while (abs(errL) + abs(errL) > ENCTOLERANCE) {
+		if (stop_check()) {
+			break;
+		}
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
 		errL = setpointL - this->encLeft;
 		errR = setpointR - this->encRight;
 		derrL = lasterrL - errL;
 		derrR = lasterrR - errR;
-		speedL = min(MAXSPEED, errL * KP * 300 + KD * (derrL/dt) * 300) + MINSPEED;
-		speedR = min(MAXSPEED, errR * KP * 300 + KD * (derrR/dt) * 300) + MINSPEED;
+		speedL = min(MAXSPEED, errL * KP * 2 + KD * (derrL/dt) * 2) + MINSPEED;
+		speedR = min(MAXSPEED, errR * KP * 2 + KD * (derrR/dt) * 2) + MINSPEED;
 		if (abs(lasterrL) < abs(errL)) {
 			speedL = -speedL;
 		}
@@ -309,6 +327,41 @@ void DiffDriving::moveDistEnc(double dist)
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	return;
 }
+*/
+
+void DiffDriving::moveDistEnc(double dist)
+{
+
+	double speed;
+	double errL = dist*32;
+	double errR = dist*32;
+	double errT = errL+errR/2;
+	ros::spinOnce();
+	double goalL = errL + this->encLeft;
+	double goalR = errR + this->encRight;
+	double derr;
+	double dt;
+	double lasterrT = errT;
+	while (errT > ENCTOLERANCE) {
+		if (stop_check()) {
+			break;
+		}
+		dt = ros::Time::now().toSec() - this->clock;
+		ros::spinOnce();
+		errT = (goalL-this->encLeft)+(goalR-this->encRight)/2;
+		derr = lasterrT - errT;
+		speed = abs(min(10.0, (errT * KP + (derr/dt) * KD)))+MINSPEED;
+		pdsrv.request.left = speed;
+		pdsrv.request.right = speed;
+		lasterrT = errT;
+		diffDrive.call(pdsrv);
+	}
+	this->stop();
+	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
+	return;
+}
+
+
 
 
 /*Idea:
@@ -330,8 +383,11 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 		case 0: {
 			double speed;
 			turnAbs(calcAngle(x - this->xcord, y - this->ycord));
-			/*
+			/* //old way with continuous euclidean distance calculation for error
 			while (err > DISTTOLERANCE) {
+				if (stop_check()) {
+					break;
+				}
 				dt = ros::Time::now().toSec() - this->clock;
 				ros::spinOnce();
 				err = calcDist(x, y);
@@ -343,9 +399,7 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 				diffDrive.call(pdsrv);
 			}
 			this->stop();*/
-			this->moveDistEnc(err);
-			this->xcord = x;
-			this->ycord = y;
+			this->moveDistEnc(err);	//only calculate euclidean distance once then drive straight for that amount of distance
 			ros::Duration(0.5).sleep();
 			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 			if (stay) { return 1; }
@@ -368,6 +422,9 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			turnAbs(calcAngle(x, y));
 			/*
 			while (err > DISTTOLERANCE) {
+				if (stop_check()) {
+					break;
+				}
 				dt = ros::Time::now().toSec() - this->clock;
 				ros::spinOnce();
 				err = calcDist(x, y);
