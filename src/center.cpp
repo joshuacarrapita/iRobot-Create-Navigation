@@ -11,7 +11,7 @@ Center::Center() : isPerpendicular(0), distCorrect(0), turnCtr(0), noPerp(0), ce
                    tolerance(0.03), speed(4.0), moveIncrement(0.1)
 {
     diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
-    sub = n.subscribe("walls_combined_topic", 1, &Center::center, this);
+    sub = n.subscribe("walls_topic", 1, &Center::center, this);
 }
 
 //stop robot
@@ -68,7 +68,7 @@ void Center::turnAngle(int direction, double angle)
 }
 
 //turns robot until it is roughly perpendicular to found wall
-void Center::perpendicularise(const red_fundamentals::WallsCombined::ConstPtr& msg)
+void Center::perpendicularise(const red_fundamentals::Walls::ConstPtr& msg)
 {   
 
 	//set variables if perpendicular
@@ -96,7 +96,7 @@ void Center::perpendicularise(const red_fundamentals::WallsCombined::ConstPtr& m
 }
 
 //moves robot until distance to wall is half cell width/length
-void Center::correctDist(const red_fundamentals::WallsCombined::ConstPtr& msg)
+void Center::correctDist(const red_fundamentals::Walls::ConstPtr& msg)
 {
 	//if too far away move forward
 	if (msg->dist > 0.24 + tolerance) {
@@ -127,7 +127,7 @@ void Center::correctDist(const red_fundamentals::WallsCombined::ConstPtr& msg)
 }
 
 //centers the robot in first available cell ends perpendicular to last found wall
-void Center::center(const red_fundamentals::WallsCombined::ConstPtr& msg)
+void Center::center(const red_fundamentals::Walls::ConstPtr& msg)
 {
 	//check if wall in sight else move until it is
 	if (!msg->dist) {

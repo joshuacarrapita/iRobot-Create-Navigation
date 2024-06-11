@@ -308,7 +308,7 @@ void calculate_center_coord() {
 
 }
 
-void parse_wall_message(const red_fundamentals::WallsCombined::ConstPtr& msg) {
+void parse_wall_message(const red_fundamentals::WallsAlt::ConstPtr& msg) {
 
 	// Just parses the wall message content into an array for further processing
 	amt_walls = 0;
@@ -358,7 +358,7 @@ int main(int argc, char **argv){
 
 	ros::init(argc, argv, "calculate_center");
 	ros::NodeHandle n;
-	ros::Subscriber sub = n.subscribe("walls_combined_topic", 1, parse_wall_message);
+	ros::Subscriber sub = n.subscribe("walls_alt_topic", 1, parse_wall_message);
 	ros::Publisher pub = n.advertise<red_fundamentals::CalculateCenter>("calculate_center_topic", 1);
 
 	while(ros::ok()) {
