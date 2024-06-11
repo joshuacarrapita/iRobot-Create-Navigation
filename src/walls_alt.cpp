@@ -1,6 +1,6 @@
 #include "ros/ros.h"
 #include "sensor_msgs/LaserScan.h"
-#include "red_fundamentals/Walls.h"
+#include "red_fundamentals/WallsAlt.h"
 #include <cstdlib>
 
 #define LARRSIZE 726
@@ -21,7 +21,7 @@ int candidateDist = 5;
 int winnerThresh = 70;
 
 ros::Publisher pub;
-red_fundamentals::Walls wall;
+red_fundamentals::WallsAlt wall;
 
 typedef struct Coords
 {
@@ -190,7 +190,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			//ROS_INFO("Wall %d has angle: %lf",i,ang);
 			if (ang > 120) {
 				//ROS_INFO("Left wall found");
-				if (winners[i][0].y < 0.05) {
+				if (winners[i][0].y < 0.09) {
 					wall.walls[2] = true;
 				}
 				wall.L_A[0] = winners[i][0].x;
@@ -199,7 +199,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 				wall.L_B[1] = winners[i][1].y;
 			} else if (ang < 60) {
 				//ROS_INFO("Right wall found");
-				if (winners[i][1].y < 0.05) {
+				if (winners[i][1].y < 0.09) {
 					wall.walls[0] = true;
 				}
 				wall.R_A[0] = winners[i][0].x;
@@ -208,7 +208,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 				wall.R_B[1] = winners[i][1].y;
 			} else {
 				//ROS_INFO("Front wall found");
-				if (winners[i][0].y < 0.4) {
+				if (winners[i][0].y < 0.5) {
 					wall.walls[1] = true;
 				}
 				wall.F_A[0] = winners[i][0].x;
@@ -234,10 +234,10 @@ int main(int argc, char **argv)
 		errThresh = atof(argv[2]);
 		winnerThresh = atoi(argv[3]);
 	}
-	ros::init(argc, argv, "walls");
+	ros::init(argc, argv, "walls_alt");
 	ros::NodeHandle n;
 	ros::Subscriber sub = n.subscribe("scan_filtered", 1, extendedSransac);
-	pub = n.advertise<red_fundamentals::Walls>("walls_topic", 1);
+	pub = n.advertise<red_fundamentals::WallsAlt>("walls_alt_topic", 1);
 	ROS_INFO("start detecting walls");
 	while(ros::ok()) {
 		ros::spinOnce();

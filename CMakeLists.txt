@@ -33,6 +33,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 add_message_files(FILES
 	Walls.msg
 	NewWalls.msg
+	WallsAlt.msg
 	StopMsg.msg
 	Cell.msg 
 	Grid.msg
@@ -44,6 +45,7 @@ add_message_files(FILES
 add_service_files(FILES
 	ExecutePlan.srv
 	StopSrv.srv
+	SimpleCall.srv
 )
 
 #common commands for building c++ executables and libraries
@@ -81,13 +83,13 @@ add_executable(example_moving src/example_moving.cpp)
 target_link_libraries(example_moving ${catkin_LIBRARIES})
 add_dependencies(example_moving create_fundamentals_generate_messages_cpp)
 
-add_executable(square_no_sensors src/square_no_sensors.cpp)
-target_link_libraries(square_no_sensors ${catkin_LIBRARIES})
-add_dependencies(square_no_sensors create_fundamentals_generate_messages_cpp)
+#add_executable(square_no_sensors src/square_no_sensors.cpp)
+#target_link_libraries(square_no_sensors ${catkin_LIBRARIES})
+#add_dependencies(square_no_sensors create_fundamentals_generate_messages_cpp)
 
-add_executable(square_with_encoders src/square_with_encoders.cpp)
-target_link_libraries(square_with_encoders ${catkin_LIBRARIES})
-add_dependencies(square_with_encoders create_fundamentals_generate_messages_cpp)
+#add_executable(square_with_encoders src/square_with_encoders.cpp)
+#target_link_libraries(square_with_encoders ${catkin_LIBRARIES})
+#add_dependencies(square_with_encoders create_fundamentals_generate_messages_cpp)
 
 add_executable(wanderer src/wanderer.cpp)
 target_link_libraries(wanderer ${catkin_LIBRARIES})
@@ -107,29 +109,36 @@ add_dependencies(stopper create_fundamentals_generate_messages_cpp)
 
 add_executable(execute_plan_server src/execute_plan_server.cpp)
 add_library(moving src/moving.cpp)
-target_link_libraries(execute_plan_server moving ${catkin_LIBRARIES})
+add_library(paradriver src/paradriver.cpp)
+add_library(song src/song.cpp)
+add_library(center src/center.cpp)
+target_link_libraries(execute_plan_server moving paradriver song center ${catkin_LIBRARIES})
 add_dependencies(execute_plan_server create_fundamentals_generate_messages_cpp)
 
-add_executable(corridor src/corridor.cpp)
-target_link_libraries(corridor moving ${catkin_LIBRARIES})
-add_dependencies(corridor create_fundamentals_generate_messages_cpp)
+#add_executable(corridor src/corridor.cpp)
+#target_link_libraries(corridor moving ${catkin_LIBRARIES})
+#add_dependencies(corridor create_fundamentals_generate_messages_cpp)
 
-add_executable(pd_control src/pd_control.cpp)
-target_link_libraries(pd_control moving ${catkin_LIBRARIES})
-add_dependencies(pd_control create_fundamentals_generate_messages_cpp)
+#add_executable(pd_control src/pd_control.cpp)
+#target_link_libraries(pd_control moving ${catkin_LIBRARIES})
+#add_dependencies(pd_control create_fundamentals_generate_messages_cpp)
 
 add_executable(smooth_server src/smooth_server.cpp)
 add_library(smooth_plan src/smooth_plan.cpp)
 target_link_libraries(smooth_server moving smooth_plan ${catkin_LIBRARIES})
 add_dependencies(smooth_server create_fundamentals_generate_messages_cpp)
 
+#add_executable(paradriver src/paradriver.cpp)
+#target_link_libraries(paradriver ${catkin_LIBRARIES})
+#add_dependencies(paradriver create_fundamentals_generate_messages_cpp)
+
+add_executable(localization src/localization.cpp)
+target_link_libraries(localization moving paradriver song ${catkin_LIBRARIES})
+add_dependencies(localization create_fundamentals_generate_messages_cpp)
+
 add_executable(walls_alt src/walls_alt.cpp)
 target_link_libraries(walls_alt ${catkin_LIBRARIES})
 add_dependencies(walls_alt create_fundamentals_generate_messages_cpp)
-
-add_executable(paradriver src/paradriver.cpp)
-target_link_libraries(paradriver ${catkin_LIBRARIES})
-add_dependencies(paradriver create_fundamentals_generate_messages_cpp)
 
 add_executable(calculate_center src/calculate_center.cpp)
 target_link_libraries(calculate_center ${catkin_LIBRARIES})
@@ -138,3 +147,11 @@ add_dependencies(calculate_center create_fundamentals_generate_messages_cpp)
 add_executable(new_walls src/new_walls.cpp)
 target_link_libraries(new_walls ${catkin_LIBRARIES})
 add_dependencies(new_walls create_fundamentals_generate_messages_cpp)
+
+add_executable(test_sound src/test_sound.cpp)
+target_link_libraries(test_sound ${catkin_LIBRARIES})
+add_dependencies(test_sound create_fundamentals_generate_messages_cpp)
+
+#add_executable(center src/center.cpp)
+#target_link_libraries(center ${catkin_LIBRARIES})
+#add_dependencies(center create_fundamentals_generate_messages_cpp)
