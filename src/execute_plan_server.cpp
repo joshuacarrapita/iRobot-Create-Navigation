@@ -39,7 +39,7 @@ vector<int> wall_nums;
 red_fundamentals::Pose curr_pose;
 red_fundamentals::Pose next_pose;
 
-double lost = true;
+bool lost = true;
 
 double laserCallback(){
     sensor_msgs::LaserScan::ConstPtr msg = ros::topic::waitForMessage<sensor_msgs::LaserScan>("scan_filtered", ros::Duration(1));
@@ -493,22 +493,8 @@ void getNextPose(int next_action){
 
 bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
           red_fundamentals::ExecutePlan::Response &res){
-
-    Center* c = new Center();
-    if(lost == true){
-        
-        c->centering();  // center
-        delete c;
-        mapCallback();	// Get map
-        ros::Duration(1.0).sleep();
-        wallCallback();	// Get walls
-		
-        potential_positions.clear();
-		candidates_seen.clear();
-        localization();	// Localize
-    }
-
-	// Initialize and reset variables between callbacks
+            
+    // Initialize and reset variables between callbacks
     vector<int> exec_plan = req.plan;
 	res.success = false;
 	drive_direction robot_dir = static_cast<drive_direction>(curr_pose.orientation);
@@ -549,18 +535,31 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 
 		Song s;
 		
-		// before moving, check for wall; this also catches the case of trying to move up after centering
+		// before moving, check for wall
 		double dist = wall_distance_check();
 		if (dist < safe_wall_dist) {
 			if (dist < 0) {
 				ROS_INFO("I couldn't find any laser message!");
 				return false;
 			}
-		    ROS_INFO("Almost hit a wall!");
-			lost = true;
-			s.playLostSound();
-            ROS_INFO("We got lost, because we almost hit a wall");
-			return true;
+		    ROS_INFO("Can't do next move! Almost hit a wall!");
+            // check if we are still where we think we are 
+            
+            ros::Duration(1.0).sleep();
+		    wallCallback();	// Get walls
+
+            red_fundamentals::Cell cell = map_cur.rows[curr_pose.row].cells[curr_pose.column];
+		    
+            if (!compareWalls(cell, next_action)) {
+			    // We got lost!
+			    lost = true;
+                s.playLostSound();
+                ROS_INFO("The walls dont match. We got lost");
+            }
+
+            // If we are lost we play the lost sound but otherwise we just return as the plan is not executable
+
+            return true;
 		}
 		
 		// before moving checking the cell we would be in
@@ -602,17 +601,36 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 }
 
 
-int main(int argc, char **argv)
-{
-  ros::init(argc, argv, "execute_plan_server");
-  ros::NodeHandle n;
+int main(int argc, char **argv){
+    ros::init(argc, argv, "execute_plan_server");
+    ros::NodeHandle n;
 
-  pose_pub = n.advertise<red_fundamentals::Pose>("/pose", 1);
-  ros::ServiceServer service = n.advertiseService("execute_plan", execute_plan_callback);
+    pose_pub = n.advertise<red_fundamentals::Pose>("/pose", 1);
+    
+    ros::ServiceServer service = n.advertiseService("execute_plan", execute_plan_callback);
 
-  ROS_INFO("Ready to run execute plan");
+    ROS_INFO("Ready to run execute plan");
 
-  ros::spin();
+    while(ros::ok()){
+        
+        if(!lost){
+            ros::spinOnce();
+        else {
+            
+            Center* c = new Center();
+            c->centering();  // center
+            delete c;
+            mapCallback();	// Get map
+            ros::Duration(1.0).sleep();
+            wallCallback();	// Get walls
+            potential_positions.clear();
+            candidates_seen.clear();
+            localization();
+            
+            ros::spinOnce();
+        }
+    }
+    
+    return 0;
   
-  return 0;
 }
