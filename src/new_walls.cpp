@@ -112,6 +112,16 @@ void set_walls(){
 			walls.R_B = {0,0};
 			break;
 
+		case 10:
+			ROS_INFO("Case 10 reached with i = %d", i);
+			walls.L_A = {-0.3637,-0.21};
+			walls.L_B = {-0.403,0.139};
+			walls.F_A = {-0.4003,0.1457};
+			walls.F_B = {0.3638,0.1934};
+			walls.R_A = {0.3662,0.1866};
+			walls.R_B = {0.3663,-0.2115};
+			break;
+
 		default:
 			ROS_INFO("Case default reached with i = %d", i);
 			walls.L_A = {0,0};

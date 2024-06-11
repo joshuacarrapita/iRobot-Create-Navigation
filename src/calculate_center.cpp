@@ -317,17 +317,17 @@ void parse_wall_message(const red_fundamentals::WallsAlt::ConstPtr& msg) {
 	for (int dir = LEFT; dir < BACK; dir++) exists_wall[dir] = true;
 
 	if((wall_points[LEFT][A][X] = msg->L_A[X]) == 0) exists_wall[LEFT] = false;
-	if((wall_points[LEFT][A][Y] = msg->L_A[Y]-OFFSET) == 0) exists_wall[LEFT] = false;
+	if((wall_points[LEFT][A][Y] = msg->L_A[Y]+OFFSET) == 0) exists_wall[LEFT] = false;
 	if((wall_points[LEFT][B][X] = msg->L_B[X]) == 0) exists_wall[LEFT] = false;
-	if((wall_points[LEFT][B][Y] = msg->L_B[Y]-OFFSET) == 0) exists_wall[LEFT] = false;
+	if((wall_points[LEFT][B][Y] = msg->L_B[Y]+OFFSET) == 0) exists_wall[LEFT] = false;
 	if((wall_points[FRONT][A][X] = msg->F_A[X]) == 0) exists_wall[FRONT] = false;
-	if((wall_points[FRONT][A][Y] = msg->F_A[Y]-OFFSET) == 0) exists_wall[FRONT] = false;
+	if((wall_points[FRONT][A][Y] = msg->F_A[Y]+OFFSET) == 0) exists_wall[FRONT] = false;
 	if((wall_points[FRONT][B][X] = msg->F_B[X]) == 0) exists_wall[FRONT] = false;
-	if((wall_points[FRONT][B][Y] = msg->F_B[Y]-OFFSET) == 0) exists_wall[FRONT] = false;
+	if((wall_points[FRONT][B][Y] = msg->F_B[Y]+OFFSET) == 0) exists_wall[FRONT] = false;
 	if((wall_points[RIGHT][A][X] = msg->R_A[X]) == 0) exists_wall[RIGHT] = false;
-	if((wall_points[RIGHT][A][Y] = msg->R_A[Y]-OFFSET) == 0) exists_wall[RIGHT] = false;
+	if((wall_points[RIGHT][A][Y] = msg->R_A[Y]+OFFSET) == 0) exists_wall[RIGHT] = false;
 	if((wall_points[RIGHT][B][X] = msg->R_B[X]) == 0) exists_wall[RIGHT] = false;
-	if((wall_points[RIGHT][B][Y] = msg->R_B[Y]-OFFSET) == 0) exists_wall[RIGHT] = false;
+	if((wall_points[RIGHT][B][Y] = msg->R_B[Y]+OFFSET) == 0) exists_wall[RIGHT] = false;
 
 	for (int dir = LEFT; dir < BACK; dir++) if (exists_wall[dir]) amt_walls++;
 
