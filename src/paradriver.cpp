@@ -5,6 +5,7 @@
 #include "red_fundamentals/StopMsg.h"
 #include <cstdlib>
 #include "paradriver.hpp"
+#include <Eigen/Dense>
 
 #define MAXSPEED 10.0
 #define MINSPEED 0.3
@@ -84,7 +85,7 @@ int DiffDriving::odomInit()
 
 double DiffDriving::calcAngle(double x, double y)
 {
-	if (x == 0) {
+	/*if (x == 0) {
 		if (y >= 0) {
 			return 0.0;
 		} else {
@@ -93,7 +94,25 @@ double DiffDriving::calcAngle(double x, double y)
 	}
 	int signer = 1;
 	if (x < this->xcord) { signer = -1; }
-	return signer * (acos(y/sqrt(x*x+y*y)) * (180/M_PI));
+	return signer * (acos(y/sqrt(x*x+y*y)) * (180/M_PI));*/
+
+	Eigen::Vector2d yaxis;
+	yaxis(0) = 0;
+	yaxis(1) = 1;
+
+	Eigen::Vector2d rel;
+	rel(0) = x;
+	rel(1) = y;
+
+	yaxis.normalize();
+	rel.normalize();
+
+	double dotprod = yaxis.dot(rel);
+	int signer = 1;
+	if (x < 0) { signer = -1; }
+	return signer * (acos(dotprod) * (180/M_PI));
+
+
 }
 
 //calculate euclidian distance between current position and given point
@@ -382,7 +401,9 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 	{
 		case 0: {
 			double speed;
-			turnAbs(calcAngle(x - this->xcord, y - this->ycord));
+			double theta = calcAngle(x-this->xcord, y-this->ycord);
+			ROS_INFO("THETA: %lf, x,y: (%lf,%lf)\n",theta, x,y);
+			turnAbs(theta);
 			/* //old way with continuous euclidean distance calculation for error
 			while (err > DISTTOLERANCE) {
 				if (stop_check()) {
@@ -419,7 +440,9 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 		}
 		case 1: {
 			double speed;
-			turnAbs(calcAngle(x, y));
+			double theta = calcAngle(x, y);
+			ROS_INFO("THETA: %lf, x,y: (%lf,%lf)\n",theta, x,y);
+			turnAbs(theta);
 			/*
 			while (err > DISTTOLERANCE) {
 				if (stop_check()) {
@@ -463,9 +486,11 @@ void DiffDriving::correct_odometry_angle_error(double x_dest, double y_dest, dou
 	// the angle correction is the supposed angle toward the center points minus the actual angle towards the center point
 	if (x_center_rel_act != 0.0 && y_center_rel_act != 0.0)
 	{
+		ROS_INFO("Robot theta: %lf",this->theta);
 		double theta_dest = calcAngle(x_dest, y_dest);
-		double theta_dest_act = calcAngle(this->xcord + x_center_rel_act, this->ycord + y_center_rel_act);
+		double theta_dest_act = calcAngle(x_center_rel_act,y_center_rel_act);
 		this->theta += theta_dest - theta_dest_act;
+		ROS_INFO("Robot theta new: %lf, theta_dest: %lf, theta_dest_act: %lf, a-b: %lf\n",this->theta, theta_dest, theta_dest_act, theta_dest-theta_dest_act);
 	}
 }
 
