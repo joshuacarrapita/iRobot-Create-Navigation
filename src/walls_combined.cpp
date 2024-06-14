@@ -168,8 +168,8 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			//update winner if current candidates have more inliers than previous best and threshold and remove inliers
 			if (curInliers > maxInliers && curInliers > winnerThresh) {
 				if (k == 0) {
-					bestwinnercand_a = candidate_b;
-					bestwinnercand_b = candidate_a;
+					bestwinnercand_a = candidate_a;
+					bestwinnercand_b = candidate_b;
 				}
 				maxInliers = curInliers;
 				winneroutliers = outliers;

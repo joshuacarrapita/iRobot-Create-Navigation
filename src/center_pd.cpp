@@ -4,18 +4,19 @@
 #include "create_fundamentals/DiffDrive.h"
 #include "red_fundamentals/WallsCombined.h"
 #include "paradriver.hpp"
-#include "center.hpp"
+#include "center_pd.hpp"
 
 
 Center::Center() : centeringPhase(LOOKINGFORFIRSTWALL), heading(-1), turnCtr(0), tolerance(0.03)
 {
     diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
-    sub = n.subscribe("walls_topic", 1, &Center::center, this);
+    sub = n.subscribe("walls_combined_topic", 1, &Center::center, this);
+    //driver = new DiffDriving();
 }
 
 //turns robot until it is roughly perpendicular to found wall
 void Center::perpendicularise(const red_fundamentals::WallsCombined::ConstPtr& msg)
-{   
+{
 
 	//set variables if perpendicular
 	if (msg->angle < 90 + tolerance*20 && msg->angle > 90 - tolerance*20) {
@@ -46,7 +47,7 @@ void Center::correctDist(const red_fundamentals::WallsCombined::ConstPtr& msg)
 	//if too close move back
 	} else if (msg->dist < 0.25) {
 		ROS_INFO("moving backwards to correct distance");
-		moveDist(-(0.25 - msg->dist));
+		driver.moveDistEnc(-(0.25 - msg->dist));
 		return;
 	}
 	return;
@@ -55,6 +56,7 @@ void Center::correctDist(const red_fundamentals::WallsCombined::ConstPtr& msg)
 //centers the robot in first available cell with 2 perpendicular walls
 void Center::center(const red_fundamentals::WallsCombined::ConstPtr& msg)
 {
+	ROS_INFO("wall is %lf away at angle %lf", msg->dist, msg->angle);
 	//check if wall in sight else move until it is
 	if (centeringPhase == LOOKINGFORFIRSTWALL && !msg->dist) {
 		//if no wall in sight turn right until full 360° rotation
@@ -88,14 +90,14 @@ void Center::center(const red_fundamentals::WallsCombined::ConstPtr& msg)
 		return;
 	}
 	//find second wall and move to phase 2
-	if (centeringPhase == DISTANCEDTOFIRSTWALL) {
+	if (centeringPhase == DISTANCEDTOFIRSTWALL | centeringPhase == LOOKINGFORSECONDWALL | centeringPhase == PERPENDICULARTOSECONDWALL) {
 		//after finished adjusting robot to first wall turn right by 90° and look for wall in front
 		if (heading == 0) {
 			ROS_INFO("turning right to find second wall");
-			turn(90);
+			driver.turn(90);
 			centeringPhase = LOOKINGFORSECONDWALL;
 			heading = 1;
-			ros::Duration(0.3).sleep();
+			ros::Duration(2.0).sleep();
 			return;
 		}
 		//if found move on to phase 2
@@ -144,6 +146,8 @@ void Center::center(const red_fundamentals::WallsCombined::ConstPtr& msg)
 }
 
 void Center::centering(){
+	ROS_INFO("starting centering process");
+
 	while (ros::ok() && centeringPhase != CENTERED) {
 		ros::spinOnce();
 	}
@@ -151,12 +155,11 @@ void Center::centering(){
 	return;
 }
 
-/* int main(int argc, char **argv)
+int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "center");
+   	ros::init(argc, argv, "center");
 	ros::NodeHandle n;
 	Center c;
-
-    c.centering();
+	c.centering();
 }
- */
+

@@ -12,15 +12,15 @@ class Center
                 enum Centphs
                 {
                         LOOKINGFORFIRSTWALL = 0,
-                        PERPENDICULARTOFIRSTWALL,
-                        DISTANCEDTOFIRSTWALL,
-                        LOOKINGFORSECONDWALL,
-                        PERPENDICULARTOSECONDWALL,
-                        DISTANCEDTOSECONDWALL,
-                        CENTERED
+                        PERPENDICULARTOFIRSTWALL = 1,
+                        DISTANCEDTOFIRSTWALL = 2,
+                        LOOKINGFORSECONDWALL = 3,
+                        PERPENDICULARTOSECONDWALL = 4,
+                        DISTANCEDTOSECONDWALL = 5,
+                        CENTERED = 6
                 };
 
-                Centphs centeringPhase;
+                int centeringPhase;
                 int heading;			//current heading of robot; 0 = north, 1 = east, 2 = south, 3 = west
                 int turnCtr;                    //keeps track of how many times robot has turned to find a wall
                 double tolerance;	        //tolerance value for angle to wall
@@ -31,7 +31,7 @@ class Center
                 ros::Subscriber sub;
 
                 DiffDriving driver;
-                
+
                 void perpendicularise(const red_fundamentals::WallsCombined::ConstPtr& msg);
                 void correctDist(const red_fundamentals::WallsCombined::ConstPtr& msg);
                 void center(const red_fundamentals::WallsCombined::ConstPtr& msg);

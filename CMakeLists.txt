@@ -164,3 +164,8 @@ add_dependencies(new_walls create_fundamentals_generate_messages_cpp)
 add_executable(walls_combined src/walls_combined.cpp)
 target_link_libraries(walls_combined ${catkin_LIBRARIES})
 add_dependencies(walls_combined create_fundamentals_generate_messages_cpp)
+
+add_executable(center_pd src/center_pd.cpp)
+#add_library(paradriver src/paradriver.cpp)
+target_link_libraries(center_pd paradriver ${catkin_LIBRARIES})
+add_dependencies(center_pd create_fundamentals_generate_messages_cpp)
