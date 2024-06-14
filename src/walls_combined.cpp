@@ -80,9 +80,9 @@ double calcAngleAlt(double slope)
 	return (cos(slope)/sin(slope));
 }
 
+//reset msg contents for next ransac iteration
 void resetMSG()
 {
-	//ROS_INFO("Resetting msg vals");
 	//reset bools
 	wall.walls[0] = false;
 	wall.walls[1] = false;
@@ -112,10 +112,9 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 	//reset walls msg contents
 	resetMSG();
 
-	//array for holding valid coordinates
-	vector<coords> coordinates;
+	vector<coords> coordinates;		//array for holding valid coordinates
 	coordinates.reserve(683);
-	coords pol;
+	coords pol;						//buffer for coord conversion
 
 	//get all valid measurements and convert to cartesian
 	for (int i = LARROFFSET; i < LARRSIZE; i++) {
@@ -125,37 +124,35 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 		pol.x = msg->ranges[i];
 		pol.y = calcSensAngle(i - (LARROFFSET-1));
 		coordinates.push_back(polToCart(pol));
-		//ROS_INFO("Generated cartesian coordinate %i with (%f , %f)", lens[0], coordinates[0][(lens[0])].x, coordinates[0][(lens[0])].y);
 	}
 
 	//actual SRANSAC start
 	int curInliers;
 	int maxInliers;
 
-	vector<coords> outliers;
+	vector<coords> outliers;		//buffer outliers of current outliers to update winneroutliers whenever new better winner found
 	outliers.reserve(683);
-	vector<coords> winneroutliers;
+	vector<coords> winneroutliers;	//outliers from winner wall will be new candidates for next iteration
 	winneroutliers.reserve(683);
-	vector<coords> inliers;
+	vector<coords> inliers;			//track inliers to get outer most inliers for center calculation
 	inliers.reserve(683);
 
-	coords winners[3][2];
-	int winnerInliers[3] = {};
+	coords winners[3][2];			//save up to 3 best winner coordinate pairs
+	int winnerInliers[3] = {};		//no of inliers of winners
+	coords bestwinnercand_a;
+	coords bestwinnercand_b;
 
 	//look for 3 best walls
 	for (int k = 0; k < 3; k++) {
 		//if not enough candidates stop looking for walls
 		if (coordinates.size() < winnerThresh) {
-			//ROS_INFO("not enough candidates");
 			break;
 		}
 		coords winner_a = robotpos;
 		coords winner_b = robotpos;
 		maxInliers = 0;
-		//ROS_INFO("looking for wall %i with %d candidates", k,coordinates.size());
 		//take candidates with fixed interval instead of random
 		for (int i = 0; i < coordinates.size()-(candidateDist+1); i+=candidateDist) {
-			//ROS_INFO("checking candidates %i", i);
 			curInliers = 0;
 			coords candidate_b = coordinates[i];
 			coords candidate_a = coordinates[i+candidateDist];
@@ -170,6 +167,10 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			}
 			//update winner if current candidates have more inliers than previous best and threshold and remove inliers
 			if (curInliers > maxInliers && curInliers > winnerThresh) {
+				if (k == 0) {
+					bestwinnercand_a = candidate_b;
+					bestwinnercand_b = candidate_a;
+				}
 				maxInliers = curInliers;
 				winneroutliers = outliers;
 				winner_a = inliers.back();
@@ -179,7 +180,6 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			inliers.clear();
 		}
 		if (maxInliers > winnerThresh) {
-			//ROS_INFO("Wall %d found",k);
 			winners[k][0] = winner_a;
 			winners[k][1] = winner_b;
 			winnerInliers[k] = maxInliers;
@@ -222,9 +222,10 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 
 		}
 	}
+	//publish dist/angle to best wall for centering 
 	if (winners[0][0].x) {
-		wall.dist = calcDist(winners[0][0], winners[0][1], robotpos);
-		wall.angle = calcAngle(winners[0][0], winners[0][1]);
+		wall.dist = calcDist(bestwinnercand_a, bestwinnercand_b, robotpos);
+		wall.angle = calcAngle(bestwinnercand_a, bestwinnercand_b);
 	}
 	pub.publish(wall);
 }
@@ -248,7 +249,6 @@ int main(int argc, char **argv)
 	ROS_INFO("start detecting walls");
 	while(ros::ok()) {
 		ros::spinOnce();
-		//ros::Duration(0.5).sleep();
 	}
 	return 0;
 }

@@ -351,6 +351,9 @@ void DiffDriving::moveDistEnc(double dist)
 		errT = (goalL-this->encLeft)+(goalR-this->encRight)/2;
 		derr = lasterrT - errT;
 		speed = abs(min(10.0, (errT * KP + (derr/dt) * KD)))+MINSPEED;
+		if (dist < 0) {
+			speed = -speed;
+		}
 		pdsrv.request.left = speed;
 		pdsrv.request.right = speed;
 		lasterrT = errT;

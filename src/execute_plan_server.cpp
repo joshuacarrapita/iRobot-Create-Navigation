@@ -172,7 +172,7 @@ void localization() {
     // maybe we can put this part outside of this function
     ROS_INFO("We are here");
     //Moving mover; //not needed if we use driver funcs
-    DiffDriving driver;
+    Diff Driving driver;
     if(!ready){
         // Rotate 180
        driver.turn(180);
