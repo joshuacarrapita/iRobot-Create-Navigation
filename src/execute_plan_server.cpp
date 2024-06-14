@@ -426,7 +426,7 @@ void localization() {
         }
 
         // get walls
-        ros::Duration(1.0).sleep();
+        //ros::Duration(1.0).sleep();
         wallCallback();
     }
 }
@@ -546,7 +546,7 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 		    ROS_INFO("Can't do next move! Almost hit a wall!");
             // check if we are still where we think we are 
             
-            ros::Duration(1.0).sleep();
+            //ros::Duration(1.0).sleep();
 		    wallCallback();	// Get walls
 
             // Check if curr_pose.row and curr_pose.column are out of range
@@ -582,7 +582,7 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 		mover.moveDist(0.8);
 
 		// after moving we check if the walls we see match the walls in the map
-		ros::Duration(1.0).sleep();
+		//ros::Duration(1.0).sleep();
 		wallCallback();	// Get walls
 
         // Check if next_pose.row und next_pose.column are outside of range
@@ -607,11 +607,8 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 			// We know where we are and publish
 			curr_pose = next_pose;
 			s.playLocalizedSound();
-            for(int i=0; i<3; i++){
-                pose_pub.publish(curr_pose);
-                ROS_INFO("Pose message %d time(s) published", i);
-                ros::Duration(1.0).sleep();
-	        }
+            pose_pub.publish(curr_pose);
+            ROS_INFO("Pose message  published");
             ROS_INFO("We are now at (%d, %d) looking %d", curr_pose.row, curr_pose.column, curr_pose.orientation);
 			lost = false;
 		}
@@ -644,7 +641,7 @@ int main(int argc, char **argv){
             c->centering();  // center
             delete c;
             mapCallback();	// Get map
-            ros::Duration(1.0).sleep();
+            //ros::Duration(1.0).sleep();
             wallCallback();	// Get walls
             potential_positions.clear();
             candidates_seen.clear();
