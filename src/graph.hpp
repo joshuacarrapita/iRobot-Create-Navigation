@@ -30,6 +30,7 @@ public:
     static void remove(vector<int>& vec, int value);
     void addEdge(int idx, int dir) const;
     bool is_adjacent(int v, int u) const;
+    vector<int> bfs(int start, int goal) const;
 };
 
 
