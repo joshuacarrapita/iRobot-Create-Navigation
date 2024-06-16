@@ -1,8 +1,10 @@
 #include "graph.hpp"
 #include <algorithm>
 #include <unordered_map>
+#include <unordered_set>
 #include <queue>
 #include <iostream>
+#include <climits>
 using namespace std;
 // for debugging
 /* vector<vector<vector<int>>> map = {{{1,2,0}, {1,2}, {1,0}, {1,2}, {1,3}, {1,0,3}},
@@ -164,6 +166,60 @@ vector<int> Graph::bfs(int start, int goal) const {
     return path;
 }
 
+vector<int> Graph::findPathVisitingAllGold(int start) {
+
+    vector<int> path; 
+    vector<int> visited(num_row * num_col, 0); //visited nodes
+    int golds_to_visit = 5; // number of gold nodes to visit
+
+    // BFS to find shortest path
+    queue<pair<int, vector<int>>> q; // queue to store current position and path taken
+    q.push({start, {start}});
+    visited[start] = 1;
+
+    while (!q.empty()) {
+        int current = q.front().first;
+        vector<int> current_path = q.front().second;
+        q.pop();
+
+        // check if we have visited all gold nodes
+        int golds_visited = 0;
+        for (int gold : golds) {
+            if (visited[gold]) {
+                golds_visited++;
+            }
+        }
+
+        // If all gold nodes are visited, we need to end at a pickup node
+        if (golds_visited == golds_to_visit) {
+            // find nearest pickup node
+            for (int pickup : pickups) {
+                if (visited[pickup]) {
+                    // found a path that visits all golds and ends at a pickup
+                    path = current_path;
+                    path.push_back(pickup);
+                    return path;
+                }
+            }
+        }
+
+        // explore neighbors
+        for (int neighbor : nodes[current].neighbors) {
+            if (!visited[neighbor]) {
+                visited[neighbor] = 1;
+                vector<int> next_path = current_path;
+                next_path.push_back(neighbor);
+                q.push({neighbor, next_path});
+            }
+        }
+    }
+
+    // no valid path found: return empty path
+    return {};
+}
+
+
+
 int main(int argc, char **argv){
     vector<vector<vector<int>>> map = {{{1,2,0}, {1,2}, {1,0}, {1,2}, {1,3}, {1,0,3}},
                                    {{2,0}, {2,3,0}, {2,0}, {2,3}, {1}, {1,0,3}},
@@ -176,7 +232,39 @@ int main(int argc, char **argv){
     graph.addEdges(map);
     graph.setType();
 
+    // Testing findPathVisitingAllGold()
+
     int start = graph.postoidx(0, 2);
+
+    vector<int> path = graph.findPathVisitingAllGold(start);
+
+    // output the path
+    if(path.empty()) {
+        cout << "No path found" << endl;
+    } else {
+        cout << "Path from " << start << ": ";
+        for(int idx : path) {
+            pair<int, int> pos = graph.idxtopos(idx);
+            cout << "(" << pos.first << ", " << pos.second << ") ";
+        }
+        cout << endl;
+    }
+
+    // output the path
+    if(path.empty()) {
+        cout << "No path found" << endl;
+    } else {
+        cout << "Path from " << start << ": ";
+        for(int idx : path) {
+            cout << idx << " ";
+        }
+        cout << endl;
+    }
+
+
+    //Testing BFS
+
+    /* int start = graph.postoidx(0, 2);
     int goal = graph.postoidx(5, 2); 
 
     vector<int> path = graph.bfs(start, goal);
@@ -202,7 +290,7 @@ int main(int argc, char **argv){
             cout << idx << " ";
         }
         cout << endl;
-    }
+    } */
 
 
 
