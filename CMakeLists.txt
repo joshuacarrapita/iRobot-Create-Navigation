@@ -42,6 +42,7 @@ add_message_files(FILES
 #uncomment if you have defined services
 add_service_files(FILES
 	ExecutePlan.srv
+	ExecutePlanNew.srv
 	StopSrv.srv
 	SimpleCall.srv
 	Localization.srv
@@ -146,4 +147,8 @@ add_dependencies(test_sound create_fundamentals_generate_messages_cpp)
 #add_executable(center src/center.cpp)
 #target_link_libraries(center ${catkin_LIBRARIES})
 #add_dependencies(center create_fundamentals_generate_messages_cpp)
+
+add_executable(move_to_position_server src/move_to_position_server.cpp)
+target_link_libraries(move_to_position_server ${catkin_LIBRARIES})
+add_dependencies(move_to_position_server create_fundamentals_generate_messages_cpp)
 
