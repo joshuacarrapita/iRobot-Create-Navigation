@@ -1,7 +1,10 @@
 #include "ros/ros.h"
 #include <cstdlib>
-#include "red_fundamentals/ExecutePlan.h"
+#include "red_fundamentals/ExecutePlanNew.h"
 #include <vector>
+#include "create_fundamentals/DiffDrive.h"
+#include "create_fundamentals/SensorPacket.h"
+#include "sensor_msgs/LaserScan.h"
 #include "paradriver.hpp"
 #include "moving.hpp"
 #include "smooth_plan.hpp"
@@ -10,43 +13,24 @@
 #include "red_fundamentals/Row.h"
 #include "red_fundamentals/Cell.h"
 #include "red_fundamentals/WallsAlt.h"
-#include "red_fundamentals/SimpleCall.h"
 #include "song.hpp"
 
 using namespace std;
 
+ros::ServiceClient diffDrive;
+create_fundamentals::DiffDrive ddsrv;
 ros::ServiceClient requestloc;
-red_fundamentals::SimpleCall srv;
 ros::Publisher pose_pub;
-ros::Publisher request_pub;
 red_fundamentals::Pose pose;
 red_fundamentals::Grid map_cur;
+
+const double Kp = 1;
+double l_delta, r_delta, l_act, r_act;
+const double tolerance = 1;
 
 bool walls[3] = {false,};
 vector<int> wall_nums;
 int row, column, orientation;
-bool need_localization = false;
-
-void get_current_pose(){
-  // get a message from pose once
-  while(ros::ok()){
-  	const red_fundamentals::Pose::ConstPtr& msg = ros::topic::waitForMessage<red_fundamentals::Pose>("/pose", ros::Duration(1.0));
-  
-  	if (msg != nullptr){
-    		row = msg->row;
-    		column = msg->column;
-    		orientation = msg->orientation;
-    		ROS_INFO("Pose message arrived");
-    		ROS_INFO("Pose after localization");
-    		ROS_INFO("row: %d, column: %d, orientation: %d", row, column, orientation);
-    		break;
-  	}
-  	
-  	/* else{
-  		ROS_INFO("Waiting for the pose message from localization node...");
-  	} */
-  }
-}
 
 void mapCallback() {
     while(ros::ok()){
@@ -135,14 +119,70 @@ void set_pose(int moved){
 	ROS_INFO("row: %d, column:%d, orientation:%d", row, column, orientation);
 }
 
-bool execute_plan(red_fundamentals::ExecutePlan::Request  &req,
-          red_fundamentals::ExecutePlan::Response &res)
+bool stop_check(){
+
+	red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(1));
+
+	if (stop_message && stop_message->content == "STOP") return true;
+	return false;
+
+}
+
+void sensorCallback(){
+
+	create_fundamentals::SensorPacket::ConstPtr msg = ros::topic::waitForMessage<create_fundamentals::SensorPacket>("sensor_packet", ros::Duration(10));
+	if(!msg){
+		return;
+	}
+	l_delta = msg->encoderLeft - l_act;
+	r_delta = msg->encoderRight - r_act;
+	l_act = msg->encoderLeft;
+	r_act = msg->encoderRight;
+}
+
+bool pd_control(double dist)
+{
+
+	double speed;
+	double errL = dist*32;
+	double errR = dist*32;
+	double errT = errL+errR/2;
+	// ROS_INFO("Moving %lf m",dist);
+	sensorCallback();
+	double goalL = errL + l_act;
+	double goalR = errR + r_act;
+	// ROS_INFO("Callback called: left: %f, right: %f", l_act, r_act);
+	while (errT > tolerance) {
+		if (stop_check()) {
+			ddsrv.request.left = 0;
+			ddsrv.request.right = 0;
+			diffDrive.call(ddsrv);
+			return false;
+		}
+		sensorCallback2();
+		errT = (goalL-l_act)+(goalR-r_act)/2;
+		speed = abs(min(10.0, (errT * Kp + 0.4)));
+		ddsrv.request.left = speed;
+		ddsrv.request.right = speed;
+		diffDrive.call(ddsrv);
+	}
+
+	// ROS_INFO("Callback called: left: %f, right: %f", l_act, r_act);
+	return true;
+
+}
+
+bool execute_plan(red_fundamentals::ExecutePlanNew::Request  &req,
+          red_fundamentals::ExecutePlanNew::Response &res)
 {
   
   // initialize variables 
+  row = req.row;
+  column = req.column;
+  orientation = req.orientation;
   res.success = false;
   DiffDriving driver;
-  Moving mover;
+  // Moving mover;
   Song s;
   // check if the plan is executable
   
@@ -171,14 +211,18 @@ bool execute_plan(red_fundamentals::ExecutePlan::Request  &req,
   				break;
   		}
   		
-  		mover.moveDist(0.8);
+  		// mover.moveDist(0.8);
+  		if(!pd_control(0.8)){
+  			s.playLostSound();
+  			ROS_INFO("Lost! We have to relocalize ourselves...");
+  			return true;
+  		}
   		set_pose(req.plan[i]);
   		
 		wallCallback();	
   		if(!compareWalls(map_cur.rows[row].cells[column], orientation)){
   			s.playLostSound();
   			ROS_INFO("Lost! We have to relocalize ourselves...");
-			need_localization = true;
   			return true;
   		}
   		
@@ -198,29 +242,15 @@ bool execute_plan(red_fundamentals::ExecutePlan::Request  &req,
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "smooth_server");
+  ros::init(argc, argv, "execute_plan_server");
   ros::NodeHandle n;
   pose_pub = n.advertise<red_fundamentals::Pose>("/pose", 1);
   
   mapCallback();
-  ROS_INFO("Waiting for the pose message from localization node...");
-  get_current_pose();
-  requestloc = n.serviceClient<red_fundamentals::SimpleCall>("localization_service");
+
+  diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
   ros::ServiceServer service = n.advertiseService("execute_plan", execute_plan);
   ROS_INFO("Ready to execute plan");
-  while(ros::ok()){
-  	ros::spinOnce();
-  	if(need_localization){
-  	// TODO Call centering
-  	ROS_INFO("Waiting for the pose message from localization node...");
-	ros::Duration(3.0).sleep();
-	requestloc.call(srv);
-  	get_current_pose();
-  	need_localization = false;
-  	ROS_INFO("Ready to execute plan");
-  	}
-  }
-
   ros::spin();
   return 0;
 }
