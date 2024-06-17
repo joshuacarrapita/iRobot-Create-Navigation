@@ -79,3 +79,26 @@ void Song::playLostSound(){
     double duration = (Q * 4 + H) / 1000.0;
     this->playSong(0, duration);
 }
+
+void Song::playSuccessSound(){
+    ROS_INFO("Play success sound");
+
+    // Define note constants
+    unsigned int d5 = 74;
+    unsigned int g5 = 79; 
+    unsigned int b5 = 83;  
+    unsigned int d6 = 86;
+
+    // Define note durations
+    unsigned int Q = 160 / 4;
+    unsigned int H = Q * 2; 
+    unsigned int E = Q / 2;
+    unsigned int S = Q / 4;   
+
+    // Upload the song 
+    this->uploadSong(0, {g5, E*3, d5, E, g5, E*3, d5, E, g5, E, d5, E, g5, E, b5, E, d6, H});
+
+    // Play the song 
+    double duration = (H * 4) / 1000.0;
+    this->playSong(0, duration);
+}
