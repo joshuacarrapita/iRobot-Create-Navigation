@@ -46,6 +46,7 @@ add_service_files(FILES
 	StopSrv.srv
 	SimpleCall.srv
 	Localization.srv
+	MoveToPosition.srv
 )
 
 #common commands for building c++ executables and libraries
