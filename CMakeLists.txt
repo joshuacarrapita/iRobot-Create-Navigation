@@ -151,6 +151,6 @@ add_dependencies(test_sound create_fundamentals_generate_messages_cpp)
 
 add_library(graph src/graph.cpp)
 add_executable(move_to_position_server src/move_to_position_server.cpp)
-target_link_libraries(move_to_position_server graph ${catkin_LIBRARIES})
+target_link_libraries(move_to_position_server graph song ${catkin_LIBRARIES})
 add_dependencies(move_to_position_server create_fundamentals_generate_messages_cpp)
 
