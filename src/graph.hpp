@@ -5,6 +5,7 @@
 // #include "red_fundamentals/Cell.h"
 
 #include <vector>
+#include <unordered_set>
 using namespace std;
 
 enum nodeType {REGULAR = 0, GOLD = 1, PICKUP = 2};
@@ -31,7 +32,8 @@ public:
     void addEdge(int idx, int dir) const;
     bool is_adjacent(int v, int u) const;
     vector<int> bfs(int start, int goal) const;
-    vector<int> findPathVisitingAllGold(int start);
+    vector<int> findPathVisitingAllGold1(int start);
+    vector<int> findPathVisitingAllGold2(int start);
 };
 
 #endif

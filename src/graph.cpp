@@ -1,10 +1,12 @@
 #include "graph.hpp"
-#include <algorithm>
+#include <iostream>
+#include <vector>
+#include <queue>
 #include <unordered_map>
 #include <unordered_set>
-#include <queue>
-#include <iostream>
+#include <algorithm>
 #include <climits>
+
 using namespace std;
 // for debugging
 /* vector<vector<vector<int>>> map = {{{1,2,0}, {1,2}, {1,0}, {1,2}, {1,3}, {1,0,3}},
@@ -166,59 +168,145 @@ vector<int> Graph::bfs(int start, int goal) const {
     return path;
 }
 
-vector<int> Graph::findPathVisitingAllGold(int start) {
+vector<int> Graph::findPathVisitingAllGold1(int start) {
+    vector<int> allNodes = { start };
+    allNodes.insert(allNodes.end(), golds.begin(), golds.end());
+    allNodes.insert(allNodes.end(), pickups.begin(), pickups.end());
 
-    vector<int> path; 
-    vector<int> visited(num_row * num_col, 0); //visited nodes
-    int golds_to_visit = 5; // number of gold nodes to visit
+    int n = allNodes.size();
+    vector<vector<int>> dist(n, vector<int>(n, INT_MAX));
 
-    // BFS to find shortest path
-    queue<pair<int, vector<int>>> q; // queue to store current position and path taken
-    q.push({start, {start}});
-    visited[start] = 1;
-
-    while (!q.empty()) {
-        int current = q.front().first;
-        vector<int> current_path = q.front().second;
-        q.pop();
-
-        // check if we have visited all gold nodes
-        int golds_visited = 0;
-        for (int gold : golds) {
-            if (visited[gold]) {
-                golds_visited++;
-            }
-        }
-
-        // If all gold nodes are visited, we need to end at a pickup node
-        if (golds_visited == golds_to_visit) {
-            // find nearest pickup node
-            for (int pickup : pickups) {
-                if (visited[pickup]) {
-                    // found a path that visits all golds and ends at a pickup
-                    path = current_path;
-                    path.push_back(pickup);
-                    return path;
-                }
-            }
-        }
-
-        // explore neighbors
-        for (int neighbor : nodes[current].neighbors) {
-            if (!visited[neighbor]) {
-                visited[neighbor] = 1;
-                vector<int> next_path = current_path;
-                next_path.push_back(neighbor);
-                q.push({neighbor, next_path});
+    // BFS to calculate shortest paths between all pairs of nodes
+    for (int i = 0; i < n; ++i) {
+        for (int j = i + 1; j < n; ++j) {
+            vector<int> path = bfs(allNodes[i], allNodes[j]);
+            if (!path.empty()) {
+                dist[i][j] = dist[j][i] = path.size() - 1;
             }
         }
     }
 
-    // no valid path found: return empty path
-    return {};
+    // DP array to store the shortest path to visit all gold nodes
+    vector<vector<int>> dp(1 << golds.size(), vector<int>(golds.size(), INT_MAX));
+    vector<vector<int>> parent(1 << golds.size(), vector<int>(golds.size(), -1));
+
+    for (int i = 0; i < golds.size(); ++i) {
+        dp[1 << i][i] = dist[0][i + 1];
+    }
+
+    for (int mask = 0; mask < (1 << golds.size()); ++mask) {
+        for (int i = 0; i < golds.size(); ++i) {
+            if (mask & (1 << i)) {
+                for (int j = 0; j < golds.size(); ++j) {
+                    if (!(mask & (1 << j))) {
+                        int nextMask = mask | (1 << j);
+                        if (dp[nextMask][j] > dp[mask][i] + dist[i + 1][j + 1]) {
+                            dp[nextMask][j] = dp[mask][i] + dist[i + 1][j + 1];
+                            parent[nextMask][j] = i;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Find the best end node and construct the optimal path
+    int minDist = INT_MAX;
+    int lastNode = -1;
+    int finalMask = (1 << golds.size()) - 1;
+
+    for (int i = 0; i < golds.size(); ++i) {
+        if (dp[finalMask][i] < minDist) {
+            minDist = dp[finalMask][i];
+            lastNode = i;
+        }
+    }
+
+    vector<int> optimalGoldPath;
+    int mask = finalMask;
+    while (lastNode != -1) {
+        optimalGoldPath.push_back(lastNode + 1);
+        int temp = parent[mask][lastNode];
+        mask ^= (1 << lastNode);
+        lastNode = temp;
+    }
+    reverse(optimalGoldPath.begin(), optimalGoldPath.end());
+
+    // Find the nearest pickup node from the last gold node visited
+    int lastGoldNode = optimalGoldPath.back();
+    int nearestPickupNode = -1;
+    int minPickupDist = INT_MAX;
+
+    for (int i = 0; i < pickups.size(); ++i) {
+        if (dist[lastGoldNode + 1][golds.size() + 1 + i] < minPickupDist) {
+            minPickupDist = dist[lastGoldNode + 1][golds.size() + 1 + i];
+            nearestPickupNode = i;
+        }
+    }
+
+    // Construct the final path including the path to the nearest pickup node
+    vector<int> fullPath = { start };
+    int currentNode = start;
+
+    for (int idx : optimalGoldPath) {
+        vector<int> segment = bfs(currentNode, allNodes[idx]);
+        if (!segment.empty()) {
+            fullPath.insert(fullPath.end(), segment.begin() + 1, segment.end());
+            currentNode = allNodes[idx];
+        }
+    }
+
+    vector<int> pickupSegment = bfs(currentNode, allNodes[golds.size() + 1 + nearestPickupNode]);
+    if (!pickupSegment.empty()) {
+        fullPath.insert(fullPath.end(), pickupSegment.begin() + 1, pickupSegment.end());
+    }
+
+    return fullPath;
 }
 
+vector<int> Graph::findPathVisitingAllGold2(int start) {
+    vector<int> best_path;
+    int best_distance = numeric_limits<int>::max(); // using the maximum integer value
 
+    // Iterate through all permutations of the gold nodes
+    sort(golds.begin(), golds.end());
+    do {
+        for (int pickup : pickups) {
+            vector<int> current_path;
+            int current_distance = 0;
+            int current_start = start;
+
+            // Go through all gold nodes in the current permutation order
+            for (int gold : golds) {
+                vector<int> path_segment = bfs(current_start, gold);
+                if (path_segment.empty()) {
+                    current_distance = numeric_limits<int>::max();
+                    break;
+                }
+                current_distance += path_segment.size() - 1;
+                current_path.insert(current_path.end(), path_segment.begin(), path_segment.end() - 1);
+                current_start = gold;
+            }
+
+            // Finally, go to the pickup node
+            vector<int> path_segment = bfs(current_start, pickup);
+            if (path_segment.empty()) {
+                current_distance = numeric_limits<int>::max();
+                break;
+            }
+            current_distance += path_segment.size() - 1;
+            current_path.insert(current_path.end(), path_segment.begin(), path_segment.end());
+
+            // Check if we found a shorter path
+            if (current_distance < best_distance) {
+                best_distance = current_distance;
+                best_path = current_path;
+            }
+        }
+    } while (next_permutation(golds.begin(), golds.end()));
+
+    return best_path;
+}
 
 int main(int argc, char **argv){
     vector<vector<vector<int>>> map = {{{1,2,0}, {1,2}, {1,0}, {1,2}, {1,3}, {1,0,3}},
@@ -234,11 +322,11 @@ int main(int argc, char **argv){
 
     // Testing findPathVisitingAllGold()
 
-    int start = graph.postoidx(0, 2);
+    int start = graph.postoidx(3, 5);
 
-    vector<int> path = graph.findPathVisitingAllGold(start);
+    vector<int> path = graph.findPathVisitingAllGold1(start);
 
-    // output the path
+    /* // output the path
     if(path.empty()) {
         cout << "No path found" << endl;
     } else {
@@ -248,18 +336,55 @@ int main(int argc, char **argv){
             cout << "(" << pos.first << ", " << pos.second << ") ";
         }
         cout << endl;
-    }
+    } */
 
     // output the path
     if(path.empty()) {
         cout << "No path found" << endl;
     } else {
-        cout << "Path from " << start << ": ";
+        cout << "Path 1 from " << start << ": ";
         for(int idx : path) {
-            cout << idx << " ";
+            if (find(graph.golds.begin(), graph.golds.end(), idx) != graph.golds.end()) {
+                cout << "(" << idx << ") ";
+            } else {
+                cout << idx << " ";
+            }
         }
         cout << endl;
     }
+
+    cout << "Total number of nodes visited: " << path.size() << endl;
+
+    path = graph.findPathVisitingAllGold2(start);
+
+    /* // output the path
+    if(path.empty()) {
+        cout << "No path found" << endl;
+    } else {
+        cout << "Path from " << start << ": ";
+        for(int idx : path) {
+            pair<int, int> pos = graph.idxtopos(idx);
+            cout << "(" << pos.first << ", " << pos.second << ") ";
+        }
+        cout << endl;
+    } */
+
+    // output the path
+    if(path.empty()) {
+        cout << "No path found" << endl;
+    } else {
+        cout << "Path 2 from " << start << ": ";
+        for(int idx : path) {
+            if (find(graph.golds.begin(), graph.golds.end(), idx) != graph.golds.end()) {
+                cout << "(" << idx << ") ";
+            } else {
+                cout << idx << " ";
+            }
+        }
+        cout << endl;
+    }
+
+    cout << "Total number of nodes visited: " << path.size() << endl;
 
 
     //Testing BFS
