@@ -8,6 +8,7 @@
 #include "red_fundamentals/Pose.h"
 #include <cstdlib>
 #include "graph.hpp"
+#include "song.hpp"
 using namespace std;
 
 red_fundamentals::Grid map_cur;
@@ -56,6 +57,7 @@ bool move_to_position(red_fundamentals::MoveToPosition::Request  &req,
     res.success = false;
     int row = req.row;
     int column = req.column;
+    Song s;
 
     // TODO call localization to get a current position, if it is unknown
     while(ros::ok()){
@@ -75,6 +77,7 @@ bool move_to_position(red_fundamentals::MoveToPosition::Request  &req,
 
         if(pose_cur.row == row && pose_cur.column == column){
             res.success = true;
+            s.playSuccessSound();
             return true;
         }
 
@@ -120,6 +123,7 @@ bool move_to_position(red_fundamentals::MoveToPosition::Request  &req,
                 ROS_INFO("Moved to the given position! Ready to run another one!");
                 ROS_INFO("current pose:  row: %d, column: %d, orientation: %d", pose_cur.row, pose_cur.column, pose_cur.orientation);
                 res.success = true;
+                s.playSuccessSound();
                 break;
             }
             else{
