@@ -315,9 +315,7 @@ bool localization(red_fundamentals::Localization::Request &req,
             Song s;
             s.playLocalizedSound();
             pose_pub.publish(pose);
-            res.row = pose.row;
-            res.column = pose.column;
-            res.orientation = pose.orientation;
+            res.pose = pose;
             
             potential_positions.clear();
             candidates_seen.clear();
@@ -427,7 +425,7 @@ bool localization(red_fundamentals::Localization::Request &req,
         wallCallback();
     }
     
-    res.success = true;
+    // res.success = true;
     return true;
 }
 
