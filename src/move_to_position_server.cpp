@@ -73,6 +73,11 @@ bool move_to_position(red_fundamentals::MoveToPosition::Request  &req,
             }
         }
 
+        if(pose_cur.row == row && pose_cur.column == column){
+            res.success = true;
+            return true;
+        }
+
         int start = graph.postoidx(pose_cur.row, pose_cur.column);
         int goal = graph.postoidx(req.row, req.column);
 
