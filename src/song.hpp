@@ -11,6 +11,7 @@ class Song
         bool playSong(int number, double duration);
         void playLocalizedSound();
         void playLostSound();
+        void playSuccessSound();
 
         ros::ServiceClient store_song_client;
         ros::ServiceClient play_song_client;
