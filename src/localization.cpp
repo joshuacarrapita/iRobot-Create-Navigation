@@ -3,7 +3,7 @@
 #include <set>
 #include "ros/ros.h"
 #include "sensor_msgs/LaserScan.h"
-#include "red_fundamentals/SimpleCall.h"
+#include "red_fundamentals/Localization.h"
 #include "red_fundamentals/Grid.h"
 #include "red_fundamentals/Row.h"
 #include "red_fundamentals/Cell.h"
@@ -12,6 +12,7 @@
 #include "paradriver.hpp"
 #include "moving.hpp"
 #include "song.hpp"
+#include "center.hpp"
 
 using namespace std;
 
@@ -150,13 +151,20 @@ bool duplicate_check(){
     return false;
 }
 
-bool localization(red_fundamentals::SimpleCall::Request &req,
-                            red_fundamentals::SimpleCall::Response &res) {
+bool localization(red_fundamentals::Localization::Request &req,
+                            red_fundamentals::Localization::Response &res) {
+    Center* c = new Center();
+    c->centering();  // center
+    delete c;
+        
+    ros::Duration(1.0).sleep();
+       
+
     // after centering, we have to rotate and check if there is a wall behind the robot
     // rotate so that we do not have a wall behind us
     // maybe we can put this part outside of this function
     wallCallback();
-	Moving mover;
+    Moving mover;
     DiffDriving driver;
  
         // Rotate 180
@@ -236,7 +244,7 @@ bool localization(red_fundamentals::SimpleCall::Request &req,
                 // Go through the cells
                 for (size_t j = 0; j < row.cells.size(); ++j) {
                     const red_fundamentals::Cell &cell = row.cells[j];
-                    ROS_INFO("At coordinates (%lu, %lu), there are %lu walls", i, j, cell.walls.size());
+                    // ROS_INFO("At coordinates (%lu, %lu), there are %lu walls", i, j, cell.walls.size());
                     // Same amount of walls get pushed back as potential position
                     // if NumWalls == 2 -> compare the difference of wall numbers
                     // since we do not know the orientation, save -1 for it
@@ -306,11 +314,11 @@ bool localization(red_fundamentals::SimpleCall::Request &req,
             pose.orientation = potential_positions.begin()->second;
             Song s;
             s.playLocalizedSound();
-            for(int i=0; i<5; i++){
-                pose_pub.publish(pose);
-                ROS_INFO("Pose message %d time(s) published", i);
-                ros::Duration(1.0).sleep();
-            }
+            pose_pub.publish(pose);
+            res.row = pose.row;
+            res.column = pose.column;
+            res.orientation = pose.orientation;
+            
             potential_positions.clear();
             candidates_seen.clear();
             break;
@@ -330,8 +338,10 @@ bool localization(red_fundamentals::SimpleCall::Request &req,
 
                 int row = potential_position.first.first;
                 int col = potential_position.first.second;
-
+                int ort = potential_position.second;
                 vector<int> cell = map_cur.rows[row].cells[col].walls;
+                bool goback = false;
+                if(wall_nums.size() == 3 || ort == -1) goback = true;
 
 
                 if (!contains(cell, 0)) {
@@ -340,7 +350,7 @@ bool localization(red_fundamentals::SimpleCall::Request &req,
                         ROS_INFO("map_cur.rows[0].cells.size() = %lu", map_cur.rows[0].cells.size());
                         ROS_INFO("Map Error ?");
                     } else {
-                        reachable_cells.insert(make_pair(make_pair(row, col + 1), 0));
+                        if(goback || abs(ort - 0) != 2) reachable_cells.insert(make_pair(make_pair(row, col + 1), 0));
                     }
 
                 }
@@ -350,7 +360,7 @@ bool localization(red_fundamentals::SimpleCall::Request &req,
                     if (0 > row - 1) {
                         ROS_INFO("Map Error ?");
                     } else {
-                        reachable_cells.insert(make_pair(make_pair(row - 1, col), 1));
+                        if(goback || abs(ort - 1) != 2) reachable_cells.insert(make_pair(make_pair(row - 1, col), 1));
                     }
                 }
 
@@ -359,7 +369,7 @@ bool localization(red_fundamentals::SimpleCall::Request &req,
                     if (0 > col - 1) {
                         ROS_INFO("Map Error ?");
                     } else {
-                        reachable_cells.insert(make_pair(make_pair(row, col - 1), 2));
+                        if(goback || abs(ort - 2) != 2) reachable_cells.insert(make_pair(make_pair(row, col - 1), 2));
                     }
                 }
 
@@ -369,7 +379,7 @@ bool localization(red_fundamentals::SimpleCall::Request &req,
                         ROS_INFO("map_cur.rows.size() = %lu", map_cur.rows.size());
                         ROS_INFO("Map Error ?");
                     } else {
-                        reachable_cells.insert(make_pair(make_pair(row + 1, col), 3));
+                        if(goback || abs(ort - 3) != 2) reachable_cells.insert(make_pair(make_pair(row + 1, col), 3));
                     }
                 }
             }
@@ -431,7 +441,7 @@ int main(int argc, char **argv){
 
     // Get walls
     wallCallback();
-    ros::ServiceServer service = n.advertiseService("localization_service", localization);
+    ros::ServiceServer service = n.advertiseService("localization", localization);
     ROS_INFO("Ready to run localization");
     
     ros::spin();
