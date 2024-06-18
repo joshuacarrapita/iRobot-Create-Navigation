@@ -32,8 +32,8 @@ public:
     void addEdge(int idx, int dir) const;
     bool is_adjacent(int v, int u) const;
     vector<int> bfs(int start, int goal) const;
-    vector<int> findPathVisitingAllGold1(int start);
-    vector<int> findPathVisitingAllGold2(int start);
+    vector<int> findPathVisitingAllGold(int start);
+
 };
 
 #endif

@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <algorithm>
-#include <climits>
 
 using namespace std;
 // for debugging
@@ -168,7 +167,128 @@ vector<int> Graph::bfs(int start, int goal) const {
     return path;
 }
 
-vector<int> Graph::findPathVisitingAllGold1(int start) {
+
+vector<int> Graph::findPathVisitingAllGold(int start) {
+    vector<int> best_path;
+    int best_distance = 100; 
+
+    sort(golds.begin(), golds.end());   // In case the gold is not sorted in the constructor
+    
+    // going through all the different permutations of golds
+    while (next_permutation(golds.begin(), golds.end())){
+        
+        for (int pickup : pickups) {
+            vector<int> current_path;
+            int current_distance = 0;
+            int current_start = start;
+
+            // Go through all gold nodes and "connect" them on a path
+            for (int gold : golds) {
+                // find a path from the current_start to the next gold
+                vector<int> path_segment = bfs(current_start, gold);
+                // if there is no path possible the high current_distance is meant to prevent this current_path to be chosen as the best one
+                if (path_segment.empty()) {    
+                    current_distance = 100;   
+                    break;
+                }
+                // add length and path_segment to the current_path
+                current_distance += path_segment.size() - 1; 
+                current_path.insert(current_path.end(), path_segment.begin(), path_segment.end() - 1);
+                current_start = gold; // current_start is now where the path_segment endet (at the next gold)
+            }
+
+            // Go to the pickup node
+            vector<int> path_segment = bfs(current_start, pickup);
+             // if there is no path possible the high current_distance is meant to prevent this current_path to be chosen as the best one
+            if (path_segment.empty()) {
+                current_distance = 100;
+                break;
+            }
+            // add length and path_segment to the current_path
+            current_distance += path_segment.size() - 1;
+            current_path.insert(current_path.end(), path_segment.begin(), path_segment.end());
+
+            // Check if we found a shorter path
+            if (current_distance < best_distance) {
+                best_distance = current_distance;
+                best_path = current_path;
+            }
+        }
+    };
+
+    return best_path;
+}
+
+int main(int argc, char **argv){
+    vector<vector<vector<int>>> map = {{{1,2,0}, {1,2}, {1,0}, {1,2}, {1,3}, {1,0,3}},
+                                   {{2,0}, {2,3,0}, {2,0}, {2,3}, {1}, {1,0,3}},
+                                   {{2,3}, {1}, {}, {1,0}, {2}, {1,0}},
+                                   {{2,1,3}, {0,3}, {2}, {}, {3}, {0,3}},
+                                   {{1,2}, {0,1}, {2,0}, {2}, {1,0}, {1,2,0,3}},
+                                   {{0,2,3}, {2,3}, {0,3}, {2,3}, {3}, {1,0,3}}};
+
+    Graph graph = Graph(6, 6);
+    graph.addEdges(map);
+    graph.setType();
+
+    // Testing findPathVisitingAllGold()
+
+    int start = 21;
+
+    vector<int> path = graph.findPathVisitingAllGold(start);
+
+    // output the path
+    if(path.empty()) {
+        cout << "No path found" << endl;
+    } else {
+        cout << "Path from " << start << ": ";
+        for(int idx : path) {
+            if (find(graph.golds.begin(), graph.golds.end(), idx) != graph.golds.end()) {
+                cout << "(" << idx << ") ";
+            } else {
+                cout << idx << " ";
+            }
+        }
+        cout << endl;
+    }
+
+    cout << "Total number of nodes visited: " << path.size() << endl;
+
+    //Testing BFS
+
+    /* int start = graph.postoidx(0, 2);
+    int goal = graph.postoidx(5, 2); 
+
+    vector<int> path = graph.bfs(start, goal);
+
+    // output the path
+    if(path.empty()) {
+        cout << "No path found" << endl;
+    } else {
+        cout << "Path from " << start << " to " << goal << ": ";
+        for(int idx : path) {
+            pair<int, int> pos = graph.idxtopos(idx);
+            cout << "(" << pos.first << ", " << pos.second << ") ";
+        }
+        cout << endl;
+    }
+
+    // output the path
+    if(path.empty()) {
+        cout << "No path found" << endl;
+    } else {
+        cout << "Path from " << start << " to " << goal << ": ";
+        for(int idx : path) {
+            cout << idx << " ";
+        }
+        cout << endl;
+    } */
+
+
+
+}
+
+/*vector<int> Graph::findPathVisitingAllGold1(int start) {
     vector<int> allNodes = { start };
     allNodes.insert(allNodes.end(), golds.begin(), golds.end());
     allNodes.insert(allNodes.end(), pickups.begin(), pickups.end());
@@ -263,163 +383,7 @@ vector<int> Graph::findPathVisitingAllGold1(int start) {
 
     return fullPath;
 }
-
-vector<int> Graph::findPathVisitingAllGold2(int start) {
-    vector<int> best_path;
-    int best_distance = numeric_limits<int>::max(); // using the maximum integer value
-
-    // Iterate through all permutations of the gold nodes
-    sort(golds.begin(), golds.end());
-    do {
-        for (int pickup : pickups) {
-            vector<int> current_path;
-            int current_distance = 0;
-            int current_start = start;
-
-            // Go through all gold nodes in the current permutation order
-            for (int gold : golds) {
-                vector<int> path_segment = bfs(current_start, gold);
-                if (path_segment.empty()) {
-                    current_distance = numeric_limits<int>::max();
-                    break;
-                }
-                current_distance += path_segment.size() - 1;
-                current_path.insert(current_path.end(), path_segment.begin(), path_segment.end() - 1);
-                current_start = gold;
-            }
-
-            // Finally, go to the pickup node
-            vector<int> path_segment = bfs(current_start, pickup);
-            if (path_segment.empty()) {
-                current_distance = numeric_limits<int>::max();
-                break;
-            }
-            current_distance += path_segment.size() - 1;
-            current_path.insert(current_path.end(), path_segment.begin(), path_segment.end());
-
-            // Check if we found a shorter path
-            if (current_distance < best_distance) {
-                best_distance = current_distance;
-                best_path = current_path;
-            }
-        }
-    } while (next_permutation(golds.begin(), golds.end()));
-
-    return best_path;
-}
-
-int main(int argc, char **argv){
-    vector<vector<vector<int>>> map = {{{1,2,0}, {1,2}, {1,0}, {1,2}, {1,3}, {1,0,3}},
-                                   {{2,0}, {2,3,0}, {2,0}, {2,3}, {1}, {1,0,3}},
-                                   {{2,3}, {1}, {}, {1,0}, {2}, {1,0}},
-                                   {{2,1,3}, {0,3}, {2}, {}, {3}, {0,3}},
-                                   {{1,2}, {0,1}, {2,0}, {2}, {1,0}, {1,2,0,3}},
-                                   {{0,2,3}, {2,3}, {0,3}, {2,3}, {3}, {1,0,3}}};
-
-    Graph graph = Graph(6, 6);
-    graph.addEdges(map);
-    graph.setType();
-
-    // Testing findPathVisitingAllGold()
-
-    int start = graph.postoidx(3, 5);
-
-    vector<int> path = graph.findPathVisitingAllGold1(start);
-
-    /* // output the path
-    if(path.empty()) {
-        cout << "No path found" << endl;
-    } else {
-        cout << "Path from " << start << ": ";
-        for(int idx : path) {
-            pair<int, int> pos = graph.idxtopos(idx);
-            cout << "(" << pos.first << ", " << pos.second << ") ";
-        }
-        cout << endl;
-    } */
-
-    // output the path
-    if(path.empty()) {
-        cout << "No path found" << endl;
-    } else {
-        cout << "Path 1 from " << start << ": ";
-        for(int idx : path) {
-            if (find(graph.golds.begin(), graph.golds.end(), idx) != graph.golds.end()) {
-                cout << "(" << idx << ") ";
-            } else {
-                cout << idx << " ";
-            }
-        }
-        cout << endl;
-    }
-
-    cout << "Total number of nodes visited: " << path.size() << endl;
-
-    path = graph.findPathVisitingAllGold2(start);
-
-    /* // output the path
-    if(path.empty()) {
-        cout << "No path found" << endl;
-    } else {
-        cout << "Path from " << start << ": ";
-        for(int idx : path) {
-            pair<int, int> pos = graph.idxtopos(idx);
-            cout << "(" << pos.first << ", " << pos.second << ") ";
-        }
-        cout << endl;
-    } */
-
-    // output the path
-    if(path.empty()) {
-        cout << "No path found" << endl;
-    } else {
-        cout << "Path 2 from " << start << ": ";
-        for(int idx : path) {
-            if (find(graph.golds.begin(), graph.golds.end(), idx) != graph.golds.end()) {
-                cout << "(" << idx << ") ";
-            } else {
-                cout << idx << " ";
-            }
-        }
-        cout << endl;
-    }
-
-    cout << "Total number of nodes visited: " << path.size() << endl;
-
-
-    //Testing BFS
-
-    /* int start = graph.postoidx(0, 2);
-    int goal = graph.postoidx(5, 2); 
-
-    vector<int> path = graph.bfs(start, goal);
-
-    // output the path
-    if(path.empty()) {
-        cout << "No path found" << endl;
-    } else {
-        cout << "Path from " << start << " to " << goal << ": ";
-        for(int idx : path) {
-            pair<int, int> pos = graph.idxtopos(idx);
-            cout << "(" << pos.first << ", " << pos.second << ") ";
-        }
-        cout << endl;
-    }
-
-    // output the path
-    if(path.empty()) {
-        cout << "No path found" << endl;
-    } else {
-        cout << "Path from " << start << " to " << goal << ": ";
-        for(int idx : path) {
-            cout << idx << " ";
-        }
-        cout << endl;
-    } */
-
-
-
-}
+*/
 
 
 
