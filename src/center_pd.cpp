@@ -59,6 +59,7 @@ void Center::center(const red_fundamentals::WallsCombined::ConstPtr& msg)
 	ROS_INFO("wall is %lf away at angle %lf", msg->dist, msg->angle);
 	//check if wall in sight else move until it is
 	if (centeringPhase == LOOKINGFORFIRSTWALL && !msg->dist) {
+		ROS_INFO("Centering phase: %d", centeringPhase);
 		//if no wall in sight turn right until full 360° rotation
 		if (turnCtr < 4) {
 			ROS_INFO("turning to find first wall");
@@ -80,12 +81,14 @@ void Center::center(const red_fundamentals::WallsCombined::ConstPtr& msg)
 		ROS_INFO("perpendicularising");
 		perpendicularise(msg);
 		centeringPhase = PERPENDICULARTOFIRSTWALL;
+		ROS_INFO("Centering phase: %d", centeringPhase);
 		return;
 	}
 	//correct distance
 	if (centeringPhase == PERPENDICULARTOFIRSTWALL && msg->dist) {
 		correctDist(msg);
 		centeringPhase = DISTANCEDTOFIRSTWALL;
+		ROS_INFO("Centering phase: %d", centeringPhase);
 		heading = 0;
 		return;
 	}
@@ -96,6 +99,7 @@ void Center::center(const red_fundamentals::WallsCombined::ConstPtr& msg)
 			ROS_INFO("turning right to find second wall");
 			driver.turn(90);
 			centeringPhase = LOOKINGFORSECONDWALL;
+			ROS_INFO("Centering phase: %d", centeringPhase);
 			heading = 1;
 			ros::Duration(2.0).sleep();
 			return;
@@ -106,9 +110,11 @@ void Center::center(const red_fundamentals::WallsCombined::ConstPtr& msg)
 			if (centeringPhase == LOOKINGFORSECONDWALL) {
 				perpendicularise(msg);
 				centeringPhase = PERPENDICULARTOSECONDWALL;
+				ROS_INFO("Centering phase: %d", centeringPhase);
 			} else if (centeringPhase == PERPENDICULARTOSECONDWALL) {
 				correctDist(msg);
 				centeringPhase = CENTERED;
+				ROS_INFO("Centering phase: %d", centeringPhase);
 			}
 			return;
 		//if right of first wall no wall turn left by 180° and look for wall in front
@@ -126,9 +132,11 @@ void Center::center(const red_fundamentals::WallsCombined::ConstPtr& msg)
 			if (centeringPhase == LOOKINGFORSECONDWALL) {
 				perpendicularise(msg);
 				centeringPhase = PERPENDICULARTOSECONDWALL;
+				ROS_INFO("Centering phase: %d", centeringPhase);
 			} else if (centeringPhase == PERPENDICULARTOSECONDWALL) {
 				correctDist(msg);
 				centeringPhase = CENTERED;
+				ROS_INFO("Centering phase: %d", centeringPhase);
 			}
 			return;
 		} else {
@@ -138,6 +146,7 @@ void Center::center(const red_fundamentals::WallsCombined::ConstPtr& msg)
 			srv.request.right = 5;
 			diffDrive.call(srv);
 			centeringPhase = LOOKINGFORFIRSTWALL;
+			ROS_INFO("Centering phase: %d", centeringPhase);
 			return;
 		}
 		
