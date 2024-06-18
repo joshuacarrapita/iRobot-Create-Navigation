@@ -388,9 +388,9 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 	{
 		case 0: {
 			double speed;
-			double theta = calcAngle(x-this->xcord, y-this->ycord);
+			double theta = calcAngle(x-this->xcord, y-this->ycord); //TODO: This resets the theta correction we made before .. or actually not but check whether we turn for the correction or not
 			ROS_INFO("THETA: %lf, x,y: (%lf,%lf)\n",theta, x,y);
-			turnAbs(theta);
+			turnAbs(theta); //TODO: should this really be turnAbs?
 			/* //old way with continuous euclidean distance calculation for error
 			while (err > DISTTOLERANCE) {
 				if (stop_check()) {
@@ -477,6 +477,7 @@ void DiffDriving::correct_odometry_angle_error(double x_center_rel_act, double y
 	{
 		double curr_theta = this->theta;
 		double theta_dest_act = calcAngle(x_center_rel_act,y_center_rel_act); // calculate angle to actual center destination
+		turnAbs(theta);
 		this->theta -= theta_dest_act; // update our current angle by the difference between the two
 		ROS_INFO("Robot theta prev: %lf, Robot theta new: %lf, theta_dest_act: %lf, a-b: %lf\n",curr_theta, this->theta, theta_dest_act, curr_theta-theta_dest_act);
 	}
