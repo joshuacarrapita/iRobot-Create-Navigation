@@ -10,8 +10,15 @@
 Center::Center() : centeringPhase(LOOKINGFORFIRSTWALL), heading(-1), turnCtr(0), tolerance(0.03)
 {
     diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
-    sub = n.subscribe("walls_combined_topic", 1, &Center::center, this);
+    sub = n.subscribe("walls_combined_topic", 1, &Center::updateWall, this);
     //driver = new DiffDriving();
+}
+
+void Center::updateWall(const red_fundamentals::WallsCombined::ConstPtr& msg)
+{
+	this->dist = msg->dist;
+	this->angle = msg->angle;
+	return;
 }
 
 //turns robot until it is roughly perpendicular to found wall
@@ -78,6 +85,7 @@ void Center::center(const red_fundamentals::WallsCombined::ConstPtr& msg)
 	//turn robot to be perpendicular to detected first wall
 	if (centeringPhase == LOOKINGFORFIRSTWALL && msg->dist) {
 		driver.stop();
+		ROS_INFO("Centering phase: %d", centeringPhase);
 		ROS_INFO("perpendicularising");
 		perpendicularise(msg);
 		centeringPhase = PERPENDICULARTOFIRSTWALL;
@@ -159,6 +167,7 @@ void Center::centering(){
 
 	while (ros::ok() && centeringPhase != CENTERED) {
 		ros::spinOnce();
+		ros::Duration(3.0).sleep();
 	}
 	ROS_INFO("centering finished");
 	return;

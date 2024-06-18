@@ -29,6 +29,8 @@ class Center
                 ros::ServiceClient diffDrive;
                 create_fundamentals::DiffDrive srv;
                 ros::Subscriber sub;
+		double dist;
+		double angle;
 
                 DiffDriving driver;
 
