@@ -634,7 +634,7 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 
 		// correct odometry
         red_fundamentals::CalculateCenter::ConstPtr act_dest = ros::topic::waitForMessage<red_fundamentals::CalculateCenter>("calculate_center_topic", ros::Duration(1));
-        ROS_INFO("Correcting angle with %lf,%lf,%lf,%lf\n", act_dest->x,act_dest->y);
+        ROS_INFO("Correcting angle with %lf,%lf\n", act_dest->x,act_dest->y);
         driver.correct_odometry_angle_error(act_dest->x,act_dest->y);
 		ROS_INFO("Correcting location with %lf,%lf,%lf,%lf\n", driver_pre_move_x + no_cell, driver_pre_move_y + whole_cell, act_dest->x,act_dest->y);
         driver.correct_odometry_location_error(driver_pre_move_x + no_cell, driver_pre_move_y + whole_cell, act_dest->x,act_dest->y);
