@@ -455,7 +455,6 @@ double wall_distance_check(){
 }
 
 void getNextPose(int next_action){
-	
 	switch(next_action){
 		// RIGHT
 		case 0:
@@ -600,9 +599,14 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
         ROS_INFO("Next Pose would be at (%d, %d) looking %d", next_pose.row, next_pose.column, next_pose.orientation);
 
         ROS_INFO("We are moving");
-        //calculate target coordinates for absolute drive func
-        double delta_x;
-        double delta_y;
+        //calculate target coordinates for absolute drive func, we don't need 
+		//to move in x direction as we already turned
+        double no_cell = 0;
+        double half_cell = 0.4;
+        double whole_cell = 0.8;
+		double driver_pre_move_x = driver.xcord;
+		double driver_pre_move_y = driver.ycord;
+		/*
         switch(next_action)
         {
             case 0:
@@ -621,18 +625,24 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
                 delta_x = 0;
                 delta_y = -0.4;
                 break;
-        }
-        //drive and correct odometry
-        driver.drive(0, driver.xcord + delta_x, driver.ycord + delta_y, 0, 1); //does turning and set to mode stay so no turning after target coords reached
+        }*/
 
+        //drive 0.4m
+        ROS_INFO("PRE DRIVE 1", act_dest->x,act_dest->y);
+        driver.drive(0, driver_pre_move_x + no_cell, driver_pre_move_y + half_cell, 0, 1); //does turning and set to mode stay so no turning after target coords reached
+        ROS_INFO("AFTER DRIVE 1", act_dest->x,act_dest->y);
+
+		// correct odometry
         red_fundamentals::CalculateCenter::ConstPtr act_dest = ros::topic::waitForMessage<red_fundamentals::CalculateCenter>("calculate_center_topic", ros::Duration(1));
-        ROS_INFO("Correcting angle with %lf,%lf,%lf,%lf\n", driver.xcord + delta_x, driver.ycord + delta_y, act_dest->x,act_dest->y);
-        driver.correct_odometry_angle_error(0, 0.4, act_dest->x,act_dest->y);
-        driver.drive(0, driver.xcord + delta_x, driver.ycord + delta_y, 0, 1);
+        ROS_INFO("Correcting angle with %lf,%lf,%lf,%lf\n", act_dest->x,act_dest->y);
+        driver.correct_odometry_angle_error(act_dest->x,act_dest->y);
+		ROS_INFO("Correcting location with %lf,%lf,%lf,%lf\n", driver_pre_move_x + no_cell, driver_pre_move_y + whole_cell, act_dest->x,act_dest->y);
+        driver.correct_odometry_location_error(driver_pre_move_x + no_cell, driver_pre_move_y + whole_cell, act_dest->x,act_dest->y);
 
-        act_dest = ros::topic::waitForMessage<red_fundamentals::CalculateCenter>("calculate_center_topic", ros::Duration(1));
-        ROS_INFO("Correcting location with %lf,%lf,%lf,%lf\n", driver.xcord + delta_x, driver.ycord + delta_y, act_dest->x,act_dest->y);
-        driver.correct_odometry_location_error(driver.xcord + delta_x, driver.ycord + delta_y, act_dest->x,act_dest->y);
+		// drive another 0.4m
+        ROS_INFO("PRE DRIVE 2", act_dest->x,act_dest->y);
+        driver.drive(0, driver.xcord + no_cell, driver.ycord + half_cell, 0, 1);
+        ROS_INFO("AFTER DRIVE 2", act_dest->x,act_dest->y);
 
 		// after moving we check if the walls we see match the walls in the map
 		ros::Duration(1.0).sleep();

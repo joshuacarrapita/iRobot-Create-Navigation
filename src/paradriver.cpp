@@ -83,36 +83,24 @@ int DiffDriving::odomInit()
 }
 
 
+// calculates angle of robot to a point relative to the robot
 double DiffDriving::calcAngle(double x, double y)
 {
-	/*if (x == 0) {
-		if (y >= 0) {
-			return 0.0;
-		} else {
-			return 180.0;
-		}
-	}
-	int signer = 1;
-	if (x < this->xcord) { signer = -1; }
-	return signer * (acos(y/sqrt(x*x+y*y)) * (180/M_PI));*/
-
 	Eigen::Vector2d yaxis;
 	yaxis(0) = 0;
 	yaxis(1) = 1;
 
-	Eigen::Vector2d rel;
-	rel(0) = x;
-	rel(1) = y;
+	Eigen::Vector2d rel_point;
+	rel_point(0) = x;
+	rel_point(1) = y;
 
 	yaxis.normalize();
-	rel.normalize();
+	rel_point.normalize();
 
-	double dotprod = yaxis.dot(rel);
+	double dotprod = yaxis.dot(rel_point);
 	int signer = 1;
 	if (x < 0) { signer = -1; }
 	return signer * (acos(dotprod) * (180/M_PI));
-
-
 }
 
 //calculate euclidian distance between current position and given point
@@ -350,7 +338,6 @@ void DiffDriving::moveDistEnc(double dist)
 
 void DiffDriving::moveDistEnc(double dist)
 {
-
 	double speed;
 	double errL = dist*32;
 	double errR = dist*32;
@@ -472,7 +459,7 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 
 void DiffDriving::correct_odometry_location_error(double x_dest, double y_dest, double x_center_rel_act, double y_center_rel_act)
 {
-	//x_center_rel_act is the relative x coordinate of the actual center. The x,y-coordinates should always be the destination minus the actual offset from the destination.
+	//x_center_rel_act is the x coordinate of the actual center relative to the robot. The x,y-coordinates should always be the destination minus the actual offset from the destination.
 	if(x_center_rel_act != 0.0) {
 		this->xcord = x_dest - x_center_rel_act;
 	}
@@ -481,16 +468,17 @@ void DiffDriving::correct_odometry_location_error(double x_dest, double y_dest, 
 	}
 }
 
-void DiffDriving::correct_odometry_angle_error(double x_dest, double y_dest, double x_center_rel_act, double y_center_rel_act)
+// calculate angle of robot towards a point assuming the robot is intented to 
+// align with 0.0° towards the center of the next cell
+void DiffDriving::correct_odometry_angle_error(double x_center_rel_act, double y_center_rel_act)
 {
-	// the angle correction is the supposed angle toward the center points minus the actual angle towards the center point
+	// the angle correction is the supposed relative angle of the robot toward the center points minus the actual relative angle towards the center point
 	if (x_center_rel_act != 0.0 && y_center_rel_act != 0.0)
 	{
-		ROS_INFO("Robot theta: %lf",this->theta);
-		double theta_dest = calcAngle(x_dest, y_dest);
-		double theta_dest_act = calcAngle(x_center_rel_act,y_center_rel_act);
-		this->theta += theta_dest - theta_dest_act;
-		ROS_INFO("Robot theta new: %lf, theta_dest: %lf, theta_dest_act: %lf, a-b: %lf\n",this->theta, theta_dest, theta_dest_act, theta_dest-theta_dest_act);
+		double curr_theta = this->theta;
+		double theta_dest_act = calcAngle(x_center_rel_act,y_center_rel_act); // calculate angle to actual center destination
+		this->theta -= theta_dest_act; // update our current angle by the difference between the two
+		ROS_INFO("Robot theta prev: %lf, Robot theta new: %lf, theta_dest_act: %lf, a-b: %lf\n",curr_theta, this->theta, theta_dest_act, curr_theta-theta_dest_act);
 	}
 }
 
