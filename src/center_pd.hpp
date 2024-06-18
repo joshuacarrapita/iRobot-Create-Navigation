@@ -34,9 +34,9 @@ class Center
 
                 DiffDriving driver;
 
-                void perpendicularise(const red_fundamentals::WallsCombined::ConstPtr& msg);
-                void correctDist(const red_fundamentals::WallsCombined::ConstPtr& msg);
-                void center(const red_fundamentals::WallsCombined::ConstPtr& msg);
+                void perpendicularise();
+                void correctDist();
+                void center();
                 void centering();
 
                 Center();
