@@ -33,7 +33,7 @@ class Center
 		double angle;
 
                 DiffDriving driver;
-
+		void updateWall(const red_fundamentals::WallsCombined::ConstPtr& msg);
                 void perpendicularise();
                 void correctDist();
                 void center();

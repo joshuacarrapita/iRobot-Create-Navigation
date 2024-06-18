@@ -63,6 +63,7 @@ void Center::correctDist()
 //centers the robot in first available cell with 2 perpendicular walls
 void Center::center()
 {
+	ros::spinOnce();
 	ROS_INFO("wall is %lf away at angle %lf", this->dist, this->angle);
 	//check if wall in sight else move until it is
 	if (centeringPhase == LOOKINGFORFIRSTWALL && !this->dist) {
@@ -135,8 +136,8 @@ void Center::center()
 			return;
 		}
 		//if found move on to phase 2
-		if (heading == 3 && msg->dist < 0.8 && msg->angle > 75 && msg->angle < 105) {
-			ROS_INFO("second wall found at heading 3 with dist: %f and angle %f", msg->dist, msg->angle);
+		if (heading == 3 && this->dist < 0.8 && this->angle > 75 && this->angle < 105) {
+			ROS_INFO("second wall found at heading 3 with dist: %f and angle %f", this->dist, this->angle);
 			driver.stop();
 			if (centeringPhase == LOOKINGFORSECONDWALL) {
 				perpendicularise();
