@@ -220,12 +220,12 @@ bool execute_plan(red_fundamentals::ExecutePlanNew::Request  &req,
   		}
   		set_pose(req.plan[i]);
   		
-		/* wallCallback();	
+		wallCallback();	
   		if(!compareWalls(map_cur.rows[row].cells[column], orientation)){
   			s.playLostSound();
   			ROS_INFO("Lost! We have to relocalize ourselves...");
   			return true;
-  		} */
+  		} 
   		
         pose.row = row;
         pose.column = column;

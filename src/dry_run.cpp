@@ -108,6 +108,7 @@ bool collect_golds(red_fundamentals::SimpleCall::Request  &req,
         // below is a placeholder for testing
         // TODO do it for each partial path
         for(int cnt=0; cnt<=num_gold; cnt++){
+			ROS_INFO("entered?");
             vector<int> plan;
             for(size_t i=0; i<partial_paths[cnt].size()-1; i++){
                 switch(partial_paths[cnt][i+1] - partial_paths[cnt][i]){
