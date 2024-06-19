@@ -319,6 +319,7 @@ bool localization(red_fundamentals::Localization::Request &req,
             
             potential_positions.clear();
             candidates_seen.clear();
+            need_change = false;
             break;
         } else {
 
