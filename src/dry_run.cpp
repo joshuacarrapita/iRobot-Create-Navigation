@@ -77,23 +77,27 @@ bool collect_golds(red_fundamentals::SimpleCall::Request  &req,
 			partial_paths[i].clear();
 		}
 		
-                int goldno = 0;
-                vector<int> golds = graph.golds;
-                for(int cell : path){
+        if(num_gold == 0) partial_paths[0] = path;
+        else{
+            int goldno = 0;
+            vector<int> golds = graph.golds;
+            for(int cell : path){
+                partial_paths[goldno].push_back(cell);
+                if(graph.contains(golds, cell)) {
+                    goldno++;
                     partial_paths[goldno].push_back(cell);
-                    if(graph.contains(golds, cell)) {
-                        goldno++;
-                        partial_paths[goldno].push_back(cell);
-                        graph.remove(golds, cell);
-                    }
+                    graph.remove(golds, cell);
                 }
+            }
                 
-                for(int j=0; j <= num_gold; j++){
-                	ROS_INFO("to gold no. %d: ", j);
+            for(int j=0; j <= num_gold; j++){
+                ROS_INFO("to gold no. %d: ", j);
 	        	for(int cell : partial_paths[j]){
 	        		ROS_INFO("%d", cell);
 	        	}
 	    	}
+        }
+                
             }
             else {
                 ROS_INFO("Could not call the localization service");
