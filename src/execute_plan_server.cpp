@@ -13,6 +13,7 @@
 #include "red_fundamentals/Row.h"
 #include "red_fundamentals/Cell.h"
 #include "red_fundamentals/WallsAlt.h"
+#include "red_fundamentals/StopMsg.h"
 #include "song.hpp"
 
 using namespace std;
@@ -119,14 +120,14 @@ void set_pose(int moved){
 	ROS_INFO("row: %d, column:%d, orientation:%d", row, column, orientation);
 }
 
-/* bool stop_check(){
+bool stop_check(){
 
 	red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(1));
 
 	if (stop_message && stop_message->content == "STOP") return true;
 	return false;
 
-} */
+} 
 
 void sensorCallback(){
 
@@ -153,12 +154,12 @@ bool pd_control(double dist)
 	double goalR = errR + r_act;
 	// ROS_INFO("Callback called: left: %f, right: %f", l_act, r_act);
 	while (errT > tolerance) {
-		/* if (stop_check()) {
+		if (stop_check()) {
 			ddsrv.request.left = 0;
 			ddsrv.request.right = 0;
 			diffDrive.call(ddsrv);
 			return false;
-		} */
+		} 
 		sensorCallback();
 		errT = (goalL-l_act)+(goalR-r_act)/2;
 		speed = abs(min(10.0, (errT * Kp + 0.4)));
@@ -219,18 +220,18 @@ bool execute_plan(red_fundamentals::ExecutePlanNew::Request  &req,
   		}
   		set_pose(req.plan[i]);
   		
-		wallCallback();	
+		/* wallCallback();	
   		if(!compareWalls(map_cur.rows[row].cells[column], orientation)){
   			s.playLostSound();
   			ROS_INFO("Lost! We have to relocalize ourselves...");
   			return true;
-  		}
+  		} */
   		
-            	pose.row = row;
-           	pose.column = column;
-            	pose.orientation = orientation;
-            	pose_pub.publish(pose);
-            	ROS_INFO("Pose message published");
+        pose.row = row;
+        pose.column = column;
+        pose.orientation = orientation;
+        pose_pub.publish(pose);
+        ROS_INFO("Pose message published");
   	}
   
   driver.stop();
