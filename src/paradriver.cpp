@@ -75,7 +75,7 @@ int DiffDriving::odomInit()
 	ROS_INFO("initialising odometer");
 	for (int i = 0; i < 10; i++) {
 		ros::spinOnce();
-		ros::Duration(0.1).sleep();
+		//ros::Duration(0.1).sleep();
 	}
 	this->odomReady = 1;
 	return 1;

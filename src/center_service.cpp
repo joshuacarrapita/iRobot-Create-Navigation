@@ -3,6 +3,7 @@
 #include "sensor_msgs/LaserScan.h"
 #include "create_fundamentals/DiffDrive.h"
 #include "red_fundamentals/WallsCombined.h"
+#include "red_fundamentals/Center.h"
 #include "paradriver.hpp"
 #include "center_pd.hpp"
 
@@ -24,13 +25,14 @@ int turnCtr = 0;
 int heading = 0;
 double tolerance = 0.3;
 
+Centphs centeringPhase = LOOKINGFORFIRSTWALL;
+
 ros::ServiceClient diffDrive;
 create_fundamentals::DiffDrive srv;
-DiffDriving driver;
 
 void updateWall()
 {
-	red_fundamentals::WallsCombined::ConstPtr& msg = ros::topic::waitForMessage<red_fundamentals::WallsCombined>("walls_combined_topic", ros::Duration(0.3));
+	red_fundamentals::WallsCombined::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::WallsCombined>("walls_combined_topic", ros::Duration(0.3));
 	dist = msg->dist;
 	angle = msg->angle;
 	return;
@@ -39,7 +41,7 @@ void updateWall()
 //turns robot until it is roughly perpendicular to found wall
 void perpendicularise()
 {
-
+	DiffDriving driver;
 	//set variables if perpendicular
 	if (angle < 90 + tolerance*20 && angle > 90 - tolerance*20) {
 		ROS_INFO("already perpendicular...");
@@ -61,6 +63,7 @@ void perpendicularise()
 //moves robot until distance to wall is half cell width/length
 void correctDist()
 {
+	DiffDriving driver;
 	//if too far away move forward
 	if (dist > 0.25) {
 		ROS_INFO("moving forward to correct distance");
@@ -78,6 +81,7 @@ void correctDist()
 //centers the robot in first available cell with 2 perpendicular walls
 void center()
 {
+	DiffDriving driver;
 	ROS_INFO("wall is %lf away at angle %lf", dist, angle);
 	//check if wall in sight else move until it is
 	if (centeringPhase == LOOKINGFORFIRSTWALL && !dist) {
@@ -188,18 +192,23 @@ bool centering(red_fundamentals::Center::Request &req, red_fundamentals::Center:
 	}
 	ROS_INFO("centering finished");
 	res.centered = true;
+	centeringPhase = LOOKINGFORFIRSTWALL;
+	heading = 0;
+	turnCtr = 0;
 	return true;
 }
 
 int main(int argc, char **argv)
 {
-   	ros::init(argc, argv, "center_service");
-    ros::NodeHandle n;
+	ros::init(argc, argv, "center_service");
+    	ros::NodeHandle n;
 	diffDrive =  n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
-    ros::ServiceServer service = n.advertiseService("center", centering);
+	DiffDriving driver;
+	driver.moveDistEnc(-0.5);
+    	ros::ServiceServer service = n.advertiseService("center", centering);
 
-    ROS_INFO("Ready to center on demand");
+    	ROS_INFO("Ready to center on demand");
 
-    ros::spin();
+    	ros::spin();
 }
 

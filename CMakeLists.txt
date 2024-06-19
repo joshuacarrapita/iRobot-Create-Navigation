@@ -47,6 +47,7 @@ add_service_files(FILES
 	ExecutePlan.srv
 	StopSrv.srv
 	SimpleCall.srv
+	Center.srv
 )
 
 #common commands for building c++ executables and libraries
@@ -169,3 +170,7 @@ add_executable(center_pd src/center_pd.cpp)
 #add_library(paradriver src/paradriver.cpp)
 target_link_libraries(center_pd paradriver ${catkin_LIBRARIES})
 add_dependencies(center_pd create_fundamentals_generate_messages_cpp)
+
+add_executable(center_service src/center_service.cpp)
+target_link_libraries(center_service paradriver ${catkin_LIBRARIES})
+add_dependencies(center_service create_fundamentals_generate_messages_cpp)
