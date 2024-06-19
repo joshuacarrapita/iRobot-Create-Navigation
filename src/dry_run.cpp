@@ -55,8 +55,6 @@ bool collect_golds(red_fundamentals::SimpleCall::Request  &req,
 {
     // initialize variables
     res.success = false;
-    int row = req.row;
-    int column = req.column;
     vector<int> partial_paths[graph.golds.size()+1];
     Song s;
     // TODO call localization to get a current position, if it is unknown
