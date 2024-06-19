@@ -6,10 +6,26 @@
 #include "paradriver.hpp"
 #include "center_pd.hpp"
 
+enum Centphs
+                {
+                        LOOKINGFORFIRSTWALL = 0,
+                        PERPENDICULARTOFIRSTWALL = 1,
+                        DISTANCEDTOFIRSTWALL = 2,
+                        LOOKINGFORSECONDWALL = 3,
+                        PERPENDICULARTOSECONDWALL = 4,
+                        DISTANCEDTOSECONDWALL = 5,
+                        CENTERED = 6
+                };
+
+
 double dist = 0;
 double angle = 0;
 int turnCtr = 0;
 int heading = 0;
+double tolerance = 0.3;
+
+ros::ServiceClient diffDrive;
+create_fundamentals::DiffDrive srv;
 DiffDriving driver;
 
 void updateWall()
@@ -179,6 +195,7 @@ int main(int argc, char **argv)
 {
    	ros::init(argc, argv, "center_service");
     ros::NodeHandle n;
+	diffDrive =  n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
     ros::ServiceServer service = n.advertiseService("center", centering);
 
     ROS_INFO("Ready to center on demand");
