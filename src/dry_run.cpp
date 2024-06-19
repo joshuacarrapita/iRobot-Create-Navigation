@@ -129,6 +129,17 @@ bool collect_golds(red_fundamentals::SimpleCall::Request  &req,
         // TODO do it for each partial path
         for(int cnt=0; cnt<=num_gold; cnt++){
 			ROS_INFO("entered?");
+            if(partial_paths[cnt].size() == 1){
+                graph.remove(graph.golds, *partial_paths[cnt].rbegin());
+                    s.opentheChest((unsigned int)graph.golds.size());
+                    ROS_INFO("GOLD or PICKUP! remaining golds: ");
+                    for(int g : graph.golds){
+                    	ROS_INFO("%d", g);
+                    }
+                    ROS_INFO("current pose:  row: %d, column: %d, orientation: %d", pose_cur.row, pose_cur.column, pose_cur.orientation);
+                    continue;
+            }
+
             vector<int> plan;
             for(size_t i=0; i<partial_paths[cnt].size()-1; i++){
                 switch(partial_paths[cnt][i+1] - partial_paths[cnt][i]){
