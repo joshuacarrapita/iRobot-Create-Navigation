@@ -102,3 +102,23 @@ void Song::playSuccessSound(){
     double duration = (H * 4) / 1000.0;
     this->playSong(0, duration);
 }
+
+void Song::opentheChest(unsigned int num){
+    ROS_INFO("Open the chest no. %d", num);
+
+    // Define note constants
+    unsigned int c4 = 60;
+
+    // Define note durations
+    unsigned int Q = 160 / 4;
+    unsigned int H = Q * 2; 
+    unsigned int E = Q / 2;
+    unsigned int S = Q / 4;   
+
+    // Upload the song 
+    this->uploadSong(0, {c4 + num, Q, c4 + num, E});
+
+    // Play the song 
+    double duration = 5;
+    this->playSong(0, duration);
+}
