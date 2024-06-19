@@ -12,8 +12,8 @@ enum Centphs
                         LOOKINGFORFIRSTWALL = 0,
                         PERPENDICULARTOFIRSTWALL = 1,
                         DISTANCEDTOFIRSTWALL = 2,
-                        LOOKINGFORSECONDWALL = 3,
-						NOPERPENDICULARSECONDWALL = 4
+			LOOKINGFORSECONDWALL = 3,
+			NOPERPENDICULARSECONDWALL = 4,
                         PERPENDICULARTOSECONDWALL = 5,
                         DISTANCEDTOSECONDWALL = 6,
                         CENTERED = 7
@@ -89,7 +89,6 @@ void center()
 	if(centeringPhase == NOPERPENDICULARSECONDWALL) {
 		if(dist < 0.8 && angle > 75 && angle < 105) {
 			centeringPhase = LOOKINGFORFIRSTWALL;
-			continue;
 		} else {
 			return;
 		}
@@ -212,6 +211,11 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "center_service");
 	ros::NodeHandle n;
+
+	DiffDriving driver;
+	driver.moveDistEnc(0.5);
+	driver.moveDistEnc(-0.5);
+
 	diffDrive =  n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
 	ros::ServiceServer service = n.advertiseService("center", centering);
 

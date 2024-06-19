@@ -307,16 +307,19 @@ void DiffDriving::moveDistEnc(double dist)
 		ros::spinOnce();
 		errL = setpointL - this->encLeft;
 		errR = setpointR - this->encRight;
+		ROS_INFO("errL: %lf | errR: %lf",errL,errR);
 		derrL = lasterrL - errL;
 		derrR = lasterrR - errR;
-		speedL = min(MAXSPEED, errL * KP * 2 + KD * (derrL/dt) * 2) + MINSPEED;
-		speedR = min(MAXSPEED, errR * KP * 2 + KD * (derrR/dt) * 2) + MINSPEED;
+		speedL = errL * KP * 2 + KD * (derrL/dt) * 2 + MINSPEED;
+		speedR = errR * KP * 2 + KD * (derrR/dt) * 2 + MINSPEED;
+		/*
 		if (abs(lasterrL) < abs(errL)) {
 			speedL = -speedL;
 		}
 		if (abs(lasterrR) < abs(errR)) {
 			speedR = -speedR;
 		}
+		*/
 		pdsrv.request.left = speedL;
 		pdsrv.request.right = speedR;
 		lasterrL = errL;
@@ -480,28 +483,6 @@ int main(int argc, char **argv)
 	dir di;
 	driver.moveDistEnc(0.5);
 	driver.moveDistEnc(-0.5);
-	/*
-	driver.turn(180);
-	ros::Duration(0.5).sleep();
-	driver.moveDist(0.85, dd);
-	
-	driver.turn(-90);
-	ros::Duration(0.5).sleep();
-	driver.moveDist(0.85, dr);
-	
-	driver.turn(-90);
-	ros::Duration(0.5).sleep();
-	driver.moveDist(0.85, du);
-	
-	driver.turn(180);
-	ros::Duration(0.5).sleep();
-	driver.moveDist(1.65, dd);
 
-	driver.turn(90);
-	ros::Duration(0.5).sleep();
-	driver.moveDist(0.85, dl);
-	*/
-	
-	
 	return 0;
 }
