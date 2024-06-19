@@ -1,6 +1,7 @@
 #include "graph.hpp"
 #include <algorithm>
 #include <unordered_map>
+#include <unordered_set>
 #include <queue>
 #include <iostream>
 using namespace std;
@@ -170,6 +171,57 @@ vector<int> Graph::bfs(int start, int goal) const {
     }
 
     return path;
+}
+
+vector<int> Graph::findPathVisitingAllGold(int start) {
+    vector<int> best_path;
+    int best_distance = 100; 
+
+    sort(golds.begin(), golds.end());   // In case the gold is not sorted in the constructor
+    
+    // going through all the different permutations of golds
+    while (next_permutation(golds.begin(), golds.end())){
+        
+        for (int pickup : pickups) {
+            vector<int> current_path;
+            int current_distance = 0;
+            int current_start = start;
+
+            // Go through all gold nodes and "connect" them on a path
+            for (int gold : golds) {
+                // find a path from the current_start to the next gold
+                vector<int> path_segment = bfs(current_start, gold);
+                // if there is no path possible the high current_distance is meant to prevent this current_path to be chosen as the best one
+                if (path_segment.empty()) {    
+                    current_distance = 100;   
+                    break;
+                }
+                // add length and path_segment to the current_path
+                current_distance += path_segment.size() - 1; 
+                current_path.insert(current_path.end(), path_segment.begin(), path_segment.end() - 1);
+                current_start = gold; // current_start is now where the path_segment endet (at the next gold)
+            }
+
+            // Go to the pickup node
+            vector<int> path_segment = bfs(current_start, pickup);
+             // if there is no path possible the high current_distance is meant to prevent this current_path to be chosen as the best one
+            if (path_segment.empty()) {
+                current_distance = 100;
+                break;
+            }
+            // add length and path_segment to the current_path
+            current_distance += path_segment.size() - 1;
+            current_path.insert(current_path.end(), path_segment.begin(), path_segment.end());
+
+            // Check if we found a shorter path
+            if (current_distance < best_distance) {
+                best_distance = current_distance;
+                best_path = current_path;
+            }
+        }
+    };
+
+    return best_path;
 }
 
 /* int main(int argc, char **argv){
