@@ -154,3 +154,7 @@ add_executable(move_to_position_server src/move_to_position_server.cpp)
 target_link_libraries(move_to_position_server graph song ${catkin_LIBRARIES})
 add_dependencies(move_to_position_server create_fundamentals_generate_messages_cpp)
 
+add_executable(dry_run_server src/dry_run_server.cpp)
+target_link_libraries(dry_run_server graph song ${catkin_LIBRARIES})
+add_dependencies(dry_run_server create_fundamentals_generate_messages_cpp)
+
