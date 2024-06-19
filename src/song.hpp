@@ -12,6 +12,7 @@ class Song
         void playLocalizedSound();
         void playLostSound();
         void playSuccessSound();
+        void opentheChest(unsigned int num);
 
         ros::ServiceClient store_song_client;
         ros::ServiceClient play_song_client;
