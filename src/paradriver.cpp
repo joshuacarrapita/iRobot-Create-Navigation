@@ -283,7 +283,7 @@ void DiffDriving::moveDist(double dist, dir direction)
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	return;
 }
-/*
+
 //PD-control func driving straight for certain distances
 void DiffDriving::moveDistEnc(double dist)
 {
@@ -327,8 +327,7 @@ void DiffDriving::moveDistEnc(double dist)
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	return;
 }
-*/
-
+/*
 void DiffDriving::moveDistEnc(double dist)
 {
 
@@ -353,7 +352,7 @@ void DiffDriving::moveDistEnc(double dist)
 		ROS_INFO("errT: %lf", errT);
 		derr = lasterrT - errT;
 		speed = abs(min(10.0, (errT * KP + (derr/dt) * KD)))+MINSPEED;
-		if (dist < 0 && this->encLeft > goalL) {
+		if (dist < 0) {
 			speed = -speed;
 		}
 		pdsrv.request.left = speed;
@@ -365,7 +364,7 @@ void DiffDriving::moveDistEnc(double dist)
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	return;
 }
-
+*/
 
 
 
@@ -479,6 +478,8 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "diffdriving");
 	DiffDriving driver;
 	dir di;
+	driver.moveDistEnc(0.5);
+	driver.moveDistEnc(-0.5);
 	/*
 	driver.turn(180);
 	ros::Duration(0.5).sleep();

@@ -13,9 +13,10 @@ enum Centphs
                         PERPENDICULARTOFIRSTWALL = 1,
                         DISTANCEDTOFIRSTWALL = 2,
                         LOOKINGFORSECONDWALL = 3,
-                        PERPENDICULARTOSECONDWALL = 4,
-                        DISTANCEDTOSECONDWALL = 5,
-                        CENTERED = 6
+						NOPERPENDICULARSECONDWALL = 4
+                        PERPENDICULARTOSECONDWALL = 5,
+                        DISTANCEDTOSECONDWALL = 6,
+                        CENTERED = 7
                 };
 
 
@@ -83,8 +84,18 @@ void center()
 {
 	DiffDriving driver;
 	ROS_INFO("wall is %lf away at angle %lf", dist, angle);
+	
+	//when looking for new first wall make sure it is a new one
+	if(centeringPhase == NOPERPENDICULARSECONDWALL) {
+		if(dist < 0.8 && angle > 75 && angle < 105) {
+			centeringPhase = LOOKINGFORFIRSTWALL;
+			continue;
+		} else {
+			return;
+		}
+	}
 	//check if wall in sight else move until it is
-	if (centeringPhase == LOOKINGFORFIRSTWALL && (angle < 65 | angle > 115)) {
+	if (centeringPhase == LOOKINGFORFIRSTWALL && !dist) {
 		driver.stop();
 		ROS_INFO("Centering phase: %d", centeringPhase);
 		//if no wall in sight turn right until full 360° rotation
@@ -103,7 +114,7 @@ void center()
 		}
 	}
 	//turn robot to be perpendicular to detected first wall
-	if (centeringPhase == LOOKINGFORFIRSTWALL && angle > 65 && angle < 115 ) {
+	if (centeringPhase == LOOKINGFORFIRSTWALL && dist) {
 		driver.stop();
 		ROS_INFO("Centering phase: %d", centeringPhase);
 		ROS_INFO("perpendicularising");
@@ -149,7 +160,6 @@ void center()
 			ROS_INFO("turning 180 deg more to find second wall left of origin");
 			driver.turn(-180);
 			heading = 3;
-			//ros::Duration(0.3).sleep();
 			return;
 		}
 		//if found move on to phase 2
@@ -172,7 +182,7 @@ void center()
 			srv.request.left = 7;
 			srv.request.right = 7;
 			diffDrive.call(srv);
-			centeringPhase = LOOKINGFORFIRSTWALL;
+			centeringPhase = NOPERPENDICULARSECONDWALL;
 			turnCtr = 0;
 			heading = 0;
 			ROS_INFO("Centering phase: %d", centeringPhase);
@@ -201,12 +211,11 @@ bool centering(red_fundamentals::Center::Request &req, red_fundamentals::Center:
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "center_service");
-    	ros::NodeHandle n;
+	ros::NodeHandle n;
 	diffDrive =  n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
-    	ros::ServiceServer service = n.advertiseService("center", centering);
+	ros::ServiceServer service = n.advertiseService("center", centering);
 
-    	ROS_INFO("Ready to center on demand");
-
-    	ros::spin();
+	ROS_INFO("Ready to center on demand");
+	ros::spin();
 }
 
