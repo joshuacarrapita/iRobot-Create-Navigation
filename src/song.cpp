@@ -116,7 +116,7 @@ void Song::opentheChest(unsigned int num){
     unsigned int S = Q / 4;   
 
     // Upload the song 
-    this->uploadSong(0, {c4 + num, Q, c4 + num, E});
+    this->uploadSong(0, {c4 + num, Q, c4 + num, E, c4 + num, Q, c4 + num, E, c4 + num, Q, c4 + num, E, c4 + num, Q, c4 + num, E});
 
     // Play the song 
     double duration = 5;
