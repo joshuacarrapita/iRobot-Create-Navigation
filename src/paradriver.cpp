@@ -339,6 +339,7 @@ void DiffDriving::moveDistEnc(double dist)
 	ros::spinOnce();
 	double goalL = errL + this->encLeft;
 	double goalR = errR + this->encRight;
+	ROS_INFO("goalL: %lf | goalR: %lf",goalL,goalR);
 	double derr;
 	double dt;
 	double lasterrT = errT;
