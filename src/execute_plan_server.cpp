@@ -154,12 +154,12 @@ bool pd_control(double dist)
 	double goalR = errR + r_act;
 	// ROS_INFO("Callback called: left: %f, right: %f", l_act, r_act);
 	while (errT > tolerance) {
-		if (stop_check()) {
+		/* if (stop_check()) {
 			ddsrv.request.left = 0;
 			ddsrv.request.right = 0;
 			diffDrive.call(ddsrv);
 			return false;
-		} 
+		} */
 		sensorCallback();
 		errT = (goalL-l_act)+(goalR-r_act)/2;
 		speed = abs(min(10.0, (errT * Kp + 0.4)));
