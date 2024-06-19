@@ -335,7 +335,7 @@ void DiffDriving::moveDistEnc(double dist)
 	double speed;
 	double errL = dist*32;
 	double errR = dist*32;
-	double errT = errL+errR/2;
+	double errT = abs(errL)+abs(errR)/2;
 	ros::spinOnce();
 	double goalL = errL + this->encLeft;
 	double goalR = errR + this->encRight;
@@ -350,9 +350,10 @@ void DiffDriving::moveDistEnc(double dist)
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
 		errT = (goalL-this->encLeft)+(goalR-this->encRight)/2;
+		ROS_INFO("errT: %lf", errT);
 		derr = lasterrT - errT;
 		speed = abs(min(10.0, (errT * KP + (derr/dt) * KD)))+MINSPEED;
-		if (dist < 0) {
+		if (dist < 0 && this->encLeft > goalL) {
 			speed = -speed;
 		}
 		pdsrv.request.left = speed;

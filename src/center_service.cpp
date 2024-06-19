@@ -84,7 +84,7 @@ void center()
 	DiffDriving driver;
 	ROS_INFO("wall is %lf away at angle %lf", dist, angle);
 	//check if wall in sight else move until it is
-	if (centeringPhase == LOOKINGFORFIRSTWALL && !dist) {
+	if (centeringPhase == LOOKINGFORFIRSTWALL && (angle < 65 | angle > 115)) {
 		driver.stop();
 		ROS_INFO("Centering phase: %d", centeringPhase);
 		//if no wall in sight turn right until full 360° rotation
@@ -103,7 +103,7 @@ void center()
 		}
 	}
 	//turn robot to be perpendicular to detected first wall
-	if (centeringPhase == LOOKINGFORFIRSTWALL && dist) {
+	if (centeringPhase == LOOKINGFORFIRSTWALL && angle > 65 && angle < 115 ) {
 		driver.stop();
 		ROS_INFO("Centering phase: %d", centeringPhase);
 		ROS_INFO("perpendicularising");
@@ -203,8 +203,6 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "center_service");
     	ros::NodeHandle n;
 	diffDrive =  n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
-	DiffDriving driver;
-	driver.moveDistEnc(-0.5);
     	ros::ServiceServer service = n.advertiseService("center", centering);
 
     	ROS_INFO("Ready to center on demand");
