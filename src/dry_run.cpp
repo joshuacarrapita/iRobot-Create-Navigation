@@ -71,14 +71,16 @@ bool collect_golds(red_fundamentals::SimpleCall::Request  &req,
                 int start = graph.postoidx(pose_cur.row, pose_cur.column);
                 // TODO if there is no gold remaining, find a path to the PICKUP location
                 if(num_gold == 0){
-                	int curidx = graph.postoidx(pose_cur.row, pose_cur.column);
                 	for(int pickup : graph.pickups){
-                		vector<int> tmp = graph.bfs(curidx, pickup);
+                		vector<int> tmp = graph.bfs(start, pickup);
                 		if(path.empty() || path.size() > tmp.size()) path = tmp;
                 	}
                 }
                 // else get a shortest path through all remaining golds and one pickup position
 				else path = graph.findPathVisitingAllGold(start);
+				for(int p : path){
+					ROS_INFO("%d", p);
+				}
                 // TODO divide the entire paht into paths from gold to gold and to pickup
 		
 		for(int i=0; i<=num_gold; i++){
