@@ -30,7 +30,7 @@ void Graph::maptograph(int n, int m){
     num_col = m;
     nodes = new node[num_row * num_col];
     // golds = {1, 11, 19, 28, 30};
-	golds = {1, 19};
+	golds = {};
     pickups = {6, 23};
 }
 
