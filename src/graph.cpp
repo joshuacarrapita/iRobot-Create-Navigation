@@ -175,7 +175,7 @@ vector<int> Graph::findPathVisitingAllGold(int start) {
     sort(golds.begin(), golds.end());   // In case the gold is not sorted in the constructor
     
     // going through all the different permutations of golds
-    while (next_permutation(golds.begin(), golds.end())){
+    do{
         
         for (int pickup : pickups) {
             vector<int> current_path;
@@ -214,7 +214,7 @@ vector<int> Graph::findPathVisitingAllGold(int start) {
                 best_path = current_path;
             }
         }
-    };
+    }while (next_permutation(golds.begin(), golds.end()));
 
     return best_path;
 }
