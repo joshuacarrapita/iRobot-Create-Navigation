@@ -55,6 +55,10 @@ bool move_to_position(red_fundamentals::MoveToPosition::Request  &req,
 {
     // initialize variables
     res.success = false;
+    if(graph.num_row <= 0 || graph.num_col <= 0 || req.row >= graph.num_row || req.column >= graph.num_col){
+        ROS_INFO("requested position is outside of the map");
+        return true;
+    }
     int row = req.row;
     int column = req.column;
     Song s;
