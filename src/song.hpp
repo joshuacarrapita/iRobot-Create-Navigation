@@ -13,6 +13,7 @@ class Song
         void playLostSound();
         void playSuccessSound();
         void opentheChest(unsigned int num);
+        void playPickupSound();
 
         ros::ServiceClient store_song_client;
         ros::ServiceClient play_song_client;
