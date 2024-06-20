@@ -112,11 +112,16 @@ vector<int> path;
                         }
                     }
 
-                    for(int j=0; j <= num_gold; j++){
+                    for(int j=0; j < num_gold; j++){
                         ROS_INFO("to gold no. %d: ", j);
                         for(int cell : partial_paths[j]){
                             ROS_INFO("%d", cell);
                         }
+                    }
+
+                    ROS_INFO("to the pickup node");
+                    for(int cell : partial_paths[num_gold]){
+            	        ROS_INFO("%d", cell);
                     }
                 }
 
