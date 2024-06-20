@@ -41,14 +41,11 @@ DiffDriving::DiffDriving()
 }
 
 bool stop_check(){
-
 	red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(0.2));
 
 	if (stop_message && stop_message->content == "STOP") return true;
 	return false;
-
 }
-
 
 //stop motors
 void DiffDriving::stop()
@@ -108,9 +105,6 @@ double DiffDriving::calcDist(double x, double y)
 {
         return sqrt((x - this->xcord)*(x - this->xcord)+(y - this->ycord)*(y - this->ycord));
 }
-
-
-
 
 //returns distance in m
 double DiffDriving::encoderToDist(double encDiff)
@@ -366,9 +360,6 @@ void DiffDriving::moveDistEnc(double dist)
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	return;
 }
-
-
-
 
 /*Idea:
  *mode 0: Turn to face goalpoint, Drive until at goalpoint, Turn to meet targetTheta
