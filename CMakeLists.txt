@@ -33,6 +33,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 add_message_files(FILES
 	Walls.msg
 	WallsAlt.msg
+	WallsCombined.msg
 	StopMsg.msg
 	Cell.msg 
 	Grid.msg
@@ -140,6 +141,10 @@ add_dependencies(localization create_fundamentals_generate_messages_cpp)
 add_executable(walls_alt src/walls_alt.cpp)
 target_link_libraries(walls_alt ${catkin_LIBRARIES})
 add_dependencies(walls_alt create_fundamentals_generate_messages_cpp)
+
+add_executable(walls_combined src/walls_combined.cpp)
+target_link_libraries(walls_combined ${catkin_LIBRARIES})
+add_dependencies(walls_combined create_fundamentals_generate_messages_cpp)
 
 add_executable(test_sound src/test_sound.cpp)
 target_link_libraries(test_sound ${catkin_LIBRARIES})
