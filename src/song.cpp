@@ -122,3 +122,27 @@ void Song::opentheChest(unsigned int num){
     double duration = 5;
     this->playSong(0, duration);
 }
+
+void Song::playPickupSound(){
+    ROS_INFO("SOS");
+	
+    // Define note constants
+    unsigned int fs5 = 78;
+    unsigned int d5 = 74;
+    unsigned int e5 = 76;
+    unsigned int a4 = 69;
+    
+    // Define note durations
+    unsigned int Q = 160 / 4;
+    unsigned int H = Q * 2; 
+    unsigned int E = Q / 2;
+    unsigned int S = Q / 4;  
+    
+    // Upload the song 
+    this->uploadSong(0, {fs5, Q, d5, Q, e5, Q, a4, Q*3, a4, Q, e5, Q, fs5, Q, d5, Q*3});
+
+    // Play the song 
+    double duration = 5;
+    this->playSong(0, duration);
+	
+}
