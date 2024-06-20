@@ -308,8 +308,8 @@ void DiffDriving::moveDistEnc(double dist)
 		errL = setpointL - this->encLeft;
 		errR = setpointR - this->encRight;
 		ROS_INFO("errL: %lf | errR: %lf",errL,errR);
-		derrL = lasterrL - errL;
-		derrR = lasterrR - errR;
+		derrL = abs(lasterrL) - abs(errL);
+		derrR = abs(lasterrR) - abs(errR);
 		speedL = errL * KP * 2 + KD * (derrL/dt) * 2 + MINSPEED;
 		speedR = errR * KP * 2 + KD * (derrR/dt) * 2 + MINSPEED;
 		/*
