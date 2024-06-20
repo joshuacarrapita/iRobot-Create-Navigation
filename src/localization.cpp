@@ -8,7 +8,8 @@
 #include "red_fundamentals/Row.h"
 #include "red_fundamentals/Cell.h"
 #include "red_fundamentals/Pose.h"
-#include "red_fundamentals/WallsAlt.h"
+// #include "red_fundamentals/WallsAlt.h"
+#include "red_fundamentals/WallsCombined.h"
 #include "paradriver.hpp"
 #include "moving.hpp"
 #include "song.hpp"
@@ -53,7 +54,7 @@ void mapCallback() {
 
 void wallCallback(){
     while(ros::ok()) {
-        const red_fundamentals::WallsAlt::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::WallsAlt>("walls_alt_topic",
+        const red_fundamentals::WallsAlt::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::WallsAlt>("walls_combined_topic",
                                                                                                           ros::Duration(0.2));
         if(msg != nullptr) {
             wall_nums.clear();
