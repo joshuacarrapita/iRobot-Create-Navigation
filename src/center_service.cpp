@@ -106,8 +106,8 @@ void center()
 		//if after turning still no wall move forwards until wall found
 		} else {
 			ROS_INFO("moving to find first wall");
-			srv.request.left = 7;
-			srv.request.right = 7;
+			srv.request.left = 10;
+			srv.request.right = 10;
 			diffDrive.call(srv);
 			return;
 		}
@@ -178,8 +178,8 @@ void center()
 		} else {
 			//if no suitable walls found directly connected to first wall, move forward with first wall left of robot and look for wall in front
 			ROS_INFO("no second wall found looking for new first wall in adjacent cell");
-			srv.request.left = 7;
-			srv.request.right = 7;
+			srv.request.left = 10;
+			srv.request.right = 10;
 			diffDrive.call(srv);
 			centeringPhase = NOPERPENDICULARSECONDWALL;
 			turnCtr = 0;
@@ -211,11 +211,11 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "center_service");
 	ros::NodeHandle n;
-
+	/*
 	DiffDriving driver;
 	driver.moveDistEnc(0.5);
 	driver.moveDistEnc(-0.5);
-
+	*/
 	diffDrive =  n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
 	ros::ServiceServer service = n.advertiseService("center", centering);
 

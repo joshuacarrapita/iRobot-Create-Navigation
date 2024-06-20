@@ -7,7 +7,7 @@
 #include "paradriver.hpp"
 
 #define MAXSPEED 10.0
-#define MINSPEED 0.3
+#define MINSPEED 0.5
 #define CORRECTIONMARGIN 3.0
 #define WHEELBASE 0.260		//m
 #define WHEELRADIUS 0.033	//m
@@ -300,9 +300,11 @@ void DiffDriving::moveDistEnc(double dist)
 	double derrL;
 	double derrR;
 	while (abs(errL) + abs(errL) > ENCTOLERANCE) {
+		/*
 		if (stop_check()) {
 			break;
 		}
+		*/
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
 		errL = setpointL - this->encLeft;
@@ -310,8 +312,18 @@ void DiffDriving::moveDistEnc(double dist)
 		ROS_INFO("errL: %lf | errR: %lf",errL,errR);
 		derrL = abs(lasterrL) - abs(errL);
 		derrR = abs(lasterrR) - abs(errR);
-		speedL = errL * KP * 2 + KD * (derrL/dt) * 2 + MINSPEED;
-		speedR = errR * KP * 2 + KD * (derrR/dt) * 2 + MINSPEED;
+		speedL = errL * KP * 5 + KD * (derrL/dt) * 2;
+		speedR = errR * KP * 5 + KD * (derrR/dt) * 2;
+		if (errL < 0) {
+			speedL -= MINSPEED;
+		} else {
+			speedL += MINSPEED;
+		}
+		if (errR < 0) {
+			speedR -= MINSPEED;
+		} else {
+			speedR += MINSPEED;
+		}
 		/*
 		if (abs(lasterrL) < abs(errL)) {
 			speedL = -speedL;
