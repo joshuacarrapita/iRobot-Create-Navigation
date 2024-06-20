@@ -38,10 +38,6 @@ void mapCallback(){
                     }
                 }
             }
-            // create a graph using the received map
-            graph.maptograph(map_cur.rows.size(), map_cur.rows[0].cells.size());
-            graph.addEdges(&map_cur);
-            graph.setType();
             break;
         }
         else{
@@ -51,15 +47,20 @@ void mapCallback(){
 }
 
 bool collect_golds(red_fundamentals::SimpleCall::Request  &req,
-                      red_fundamentals::SimpleCall::Response &res)
+                   red_fundamentals::SimpleCall::Response &res)
 {
+    // create a graph using the received map
+    graph.maptograph(map_cur.rows.size(), map_cur.rows[0].cells.size());
+    graph.addEdges(&map_cur);
+    graph.setType();
     // initialize variables
     res.success = false;
     vector<int> partial_paths[graph.golds.size()+1];
     Song s;
+    
     // TODO call localization to get a current position, if it is unknown
     while(ros::ok()){
-	int num_gold = (int)graph.golds.size();
+        int num_gold = (int)graph.golds.size();
         if(need_localization){
             if (client_loc.call(srv_loc)) {
                 ROS_INFO("row: %d, column: %d, orientation: %d",srv_loc.response.pose.row, srv_loc.response.pose.column, 		srv_loc.response.pose.orientation);
@@ -67,52 +68,6 @@ bool collect_golds(red_fundamentals::SimpleCall::Request  &req,
                 pose_cur.column = srv_loc.response.pose.column;
                 pose_cur.orientation = srv_loc.response.pose.orientation;
                 need_localization = false;
-				vector<int> path;
-                int start = graph.postoidx(pose_cur.row, pose_cur.column);
-                // TODO if there is no gold remaining, find a path to the PICKUP location
-                if(num_gold == 0){
-                	for(int pickup : graph.pickups){
-                		vector<int> tmp = graph.bfs(start, pickup);
-                		if(path.empty() || path.size() > tmp.size()) path = tmp;
-                	}
-                }
-                // else get a shortest path through all remaining golds and one pickup position
-				else path = graph.findPathVisitingAllGold(start);
-				for(int p : path){
-					ROS_INFO("%d", p);
-				}
-                // TODO divide the entire paht into paths from gold to gold and to pickup
-		
-		for(int i=0; i<=num_gold; i++){
-			partial_paths[i].clear();
-		}
-		
-        if(num_gold == 0) {
-			ROS_INFO("path to PICKUP");
-			partial_paths[0] = path;
-			for(int p : partial_paths[0]){
-				ROS_INFO("%d", p);
-			}
-		}	
-        else{
-            int goldno = 0;
-            vector<int> golds = graph.golds;
-            for(int cell : path){
-                partial_paths[goldno].push_back(cell);
-                if(graph.contains(golds, cell)) {
-                    goldno++;
-                    partial_paths[goldno].push_back(cell);
-                    graph.remove(golds, cell);
-                }
-            }
-                
-            for(int j=0; j <= num_gold; j++){
-                ROS_INFO("to gold no. %d: ", j);
-	        	for(int cell : partial_paths[j]){
-	        		ROS_INFO("%d", cell);
-	        	}
-	    	}
-        }
                 
             }
             else {
@@ -121,6 +76,49 @@ bool collect_golds(red_fundamentals::SimpleCall::Request  &req,
             }
         }
 
+vector<int> path;
+                int start = graph.postoidx(pose_cur.row, pose_cur.column);
+                
+                for(int i=0; i<=num_gold; i++){
+                    partial_paths[i].clear();
+                }
+
+
+                // TODO if there is no gold remaining, find a path to the PICKUP location
+                if(num_gold == 0){
+                    for(int pickup : graph.pickups){
+                        vector<int> tmp = graph.bfs(start, pickup);
+                        if(path.empty() || path.size() > tmp.size()) path = tmp;
+                    }
+                    ROS_INFO("path to PICKUP");
+                    partial_paths[0] = path;
+                    for(int p : partial_paths[0]){
+                        ROS_INFO("%d", p);
+                    }
+                }
+                // else get a shortest path through all remaining golds and one pickup position
+                else {
+                	path = graph.findPathVisitingAllGold(start);
+                	
+                	// TODO divide the entire paht into paths from gold to gold and to pickup
+                	int goldno = 0;
+                    vector<int> golds_tmp = graph.golds;
+                    for(int cell : path){
+                        partial_paths[goldno].push_back(cell);
+                        if(graph.contains(golds_tmp, cell)) {
+                            goldno++;
+                            partial_paths[goldno].push_back(cell);
+                            graph.remove(golds_tmp, cell);
+                        }
+                    }
+
+                    for(int j=0; j <= num_gold; j++){
+                        ROS_INFO("to gold no. %d: ", j);
+                        for(int cell : partial_paths[j]){
+                            ROS_INFO("%d", cell);
+                        }
+                    }
+                }
 
 
 
@@ -128,16 +126,23 @@ bool collect_golds(red_fundamentals::SimpleCall::Request  &req,
         // below is a placeholder for testing
         // TODO do it for each partial path
         for(int cnt=0; cnt<=num_gold; cnt++){
-			ROS_INFO("entered?");
             if(partial_paths[cnt].size() == 1){
-                graph.remove(graph.golds, *partial_paths[cnt].rbegin());
-                    s.opentheChest((unsigned int)graph.golds.size());
-                    ROS_INFO("GOLD or PICKUP! remaining golds: ");
-                    for(int g : graph.golds){
-                    	ROS_INFO("%d", g);
+                // TODO distinguish between GOLD and PICKUP
+                    if(graph.golds.size() == 0){ // PICKUP
+                        ROS_INFO("Waiting for the helicopter...");
+                        s.playPickupSound();
                     }
-                    ROS_INFO("current pose:  row: %d, column: %d, orientation: %d", pose_cur.row, pose_cur.column, pose_cur.orientation);
-                    continue;
+
+                    else{ // GOLD
+                        graph.remove(graph.golds, *partial_paths[cnt].rbegin());
+                        s.opentheChest((unsigned int)graph.golds.size());
+                        ROS_INFO("GOLD! remaining golds: ");
+                        for(int g : graph.golds){
+                            ROS_INFO("%d", g);
+                        }
+                    }
+                ROS_INFO("current pose:  row: %d, column: %d, orientation: %d", pose_cur.row, pose_cur.column, pose_cur.orientation);
+                continue;
             }
 
             vector<int> plan;
@@ -163,20 +168,29 @@ bool collect_golds(red_fundamentals::SimpleCall::Request  &req,
             srv_ep.request.orientation = pose_cur.orientation;
             if(client_ep.call(srv_ep)){
                 if(srv_ep.response.success){
-                    // TODO update current position for the next call if the plan could be executed
+                    // update current position for the next call if the plan could be executed
                     pose_cur.row = *partial_paths[cnt].rbegin() / graph.num_col;
                     pose_cur.column = *partial_paths[cnt].rbegin() % graph.num_col;
-                    // TODO update orientation
+                    // update orientation
                     pose_cur.orientation = *plan.rbegin();
-                    graph.remove(graph.golds, *partial_paths[cnt].rbegin());
-                    s.opentheChest((unsigned int)graph.golds.size());
-                    ROS_INFO("GOLD or PICKUP! remaining golds: ");
-                    for(int g : graph.golds){
-                    	ROS_INFO("%d", g);
+
+                    // TODO distinguish between GOLD and PICKUP
+                    if(graph.golds.size() == 0){ // PICKUP
+                        ROS_INFO("Waiting for the helicopter...");
+                        s.playPickupSound();
+                    }
+
+                    else{ // GOLD
+                        graph.remove(graph.golds, *partial_paths[cnt].rbegin());
+                        s.opentheChest((unsigned int)graph.golds.size());
+                        ROS_INFO("GOLD! remaining golds: ");
+                        for(int g : graph.golds){
+                            ROS_INFO("%d", g);
+                        }
                     }
                     ROS_INFO("current pose:  row: %d, column: %d, orientation: %d", pose_cur.row, pose_cur.column, pose_cur.orientation);
-                    
-                    
+
+
                 }
                 else{
                     // TODO think about under what circumstances the plan cannot be executed and what to do
@@ -191,11 +205,11 @@ bool collect_golds(red_fundamentals::SimpleCall::Request  &req,
                 return true;
             }
         }
-        
+
         if(!need_localization){
-        	res.success = true;
-        	break;
-	}
+            res.success = true;
+            break;
+        }
     }
     return true;
 }
