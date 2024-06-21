@@ -21,8 +21,9 @@
 #define ANGLETOLERANCE 0.5	//deg
 #define ENCTOLERANCE 0.1	//rad
 
+#define KPTURN 0.10
 #define KP 0.20		//proportional gain factor
-#define KD 1.5		//derivative gain factor
+#define KD 4.5		//derivative gain factor
 
 using namespace std;
 
@@ -164,7 +165,7 @@ void DiffDriving::turnAbs(double targetTheta)
 		err = abs(targetTheta - theta);
 		derr = lasterr - err;
 		lasterr = err;
-		speed = min(MAXSPEED, err * KP + KD * (derr/dt)) + MINSPEED;
+		speed = min(MAXSPEED, err * KP  + KD * (derr/dt)) + MINSPEED;
 		if (theta > targetTheta) {
 			//ROS_INFO("turning left");
 			this->pdsrv.request.left = -speed;
@@ -199,7 +200,8 @@ void DiffDriving::turn(double targetTheta)
 		err = abs(goal - theta);
 		derr = lasterr - err;
 		lasterr = err;
-		speed = min(MAXSPEED, err * KP + KD * (derr/dt)) + MINSPEED;
+		speed = min(MAXTURNSPEED, err * KP + KD * (derr/dt)) + MINSPEED;
+		ROS_INFO("Differential component: %lf with derr: %lf and dt: %lf", KD * (derr/dt), derr, dt);
 		if (theta > goal) {
 			//turn left
 			this->pdsrv.request.left = -speed;
