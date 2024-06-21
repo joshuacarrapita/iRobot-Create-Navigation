@@ -420,7 +420,7 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			double speed;
 			double theta = calcAngle(x, y);
 			ROS_INFO("THETA: %lf, x,y: (%lf,%lf)\n",theta, x,y);
-			turnAbs(theta);
+			turn(theta);
 			/*
 			while (err > DISTTOLERANCE) {
 				if (stop_check()) {
