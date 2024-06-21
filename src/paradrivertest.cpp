@@ -105,6 +105,11 @@ double DiffDriving::calcDist(double x, double y)
         return sqrt((x - this->xcord)*(x - this->xcord)+(y - this->ycord)*(y - this->ycord));
 }
 
+//calculate euclidian distance to relative given point
+double DiffDriving::calcRelDist(double x, double y)
+{
+        return sqrt(x*x + y*y);
+}
 
 
 
@@ -277,17 +282,12 @@ void DiffDriving::moveDistEnc(double dist)
 int DiffDriving::drive(int mode, double x, double y, double targetTheta, int stay)
 {
 	ros::spinOnce();
-	double errX = x - this->xcord;
-	double errY = y - this->ycord;
-	double err = calcDist(x, y);
-	double lasterr = err;
-	double derr;
-	double dt;
 	switch(mode)
 	{
 		case 0: {
 			double speed;
 			turnAbs(calcAngle(x - this->xcord, y - this->ycord));
+			double err = calcDist(x, y);
 			this->moveDistEnc(err);	//only calculate euclidean distance once then drive straight for that amount of distance
 			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 			if (stay) { return 1; }
@@ -298,6 +298,7 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 		case 1: {
 			double speed;
 			turnAbs(calcAngle(x, y));
+			double err = calcRelDist(x, y);
 			this->moveDistEnc(err);
 			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 			if (stay) { return 1; }
@@ -318,6 +319,13 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 		*/
 	}
 	return 0;
+}
+
+void driveWithCorrection(double x, double y, double targetTheta)
+{
+	for (int i = 1; i < 6; i++) {
+		i = i;
+	}
 }
 
 void DiffDriving::correct_odometry_location_error(double x_dest, double y_dest, double x_center_rel_act, double y_center_rel_act)
