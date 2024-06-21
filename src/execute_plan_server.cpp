@@ -606,7 +606,9 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 
 		double rel_dest_x = act_dest->x;
 		double rel_dest_y = act_dest->y;
-		if (rel_dest_y == 0.0) rel_dest_y = 0.8;
+		if (rel_dest_y <= 0.0) rel_dest_y = 0.8;
+		rel_dest_y = rel_dest_y * 0.9; // just a hotfix because it seems like drive overshoots
+		ROS_INFO("DRIVING TO (relative): (x,y) (%lf,%lf)!\n", rel_dest_x, rel_dest_y);
         driver.drive(1, rel_dest_x, rel_dest_y, 0, 1); //does turning and set to mode stay so no turning after target coords reached
 
        	wallCallback();	// Get walls
@@ -622,8 +624,22 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
         }
 
 		red_fundamentals::Cell cell = map_cur.rows[next_pose.row].cells[next_pose.column];
-		
-        if (!compareWalls(cell, next_pose.orientation)) {
+
+		if (!compareWalls(cell, next_pose.orientation)) {
+			// We got lost!
+			//lost = true;
+            s.playLostSound();
+            ROS_INFO("The walls dont match. We got lost");
+			//return true;
+		} 
+		// We know where we are and publish
+		curr_pose = next_pose;
+		s.playLocalizedSound();
+	    pose_pub.publish(curr_pose);
+		ROS_INFO("We are now at (%d, %d) looking %d", curr_pose.row, curr_pose.column, curr_pose.orientation);
+		lost = false;
+
+        /*if (!compareWalls(cell, next_pose.orientation)) {
 			// We got lost!
 			lost = true;
             s.playLostSound();
@@ -640,8 +656,7 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 	        }
             ROS_INFO("We are now at (%d, %d) looking %d", curr_pose.row, curr_pose.column, curr_pose.orientation);
 			lost = false;
-		}
-
+		}*/
 	}
 
 	res.success = true;
