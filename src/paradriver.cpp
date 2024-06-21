@@ -437,7 +437,8 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 				diffDrive.call(pdsrv);
 			}
 			this->stop();*/
-			this->moveDistEnc(err);
+			double relErr = calcDist(x+this->xcord, y+this->ycord);
+			this->moveDistEnc(relErr);
 			ros::Duration(0.5).sleep();
 			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 			if (stay) { return 1; }

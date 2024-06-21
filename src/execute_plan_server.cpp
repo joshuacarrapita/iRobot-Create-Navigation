@@ -640,7 +640,7 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 
         //drive 0.4m
         ROS_INFO("PRE DRIVE 1");
-        driver.drive(0, driver_pre_move_x + no_cell, driver_pre_move_y + half_cell, 0, 1); //does turning and set to mode stay so no turning after target coords reached
+        driver.drive(0, driver_pre_move_x + delta_x/2, driver_pre_move_y + delta_y/2, 0, 1); //does turning and set to mode stay so no turning after target coords reached
         ROS_INFO("AFTER DRIVE 1");
 
 		// correct odometry
@@ -656,7 +656,7 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 
 		// drive another 0.4m
         ROS_INFO("PRE DRIVE 2");
-        driver.drive(0, driver_pre_move + no_cell, driver_pre_move + half_cell + half_cell, 0, 1);
+        driver.drive(0, driver_pre_move + delta_x, driver_pre_move + delta_y, 0, 1);
         ROS_INFO("AFTER DRIVE 2");
 
 		// after moving we check if the walls we see match the walls in the map
