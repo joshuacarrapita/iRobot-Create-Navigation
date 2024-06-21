@@ -199,9 +199,9 @@ void DiffDriving::turn(double targetTheta)
 		ros::spinOnce();
 		err = abs(goal - theta);
 		derr = lasterr - err;
+		ROS_INFO("Differential component: %lf with derr: %lf and dt: %lf\n lasterr: %lf | err: %lf", KD * (derr/dt), derr, dt, lasterr, err);
 		lasterr = err;
 		speed = min(MAXTURNSPEED, err * KP + KD * (derr/dt)) + MINSPEED;
-		ROS_INFO("Differential component: %lf with derr: %lf and dt: %lf", KD * (derr/dt), derr, dt);
 		if (theta > goal) {
 			//turn left
 			this->pdsrv.request.left = -speed;
