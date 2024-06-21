@@ -608,23 +608,28 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 		double driver_pre_move_y = driver.ycord;
 		double delta_x;
 		double delta_y;
+		double turn_target;
         switch(next_action)
         {
             case 0:
                 delta_x = 0.8;
                 delta_y = 0;
+				turn_target = 90;
                 break;
             case 1:
                 delta_x = 0;
                 delta_y = 0.8;
+				turn_target = 0;
                 break;
             case 2:
                 delta_x = -0.8;
                 delta_y = 0;
+				turn_target = -90;
                 break;
             case 3:
                 delta_x = 0;
                 delta_y = -0.8;
+				turn_target = 180;
                 break;
         }
 
@@ -642,7 +647,7 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 		red_fundamentals::CalculateCenter::ConstPtr act_dest = ros::topic::waitForMessage<red_fundamentals::CalculateCenter>("calculate_center_topic", ros::Duration(1));
         ROS_INFO("Correcting angle with %lf,%lf\n", act_dest->x,act_dest->y);
         driver.correct_odometry_angle_error(act_dest->x,act_dest->y);
-		driver.turnAbs(0); // After correcting odometry angle error we need to turn and then check for the new relative center because
+		driver.turnAbs(turn_target); // After correcting odometry angle error we need to turn and then check for the new relative center because
 		// calculate_center works relative to the robots direction and we would get wrong coordinates in the next step if we didnt align the direction 
 		// to 0 degree beforehand
         act_dest = ros::topic::waitForMessage<red_fundamentals::CalculateCenter>("calculate_center_topic", ros::Duration(1));
