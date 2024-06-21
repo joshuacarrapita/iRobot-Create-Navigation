@@ -576,9 +576,8 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 	}
 	ROS_INFO("(THATS, IT)\n");
 
-	// go over the whole execution plan
+	/*// go over the whole execution plan
 	for (int i = 0; i < exec_plan.size(); i++){
-
 		int next_action = exec_plan[i];
 		robot_dir = static_cast<drive_direction>(curr_pose.orientation); // update robot direction
 		int turn_dir = robot_dir - next_action; // dynamically calculate the necessary turn amount based on current robot direction and desired cell
@@ -693,7 +692,7 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 		ROS_INFO("We are now at (%d, %d) looking %d", curr_pose.row, curr_pose.column, curr_pose.orientation);
 		lost = false;
 
-        /*if (!compareWalls(cell, next_pose.orientation)) {
+        ////if (!compareWalls(cell, next_pose.orientation)) {
 			// We got lost!
 			lost = true;
             s.playLostSound();
@@ -710,8 +709,8 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 	        }
             ROS_INFO("We are now at (%d, %d) looking %d", curr_pose.row, curr_pose.column, curr_pose.orientation);
 			lost = false;
-		}*/
-	}
+		}////
+	}*/
 
 	res.success = true;
 	return true;
