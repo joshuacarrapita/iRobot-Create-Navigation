@@ -21,8 +21,8 @@
 #define ANGLETOLERANCE 0.5	//deg
 #define ENCTOLERANCE 0.1	//rad
 
-#define KPTURN 0.10
-#define KDTURN 0.95
+#define KPTURN 0.15
+#define KDTURN 0.01
 #define KP 0.20		//proportional gain factor
 #define KD 0.90		//derivative gain factor
 
@@ -196,18 +196,24 @@ void DiffDriving::turn(double targetTheta)
 	double goal = theta + targetTheta;
 	double err = abs(targetTheta);
 	double speed;
-	double lasterr = err;
+	double lasterr = err + 0.00001;
 	double dt;
 	double derr;
+	double derivative;
+	double starttime = ros::Time::now().toSec();
 	while (err > ANGLETOLERANCE) {
 		//ROS_INFO("turning with err: %lf", err);
 		dt = ros::Time::now().toSec() - this->clock;
-		lasterr = err;
 		ros::spinOnce();
 		err = abs(goal - theta);
-		derr = lasterr - err;
-		ROS_INFO("Differential component: %lf with derr: %lf and dt: %lf\n lasterr: %lf | err: %lf", KD * (derr/dt), derr, dt, lasterr, err);
-		speed = min(MAXTURNSPEED, err * KP + KD * (derr/dt)) + MINSPEED;
+		if (err != lasterr) {
+			derr = lasterr - err;
+			derivative = (derr/dt) * KDTURN;
+		}
+		ROS_INFO("err: %lf Derivative: %lf", err, derivative);
+		lasterr = err;
+		//ROS_INFO("Differential component: %lf with derr: %lf and dt: %lf\n lasterr: %lf | err: %lf", KD * (derr/dt), derr, dt, lasterr, err);
+		speed = min(MAXSPEED, err * KPTURN + derivative) + MINSPEED;
 		if (theta > goal) {
 			//turn left
 			this->pdsrv.request.left = -speed;
@@ -221,6 +227,7 @@ void DiffDriving::turn(double targetTheta)
 	}
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	this->stop();
+	ROS_INFO("total time: %lf", ros::Time::now().toSec() - starttime);
 }
 
 //PD-control func driving straight for certain distances
@@ -297,7 +304,7 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 		}
 		case 1: {
 			double speed;
-			turnAbs(calcAngle(x, y));
+			turn(calcAngle(x, y));
 			double err = calcRelDist(x, y);
 			this->moveDistEnc(err);
 			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
@@ -355,9 +362,10 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "diffdriving");
 	DiffDriving driver;
 	dir di;
-	for (int i = 0; i < 16; i++) {
+	for (int i = 0; i < 4; i++) {
 		driver.turn(90);
 		ros::Duration(0.3).sleep();
+		//driver.moveDistEnc(0.4);
 	}
 
 	return 0;
