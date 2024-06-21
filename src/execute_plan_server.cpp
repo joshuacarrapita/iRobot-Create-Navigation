@@ -490,7 +490,6 @@ void getNextPose(int next_action){
 }
 
 vector<vector<int>> exec_plan_to_cell_plan(vector<int> exec_plan, int row, int col){
-
 	vector<vector<int>> cell_plan;
 	vector<int> start = {row,col};
 
@@ -568,6 +567,14 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 	ROS_INFO("ORIENTATION: %d, drivertheta: %lf",curr_pose.orientation, driver.theta);
 	driver.xcord = curr_pose.column * 0.8;
 	driver.ycord = curr_pose.row * (-0.8);
+
+	vector<vector<int>> cell_plan = exec_plan_to_cell_plan(exec_plan, curr_pose.row, curr_pose.column);
+	ROS_INFO("CELL PLAN (row, col): ");
+
+	for (int i = 0; i < cell_plan.size(); i++){
+		ROS_INFO("(%d,%d), ",cell_plan[i][ROW], cell_plan[i][COL]);
+	}
+	ROS_INFO("(THATS, IT)\n");
 
 	// go over the whole execution plan
 	for (int i = 0; i < exec_plan.size(); i++){
