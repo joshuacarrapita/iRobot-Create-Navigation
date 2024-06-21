@@ -192,6 +192,16 @@ void center()
 	return;
 }
 
+void resetCentering()
+{
+	dist = 0;
+	angle = 0;
+	centeringPhase = LOOKINGFORFIRSTWALL;
+	heading = 0;
+	turnCtr = 0;
+	return;
+}
+
 bool centering(red_fundamentals::Center::Request &req, red_fundamentals::Center::Response &res){
 	ROS_INFO("starting centering process");
 	res.centered = false;
@@ -201,9 +211,7 @@ bool centering(red_fundamentals::Center::Request &req, red_fundamentals::Center:
 	}
 	ROS_INFO("centering finished");
 	res.centered = true;
-	centeringPhase = LOOKINGFORFIRSTWALL;
-	heading = 0;
-	turnCtr = 0;
+	resetCentering();
 	return true;
 }
 
@@ -211,11 +219,6 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "center_service");
 	ros::NodeHandle n;
-	/*
-	DiffDriving driver;
-	driver.moveDistEnc(0.5);
-	driver.moveDistEnc(-0.5);
-	*/
 	diffDrive =  n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
 	ros::ServiceServer service = n.advertiseService("center", centering);
 
