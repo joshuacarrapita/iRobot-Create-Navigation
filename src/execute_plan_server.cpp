@@ -524,7 +524,6 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 
 	// go over the whole execution plan
 	for (int i = 0; i < exec_plan.size(); i++){
-
 		int next_action = exec_plan[i];
 		robot_dir = static_cast<drive_direction>(curr_pose.orientation); // update robot direction
 		int turn_dir = robot_dir - next_action; // dynamically calculate the necessary turn amount based on current robot direction and desired cell
@@ -602,6 +601,7 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 
         //calculate target coordinates for relative drive func, we don't need 
 		//to move in x direction as we already turned
+		while (!driver.mayDrive) ;
 		red_fundamentals::CalculateCenter::ConstPtr act_dest = ros::topic::waitForMessage<red_fundamentals::CalculateCenter>("calculate_center_topic", ros::Duration(1));
 
 		double rel_dest_x = act_dest->x;

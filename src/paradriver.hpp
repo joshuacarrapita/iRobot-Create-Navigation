@@ -40,6 +40,7 @@ class DiffDriving
 		double ycord;
 		double theta;
 		double clock;
+		bool mayDrive;
 		DiffDriving();
 };
 

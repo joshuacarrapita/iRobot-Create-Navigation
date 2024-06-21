@@ -20,6 +20,7 @@
 #define DISTTOLERANCE 0.01	//m
 #define ANGLETOLERANCE 0.5	//deg
 #define ENCTOLERANCE 0.1	//rad
+#define MAYDRIVETOLERANCE 0.5
 
 #define KP 0.20		//proportional gain factor
 #define KD 0.90		//derivative gain factor
@@ -343,6 +344,7 @@ void DiffDriving::moveDistEnc(double dist)
 	double dt;
 	double lasterrT = errT;
 	while (errT > ENCTOLERANCE) {
+		if (errT < MAYDRIVETOLERANCE) this->mayDrive = true;
 		if (stop_check()) {
 			break;
 		}
@@ -368,6 +370,7 @@ void DiffDriving::moveDistEnc(double dist)
 */
 int DiffDriving::drive(int mode, double x, double y, double targetTheta, int stay)
 {
+	this->mayDrive = false;
 	ros::spinOnce();
 	double errX = x - this->xcord;
 	double errY = y - this->ycord;
@@ -439,7 +442,6 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			this->stop();*/
 			double relErr = calcDist(x+this->xcord, y+this->ycord);
 			this->moveDistEnc(relErr);
-			ros::Duration(0.5).sleep();
 			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 			if (stay) { return 1; }
 			this->turnAbs(targetTheta);
