@@ -22,8 +22,9 @@
 #define ENCTOLERANCE 0.1	//rad
 
 #define KPTURN 0.10
+#define KDTURN 0.95
 #define KP 0.20		//proportional gain factor
-#define KD 4.5		//derivative gain factor
+#define KD 0.90		//derivative gain factor
 
 using namespace std;
 
@@ -196,11 +197,11 @@ void DiffDriving::turn(double targetTheta)
 	while (err > ANGLETOLERANCE) {
 		//ROS_INFO("turning with err: %lf", err);
 		dt = ros::Time::now().toSec() - this->clock;
+		lasterr = err;
 		ros::spinOnce();
 		err = abs(goal - theta);
 		derr = lasterr - err;
 		ROS_INFO("Differential component: %lf with derr: %lf and dt: %lf\n lasterr: %lf | err: %lf", KD * (derr/dt), derr, dt, lasterr, err);
-		lasterr = err;
 		speed = min(MAXTURNSPEED, err * KP + KD * (derr/dt)) + MINSPEED;
 		if (theta > goal) {
 			//turn left
@@ -242,9 +243,9 @@ void DiffDriving::moveDistEnc(double dist)
 		ros::spinOnce();
 		errL = setpointL - this->encLeft;
 		errR = setpointR - this->encRight;
-		ROS_INFO("errL: %lf | errR: %lf",errL,errR);
 		derrL = abs(lasterrL) - abs(errL);
 		derrR = abs(lasterrR) - abs(errR);
+		ROS_INFO("errL: %lf | errR: %lf | derrL: %lf | derrR: %lf",errL,errR,derrL,derrR);
 		speedL = errL * KP * 5 + KD * (derrL/dt) * 2;
 		speedR = errR * KP * 5 + KD * (derrR/dt) * 2;
 		if (errL < 0) {
@@ -288,11 +289,22 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			double speed;
 			turnAbs(calcAngle(x - this->xcord, y - this->ycord));
 			this->moveDistEnc(err);	//only calculate euclidean distance once then drive straight for that amount of distance
-			ros::Duration(0.5).sleep();
 			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 			if (stay) { return 1; }
 			this->turnAbs(targetTheta);
+			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 			return 1;
+		}
+		case 1: {
+			double speed;
+			turnAbs(calcAngle(x, y));
+			this->moveDistEnc(err);
+			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
+			if (stay) { return 1; }
+			this->turnAbs(targetTheta);
+			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
+			return 1;
+		}
 		//idea for smooth driving:
 		/*-Use local coordinate system with y axis always being robot heading
 		  -Each step calculate delta theta,x,y to target point
@@ -304,17 +316,6 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			->
 
 		*/
-		}
-		case 1: {
-			double speed;
-			turnAbs(calcAngle(x, y));
-			this->moveDistEnc(err);
-			ros::Duration(0.5).sleep();
-			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
-			if (stay) { return 1; }
-			this->turnAbs(targetTheta);
-			return 1;
-		}
 	}
 	return 0;
 }
