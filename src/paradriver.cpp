@@ -381,7 +381,7 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			double speed;
 			double theta = calcAngle(x-this->xcord, y-this->ycord); //TODO: This resets the theta correction we made before .. or actually not but check whether we turn for the correction or not
 			ROS_INFO("THETA: %lf, x,y: (%lf,%lf)\n",theta, x,y);
-			turnAbs(theta); //TODO: should this really be turnAbs?
+			turn(theta); //TODO: should this really be turnAbs?
 			/* //old way with continuous euclidean distance calculation for error
 			while (err > DISTTOLERANCE) {
 				if (stop_check()) {

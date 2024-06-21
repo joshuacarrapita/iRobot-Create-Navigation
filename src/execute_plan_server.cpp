@@ -536,45 +536,150 @@ vector<vector<int>> exec_plan_to_cell_plan(vector<int> exec_plan, int row, int c
 	return cell_plan;
 }
 
+int lost_check(int next_action){
+	Song s;
+			
+	// before moving, check for wall
+	double dist = wall_distance_check();
+	if (dist < safe_wall_dist) {
+		if (dist < 0) {
+			ROS_INFO("I couldn't find any laser message!");
+			return -1;
+		}
+		ROS_INFO("Can't do next move! Almost hit a wall!");
+		// check if we are still where we think we are 
+		
+		ros::Duration(1.0).sleep();
+		wallCallback();	// Get walls
+
+		// Check if curr_pose.row and curr_pose.column are out of range
+		if (curr_pose.row < 0 || curr_pose.row >= map_cur.rows.size() ||
+			curr_pose.column < 0 || curr_pose.column >= map_cur.rows[curr_pose.row].cells.size()) {
+			// We got lost!
+			lost = true;
+			s.playLostSound();
+			ROS_INFO("Out of range of map! We got lost (1)");
+			return true;
+		}
+
+		red_fundamentals::Cell cell = map_cur.rows[curr_pose.row].cells[curr_pose.column];
+		
+		if (!compareWalls(cell, next_action)) {
+			// We got lost!
+			lost = true;
+			s.playLostSound();
+			ROS_INFO("The walls dont match. We got lost");
+		}
+
+		// If we are lost we play the lost sound but otherwise we just return as the plan is not executable
+
+		return true;
+	}
+	
+	wallCallback();	// Get walls
+
+	// Check if next_pose.row und next_pose.column are outside of range
+	if (next_pose.row < 0 || next_pose.row >= map_cur.rows.size() ||
+		next_pose.column < 0 || next_pose.column >= map_cur.rows[next_pose.row].cells.size()) {
+		// We got lost!
+		lost = true;
+		s.playLostSound();
+		ROS_INFO("Out of range of map! We got lost (2)");
+		return true;
+	}
+
+	red_fundamentals::Cell cell = map_cur.rows[next_pose.row].cells[next_pose.column];
+
+	if (!compareWalls(cell, next_pose.orientation)) {
+		// We got lost!
+		lost = true;
+		s.playLostSound();
+		ROS_INFO("The walls dont match. We got lost");
+	} else {
+		// We know where we are and publish
+		curr_pose = next_pose;
+		s.playLocalizedSound();
+		for(int i=0; i<3; i++){
+			pose_pub.publish(curr_pose);
+			ROS_INFO("Pose message %d time(s) published", i);
+			ros::Duration(1.0).sleep();
+		}
+		ROS_INFO("We are now at (%d, %d) looking %d", curr_pose.row, curr_pose.column, curr_pose.orientation);
+		lost = false;
+	}
+
+	return lost;
+
+}
+
+//set odometry according to current pose
+void set_driver_global_coords(DiffDriving driver){
+	switch (curr_pose.orientation)
+	{
+		case RIGHT:
+			driver.theta = 90;
+			break;
+		case UP:
+			driver.theta = 0;
+			break;
+		case LEFT:
+			driver.theta = -90;
+			break;
+		case DOWN:
+			driver.theta = 180;
+			break;
+		default:
+			break;
+	}
+	driver.xcord = curr_pose.column * 0.8;
+	driver.ycord = curr_pose.row * (-0.8);
+	ROS_INFO("ORIENTATION: %d, DRIVER THETA: %lf,\n POSE (row,col): (%d,%d),\n COORD (y,x): (%lf,%lf)\n",curr_pose.orientation, driver.theta, curr_pose.row, curr_pose.column, driver.xcord, driver.ycord);
+}
+
+void correct_odometry(DiffDriving driver){
+	//TODO: correct_angle();
+	//TODO: correct_coordinates();
+}
+
+void setNextPose(int orientation, vector<int> cell) {
+	next_pose.orientation = orientation;
+	next_pose.row = cell[ROW];
+	next_pose.column = cell[COL];
+	ROS_INFO("Next Pose would be at (%d, %d) looking %d", next_pose.row, next_pose.column, next_pose.orientation);
+}
 
 bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
           red_fundamentals::ExecutePlan::Response &res){
             
     // Initialize and reset variables between callbacks
-    vector<int> exec_plan = req.plan;
 	res.success = false;
-	drive_direction robot_dir = static_cast<drive_direction>(curr_pose.orientation);
+	vector<int> exec_plan = req.plan;
     DiffDriving driver;
-
-	//set Odometry according to current pose
-	switch (curr_pose.orientation)
-	{
-		case 0:
-			driver.theta = 90;
-		    break;
-	    case 1:
-		    driver.theta = 0;
-		    break;
-	    case 2:
-		    driver.theta = -90;
-		    break;
-	    case 3:
-		    driver.theta = 180;
-		    break;
-	    default:
-		    break;
-	}
-	ROS_INFO("ORIENTATION: %d, drivertheta: %lf",curr_pose.orientation, driver.theta);
-	driver.xcord = curr_pose.column * 0.8;
-	driver.ycord = curr_pose.row * (-0.8);
+	set_driver_global_coords(driver);
 
 	vector<vector<int>> cell_plan = exec_plan_to_cell_plan(exec_plan, curr_pose.row, curr_pose.column);
-	ROS_INFO("CELL PLAN (row, col): ");
 
+	// DEBUG PRINTS
+	ROS_INFO("CELL PLAN (row, col): ");
 	for (int i = 0; i < cell_plan.size(); i++){
 		ROS_INFO("(%d,%d), ",cell_plan[i][ROW], cell_plan[i][COL]);
 	}
 	ROS_INFO("(THATS, IT)\n");
+
+	for (int i = 0; i < cell_plan.size(); i++){
+
+		correct_odometry(driver);
+
+		if (lost_check(exec_plan[i+1])) return true;
+		
+		setNextPose(exec_plan[i+1], cell_plan[i+1]);
+
+		double global_x = cell_plan[i][COL] * 0.8;
+		double global_y = cell_plan[i][ROW] * -0.8;
+
+		driver.drive(0, global_x, global_y, 0, 1); //does turning and set to mode stay so no turning after target coords reached
+
+	}
 
 	/*// go over the whole execution plan
 	for (int i = 0; i < exec_plan.size(); i++){
@@ -692,25 +797,7 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 		ROS_INFO("We are now at (%d, %d) looking %d", curr_pose.row, curr_pose.column, curr_pose.orientation);
 		lost = false;
 
-        ////if (!compareWalls(cell, next_pose.orientation)) {
-			// We got lost!
-			lost = true;
-            s.playLostSound();
-            ROS_INFO("The walls dont match. We got lost");
-			return true;
-		} else {
-			// We know where we are and publish
-			curr_pose = next_pose;
-			s.playLocalizedSound();
-            for(int i=0; i<3; i++){
-                pose_pub.publish(curr_pose);
-                ROS_INFO("Pose message %d time(s) published", i);
-                ros::Duration(1.0).sleep();
-	        }
-            ROS_INFO("We are now at (%d, %d) looking %d", curr_pose.row, curr_pose.column, curr_pose.orientation);
-			lost = false;
-		}////
-	}*/
+        }*/
 
 	res.success = true;
 	return true;
