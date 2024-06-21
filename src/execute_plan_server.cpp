@@ -540,7 +540,7 @@ int lost_check(int next_action){
 	Song s;
 			
 	// before moving, check for wall
-	double dist = wall_distance_check();
+	/*double dist = wall_distance_check();
 	if (dist < safe_wall_dist) {
 		if (dist < 0) {
 			ROS_INFO("I couldn't find any laser message!");
@@ -564,7 +564,7 @@ int lost_check(int next_action){
 
 		red_fundamentals::Cell cell = map_cur.rows[curr_pose.row].cells[curr_pose.column];
 		
-		if (!compareWalls(cell, next_action)) {
+		if (!compareWalls(cell, next_action)) { // TODO: Isn't the comparison to next action wrong here too?
 			// We got lost!
 			lost = true;
 			s.playLostSound();
@@ -574,7 +574,7 @@ int lost_check(int next_action){
 		// If we are lost we play the lost sound but otherwise we just return as the plan is not executable
 
 		return true;
-	}
+	}*/
 	
 	wallCallback();	// Get walls
 
@@ -609,7 +609,6 @@ int lost_check(int next_action){
 	}
 
 	return lost;
-
 }
 
 //set odometry according to current pose
@@ -633,15 +632,19 @@ void set_driver_global_coords(DiffDriving driver){
 	}
 	driver.xcord = curr_pose.column * 0.8;
 	driver.ycord = curr_pose.row * (-0.8);
-	ROS_INFO("ORIENTATION: %d, DRIVER THETA: %lf,\n POSE (row,col): (%d,%d),\n COORD (y,x): (%lf,%lf)\n",curr_pose.orientation, driver.theta, curr_pose.row, curr_pose.column, driver.xcord, driver.ycord);
+	ROS_INFO("ORIENTATION: %d, DRIVER THETA: %lf,\n POSE (row,col): (%d,%d),\n COORD (x,y): (%lf,%lf)\n",curr_pose.orientation, driver.theta, curr_pose.row, curr_pose.column, driver.xcord, driver.ycord);
 }
 
 void correct_odometry(DiffDriving driver){
-	//TODO: correct_angle();
-	//TODO: correct_coordinates();
+	//TODO: correct_angle() based on global position and walls instead of center calculation;
+	//TODO: correct_coordinates() based on center calculation;
 }
 
 void setNextPose(int orientation, vector<int> cell) {
+	// TODO: Check whether and how the next pose should be calculated,
+	// can it be the pose after moving?
+	// or should it even be the pose after that?
+	// orientation from current orientation and difference in cell direction?
 	next_pose.orientation = orientation;
 	next_pose.row = cell[ROW];
 	next_pose.column = cell[COL];
@@ -659,20 +662,21 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 
 	vector<vector<int>> cell_plan = exec_plan_to_cell_plan(exec_plan, curr_pose.row, curr_pose.column);
 
-	// DEBUG PRINTS
-	ROS_INFO("CELL PLAN (row, col): ");
-	for (int i = 0; i < cell_plan.size(); i++){
-		ROS_INFO("(%d,%d), ",cell_plan[i][ROW], cell_plan[i][COL]);
-	}
-	ROS_INFO("(THATS, IT)\n");
+	/* DEBUG PRINTS
+		ROS_INFO("CELL PLAN (row, col): ");
+		for (int i = 0; i < cell_plan.size(); i++){
+			ROS_INFO("(%d,%d), ",cell_plan[i][ROW], cell_plan[i][COL]);
+		}
+		ROS_INFO("(THATS, IT)\n");
+	*/
 
 	for (int i = 0; i < cell_plan.size(); i++){
 
 		correct_odometry(driver);
 
+		setNextPose(cell_plan[i]); //TODO: this is wrong, we gotta think next_pose over
+
 		if (lost_check(exec_plan[i+1])) return true;
-		
-		setNextPose(exec_plan[i+1], cell_plan[i+1]);
 
 		double global_x = cell_plan[i][COL] * 0.8;
 		double global_y = cell_plan[i][ROW] * -0.8;
