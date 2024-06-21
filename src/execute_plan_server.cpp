@@ -604,8 +604,10 @@ bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
 		//to move in x direction as we already turned
 		red_fundamentals::CalculateCenter::ConstPtr act_dest = ros::topic::waitForMessage<red_fundamentals::CalculateCenter>("calculate_center_topic", ros::Duration(1));
 
-		if (act_dest->y == 0.0) act_dest->y = 0.8;
-        driver.drive(1, act_dest->x, act_dest->y, 0, 1); //does turning and set to mode stay so no turning after target coords reached
+		double rel_dest_x = act_dest->x;
+		double rel_dest_y = act_dest->y;
+		if (rel_dest_y == 0.0) rel_dest_y = 0.8;
+        driver.drive(1, rel_dest_x, rel_dest_y, 0, 1); //does turning and set to mode stay so no turning after target coords reached
 
        	wallCallback();	// Get walls
 
