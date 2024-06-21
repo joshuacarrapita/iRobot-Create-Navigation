@@ -23,6 +23,7 @@ const double safe_wall_dist = 0.8;
 
 enum drive_direction { RIGHT = 0, UP = 1, LEFT = 2, DOWN = 3 };
 enum turn_direction { RIGHT_TURN = 1, ALSO_RIGHT_TURN = -3, NO_TURN = 0, LEFT_TURN = -1, ALSO_LEFT_TURN = 3, BACK_TURN = 2, ALSO_BACK_TURN = -2 };
+enum map_axis { ROW = 0, COL = 1 };
 
 red_fundamentals::Grid map_cur;
 ros::Publisher pose_pub;
@@ -488,8 +489,54 @@ void getNextPose(int next_action){
 	return;
 }
 
-//bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
-//          red_fundamentals::ExecutePlan::Response &res){
+vector<vector<int>> exec_plan_to_cell_plan(vector<int> exec_plan, int row, int col){
+
+	vector<vector<int>> cell_plan;
+	vector<int> start = {row,col};
+
+	for (int i = 0; i < exec_plan.size(); i++){
+
+		switch (exec_plan[i])
+		{
+			case RIGHT:
+				while(exec_plan[i] == 0){
+					start[COL] += 1;
+					i++;
+				}
+				i--;
+				break;
+			case UP:
+				while(exec_plan[i] == 1){
+					start[ROW] -= 1;
+					i++;
+				}
+				i--;
+				break;
+			case LEFT:
+				while(exec_plan[i] == 2){
+					start[COL] -= 1;
+					i++;
+				}
+				i--;
+				break;
+			case DOWN:
+				while(exec_plan[i] == 3){
+					start[ROW] += 1;
+					i++;
+				}
+				i--;
+				break;
+			default:
+				return {{}};
+		}
+				
+		cell_plan.push_back(start);
+
+	}
+
+	return cell_plan;
+}
+
 
 bool execute_plan_callback(red_fundamentals::ExecutePlan::Request &req,
           red_fundamentals::ExecutePlan::Response &res){
