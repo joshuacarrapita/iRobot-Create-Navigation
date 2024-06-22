@@ -27,8 +27,8 @@ class DiffDriving
 		int drive(int mode, double x, double y, double targetTheta, int stay);
 		void testdrive(double leftspeed, double rightspeed);
 		void moveDist(double dist);
-		void correct_odometry_error(double x_dest, double y_dest, double x_center_rel_act, double y_center_rel_act);
-
+		void correct_odometry_location_error(double x_dest, double y_dest, double x_center_rel_act, double y_center_rel_act);
+		void correct_odometry_angle_error(double x_center_rel_act, double y_center_rel_act);
 		ros::NodeHandle n;
 		ros::ServiceClient diffDrive;
 		create_fundamentals::DiffDrive pdsrv;

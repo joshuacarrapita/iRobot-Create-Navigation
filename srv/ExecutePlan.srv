@@ -1,3 +1,6 @@
 int32[] plan
+int32 row
+int32 column
+int32 orientation
 ---
 bool success

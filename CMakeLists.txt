@@ -31,19 +31,17 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 #uncomment if you have defined messages
 add_message_files(FILES
-	Walls.msg
-	WallsAlt.msg
 	WallsCombined.msg
 	StopMsg.msg
 	Cell.msg 
 	Grid.msg
 	Pose.msg
 	Row.msg
+	CalculateCenter.msg
 )
 #uncomment if you have defined services
 add_service_files(FILES
 	ExecutePlan.srv
-	ExecutePlanNew.srv
 	StopSrv.srv
 	SimpleCall.srv
 	Localization.srv
@@ -138,9 +136,9 @@ add_executable(localization src/localization.cpp)
 target_link_libraries(localization moving paradriver center song ${catkin_LIBRARIES})
 add_dependencies(localization create_fundamentals_generate_messages_cpp)
 
-add_executable(walls_alt src/walls_alt.cpp)
-target_link_libraries(walls_alt ${catkin_LIBRARIES})
-add_dependencies(walls_alt create_fundamentals_generate_messages_cpp)
+add_executable(calculate_center src/calculate_center.cpp)             
+target_link_libraries(calculate_center ${catkin_LIBRARIES})           
+add_dependencies(calculate_center create_fundamentals_generate_messages_cpp) 
 
 add_executable(walls_combined src/walls_combined.cpp)
 target_link_libraries(walls_combined ${catkin_LIBRARIES})
@@ -162,4 +160,3 @@ add_dependencies(move_to_position_server create_fundamentals_generate_messages_c
 add_executable(dry_run src/dry_run.cpp)
 target_link_libraries(dry_run graph song ${catkin_LIBRARIES})
 add_dependencies(dry_run create_fundamentals_generate_messages_cpp)
-

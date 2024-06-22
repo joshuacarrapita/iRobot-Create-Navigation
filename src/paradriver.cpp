@@ -2,8 +2,10 @@
 #include "create_fundamentals/DiffDrive.h"
 #include "create_fundamentals/SensorPacket.h"
 #include "create_fundamentals/ResetEncoders.h"
+#include "red_fundamentals/StopMsg.h"
 #include <cstdlib>
 #include "paradriver.hpp"
+#include <Eigen/Dense>
 
 #define MAXSPEED 10.0
 #define MINSPEED 0.3
@@ -36,6 +38,13 @@ DiffDriving::DiffDriving()
 	clock = ros::Time::now().toSec();
 	this->resetOdometer();
 	this->odomInit();
+}
+
+bool stop_check(){
+	red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(0.2));
+
+	if (stop_message && stop_message->content == "STOP") return true;
+	return false;
 }
 
 //stop motors
@@ -71,18 +80,24 @@ int DiffDriving::odomInit()
 }
 
 
+// calculates angle of robot to a point relative to the robot
 double DiffDriving::calcAngle(double x, double y)
 {
-	if (x == 0) {
-		if (y >= 0) {
-			return 0.0;
-		} else {
-			return 180.0;
-		}
-	}
+	Eigen::Vector2d yaxis;
+	yaxis(0) = 0;
+	yaxis(1) = 1;
+
+	Eigen::Vector2d rel_point;
+	rel_point(0) = x;
+	rel_point(1) = y;
+
+	yaxis.normalize();
+	rel_point.normalize();
+
+	double dotprod = yaxis.dot(rel_point);
 	int signer = 1;
-	if (x < this->xcord) { signer = -1; }
-	return signer * (acos(y/sqrt(x*x+y*y)) * (180/M_PI));
+	if (x < 0) { signer = -1; }
+	return signer * (acos(dotprod) * (180/M_PI));
 }
 
 //calculate euclidian distance between current position and given point
@@ -90,9 +105,6 @@ double DiffDriving::calcDist(double x, double y)
 {
         return sqrt((x - this->xcord)*(x - this->xcord)+(y - this->ycord)*(y - this->ycord));
 }
-
-
-
 
 //returns distance in m
 double DiffDriving::encoderToDist(double encDiff)
@@ -238,6 +250,9 @@ void DiffDriving::moveDist(double dist, dir direction)
 	double derr;
 	double dt;
 	while (abs(err) > DISTTOLERANCE) {
+		if (stop_check()) {
+			break;
+		}
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
 		switch(direction)
@@ -269,7 +284,8 @@ void DiffDriving::moveDist(double dist, dir direction)
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	return;
 }
-
+/*
+//PD-control func driving straight for certain distances
 void DiffDriving::moveDistEnc(double dist)
 {
 	ros::spinOnce();
@@ -285,14 +301,17 @@ void DiffDriving::moveDistEnc(double dist)
 	double derrL;
 	double derrR;
 	while (abs(errL) + abs(errL) > ENCTOLERANCE) {
+		if (stop_check()) {
+			break;
+		}
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
 		errL = setpointL - this->encLeft;
 		errR = setpointR - this->encRight;
 		derrL = lasterrL - errL;
 		derrR = lasterrR - errR;
-		speedL = min(MAXSPEED, errL * KP * 300 + KD * (derrL/dt) * 300) + MINSPEED;
-		speedR = min(MAXSPEED, errR * KP * 300 + KD * (derrR/dt) * 300) + MINSPEED;
+		speedL = min(MAXSPEED, errL * KP * 2 + KD * (derrL/dt) * 2) + MINSPEED;
+		speedR = min(MAXSPEED, errR * KP * 2 + KD * (derrR/dt) * 2) + MINSPEED;
 		if (abs(lasterrL) < abs(errL)) {
 			speedL = -speedL;
 		}
@@ -309,7 +328,38 @@ void DiffDriving::moveDistEnc(double dist)
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	return;
 }
+*/
 
+void DiffDriving::moveDistEnc(double dist)
+{
+	double speed;
+	double errL = dist*32;
+	double errR = dist*32;
+	double errT = errL+errR/2;
+	ros::spinOnce();
+	double goalL = errL + this->encLeft;
+	double goalR = errR + this->encRight;
+	double derr;
+	double dt;
+	double lasterrT = errT;
+	while (errT > ENCTOLERANCE) {
+		if (stop_check()) {
+			break;
+		}
+		dt = ros::Time::now().toSec() - this->clock;
+		ros::spinOnce();
+		errT = (goalL-this->encLeft)+(goalR-this->encRight)/2;
+		derr = lasterrT - errT;
+		speed = abs(min(10.0, (errT * KP + (derr/dt) * KD)))+MINSPEED;
+		pdsrv.request.left = speed;
+		pdsrv.request.right = speed;
+		lasterrT = errT;
+		diffDrive.call(pdsrv);
+	}
+	this->stop();
+	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
+	return;
+}
 
 /*Idea:
  *mode 0: Turn to face goalpoint, Drive until at goalpoint, Turn to meet targetTheta
@@ -329,9 +379,14 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 	{
 		case 0: {
 			double speed;
-			turnAbs(calcAngle(x - this->xcord, y - this->ycord));
-			/*
+			double theta = calcAngle(x-this->xcord, y-this->ycord); //TODO: This resets the theta correction we made before .. or actually not but check whether we turn for the correction or not
+			ROS_INFO("THETA: %lf, x,y: (%lf,%lf)\n",theta, x,y);
+			turnAbs(theta); //TODO: should this really be turnAbs?
+			/* //old way with continuous euclidean distance calculation for error
 			while (err > DISTTOLERANCE) {
+				if (stop_check()) {
+					break;
+				}
 				dt = ros::Time::now().toSec() - this->clock;
 				ros::spinOnce();
 				err = calcDist(x, y);
@@ -343,9 +398,7 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 				diffDrive.call(pdsrv);
 			}
 			this->stop();*/
-			this->moveDistEnc(err);
-			this->xcord = x;
-			this->ycord = y;
+			this->moveDistEnc(err);	//only calculate euclidean distance once then drive straight for that amount of distance
 			ros::Duration(0.5).sleep();
 			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 			if (stay) { return 1; }
@@ -365,9 +418,14 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 		}
 		case 1: {
 			double speed;
-			turnAbs(calcAngle(x, y));
+			double theta = calcAngle(x, y);
+			ROS_INFO("THETA: %lf, x,y: (%lf,%lf)\n",theta, x,y);
+			turn(theta);
 			/*
 			while (err > DISTTOLERANCE) {
+				if (stop_check()) {
+					break;
+				}
 				dt = ros::Time::now().toSec() - this->clock;
 				ros::spinOnce();
 				err = calcDist(x, y);
@@ -379,7 +437,8 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 				diffDrive.call(pdsrv);
 			}
 			this->stop();*/
-			this->moveDistEnc(err);
+			double relErr = calcDist(x+this->xcord, y+this->ycord);
+			this->moveDistEnc(relErr);
 			ros::Duration(0.5).sleep();
 			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 			if (stay) { return 1; }
@@ -390,10 +449,30 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 	return 0;
 }
 
-void DiffDriving::correct_odometry_error(double x_dest, double y_dest, double x_center_rel_act, double y_center_rel_act)
+void DiffDriving::correct_odometry_location_error(double x_dest, double y_dest, double x_center_rel_act, double y_center_rel_act)
 {
-	this->xcord = x_dest - x_center_rel_act;
-	this->ycord = y_dest - y_center_rel_act;
+	//x_center_rel_act is the x coordinate of the actual center relative to the robot. The x,y-coordinates should always be the destination minus the actual offset from the destination.
+	if(x_center_rel_act != 0.0) {
+		this->xcord = x_dest - x_center_rel_act;
+	}
+	if(y_center_rel_act != 0.0) {
+		this->ycord = y_dest - y_center_rel_act;
+	}
+}
+
+// calculate angle of robot towards a point assuming the robot is intented to 
+// align with 0.0° towards the center of the next cell
+void DiffDriving::correct_odometry_angle_error(double x_center_rel_act, double y_center_rel_act)
+{
+	// the angle correction is the supposed relative angle of the robot toward the center points minus the actual relative angle towards the center point
+	if (x_center_rel_act != 0.0 && y_center_rel_act != 0.0)
+	{
+		double curr_theta = this->theta;
+		double theta_dest_act = calcAngle(x_center_rel_act,y_center_rel_act); // calculate angle to actual center destination
+		turnAbs(theta);
+		this->theta -= theta_dest_act; // update our current angle by the difference between the two
+		ROS_INFO("Robot theta prev: %lf, Robot theta new: %lf, theta_dest_act: %lf, a-b: %lf\n",curr_theta, this->theta, theta_dest_act, curr_theta-theta_dest_act);
+	}
 }
 
 int main(int argc, char **argv)
