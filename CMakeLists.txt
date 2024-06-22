@@ -46,6 +46,7 @@ add_service_files(FILES
 	SimpleCall.srv
 	Localization.srv
 	MoveToPosition.srv
+	Center.srv
 )
 
 #common commands for building c++ executables and libraries
@@ -148,9 +149,9 @@ add_executable(test_sound src/test_sound.cpp)
 target_link_libraries(test_sound ${catkin_LIBRARIES})
 add_dependencies(test_sound create_fundamentals_generate_messages_cpp)
 
-#add_executable(center src/center.cpp)
-#target_link_libraries(center ${catkin_LIBRARIES})
-#add_dependencies(center create_fundamentals_generate_messages_cpp)
+add_executable(center_service src/center_service.cpp)
+target_link_libraries(center_service paradriver ${catkin_LIBRARIES})
+add_dependencies(center_service create_fundamentals_generate_messages_cpp)
 
 add_library(graph src/graph.cpp)
 add_executable(move_to_position_server src/move_to_position_server.cpp)
