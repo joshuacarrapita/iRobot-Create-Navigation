@@ -6,25 +6,28 @@
 #include <cstdlib>
 #include "paradrivertest.hpp"
 
-#define MAXSPEED 10.0
-#define MAXTURNSPEED 8.0
-#define MINSPEED 0.5
+#define MAXSPEED 10.0				//max allowed speed for straight motion
+#define MAXTURNSPEED 8.0			//max allowed speed for rotational motion
+#define MINSPEED 0.4				//min speed to facilitate actual robot movement
 #define CORRECTIONMARGIN 3.0
-#define WHEELBASE 0.260			//m
-#define WHEELRADIUS 0.033		//m
-#define RADIANSPERROTATION 5.5
-#define DISTPERROTATION 0.1815	//m
+#define WHEELBASE 0.260				//m
+#define WHEELRADIUS 0.033			//m
+#define RADIANSPERROTATION 5.5			//rad
+#define DISTPERROTATION 0.1815			//m
+#define ENCPM 31.95				//change in enc values per meter driven
 
 #define ACCELTIME 30
-#define THETACORRECTION 0.98	//correction factor for odometry theta calculation
-#define DISTTOLERANCE 0.01		//m
-#define ANGLETOLERANCE 0.5		//deg
-#define ENCTOLERANCE 0.1		//rad
+#define DISTCORRECTION 0.98
+#define THETACORRECTION 0.96			//correction factor for odometry theta calculation
+#define DISTTOLERANCE 0.01			//m
+#define ANGLETOLERANCE 0.5			//deg
+#define ANGLETOLERANCEREL 0.4			//deg
+#define ENCTOLERANCE 0.05			//rad
 
-#define KPTURN 0.15				//proportional gain for turning
+#define KPTURN 0.20				//proportional gain for turning
 #define KDTURN 0.01				//derivative gain for turning
-#define KP 0.20					//proportional gain factor for driving straight
-#define KD 0.90					//derivative gain factor for driving straight
+#define KP 1.50					//proportional gain factor for driving straight
+#define KD 0.01					//derivative gain factor for driving straight
 
 using namespace std;
 
@@ -141,7 +144,7 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 		double distL = encoderToDist(msg->encoderLeft - encLeft);
 		double distR = encoderToDist(msg->encoderRight - encRight);
 
-		double dist = centDist(distL, distR);
+		double dist = centDist(distL, distR) * DISTCORRECTION;
 		double deltaTheta = thetaDiff(distL, distR);
 		this->xcord += dist * sin((theta*M_PI/180) + deltaTheta/2);
 		this->ycord += dist * cos((theta*M_PI/180) + deltaTheta/2);
@@ -174,7 +177,7 @@ void DiffDriving::turnAbs(double targetTheta)
 			derivative = (derr/dt) * KDTURN;
 		}
 		lasterr = err;
-		speed = min(MAXSPEED, err * KP  + derivative) + MINSPEED;
+		speed = min(MAXSPEED, err * KPTURN  + derivative) + MINSPEED;
 		if (theta > targetTheta) {
 			this->pdsrv.request.left = -speed;
 			this->pdsrv.request.right = speed;
@@ -196,13 +199,13 @@ void DiffDriving::turn(double targetTheta)
 	ros::spinOnce();
 	double goal = theta + targetTheta;
 	double err = abs(targetTheta);
-	double speed;
+	double speed = 1.0;
 	double lasterr = err;
 	double dt;
 	double derr;
 	double derivative = 0;
 	double starttime = ros::Time::now().toSec();
-	while (err > ANGLETOLERANCE) {
+	while (err > ANGLETOLERANCEREL) {
 		//ROS_INFO("turning with err: %lf", err);
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
@@ -214,7 +217,7 @@ void DiffDriving::turn(double targetTheta)
 		ROS_INFO("err: %lf Derivative: %lf", err, derivative);
 		lasterr = err;
 		//ROS_INFO("Differential component: %lf with derr: %lf and dt: %lf\n lasterr: %lf | err: %lf", KD * (derr/dt), derr, dt, lasterr, err);
-		speed = min(MAXSPEED, err * KPTURN + derivative) + MINSPEED;
+		speed = min(MAXTURNSPEED, err * KPTURN + derivative) + MINSPEED;
 		if (theta > goal) {
 			//turn left
 			this->pdsrv.request.left = -speed;
@@ -237,8 +240,8 @@ void DiffDriving::moveDistEnc(double dist)
 	ros::spinOnce();
 	double speedL;
 	double speedR;
-	double setpointL = dist*32 + this->encLeft;
-	double setpointR = dist*32 + this->encRight;
+	double setpointL = dist*ENCPM + this->encLeft;
+	double setpointR = dist*ENCPM + this->encRight;
 	double errL = setpointL - this->encLeft;
 	double errR = setpointR - this->encRight;
 	double lasterrL = errL;
@@ -267,17 +270,17 @@ void DiffDriving::moveDistEnc(double dist)
 			derivativeR = (derrR/dt) * KD;
 		}
 		//ROS_INFO("errL: %lf | errR: %lf | derrL: %lf | derrR: %lf",errL,errR,derrL,derrR);
-		speedL = errL * KP * 5 + derivativeL;
-		speedR = errR * KP * 5 + derivativeL;
+		speedL = errL * KP;
+		speedR = errR * KP;
 		if (errL < 0) {
-			speedL -= MINSPEED;
+			speedL -= (MINSPEED + derivativeL);
 		} else {
-			speedL += MINSPEED;
+			speedL += (MINSPEED + derivativeL);
 		}
 		if (errR < 0) {
-			speedR -= MINSPEED;
+			speedR -= (MINSPEED + derivativeR);
 		} else {
-			speedR += MINSPEED;
+			speedR += (MINSPEED + derivativeR);
 		}
 		pdsrv.request.left = speedL;
 		pdsrv.request.right = speedR;
@@ -305,10 +308,8 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			turnAbs(calcAngle(x - this->xcord, y - this->ycord));
 			double err = calcDist(x, y);
 			this->moveDistEnc(err);	//only calculate euclidean distance once then drive straight for that amount of distance
-			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 			if (stay) { return 1; }
 			this->turnAbs(targetTheta);
-			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 			return 1;
 		}
 		case 1: {
@@ -316,10 +317,8 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			turn(calcAngle(x, y));
 			double err = calcRelDist(x, y);
 			this->moveDistEnc(err);
-			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 			if (stay) { return 1; }
 			this->turnAbs(targetTheta);
-			ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 			return 1;
 		}
 		//idea for smooth driving:
@@ -371,11 +370,27 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "diffdriving");
 	DiffDriving driver;
 	dir di;
-	for (int i = 0; i < 4; i++) {
+	/*
+	for (int i = 1; i <= 16; i++) {
+		//driver.turnAbs(-90*i);
 		driver.turn(90);
-		ros::Duration(0.3).sleep();
+		//driver.moveDistEnc(0.25);
+		ros::Duration(2.3).sleep();
 		//driver.moveDistEnc(0.4);
 	}
-
+	*/
+	driver.drive(0,0,-0.8,0,1);
+	driver.drive(0,-0.8,-0.8,0,1);
+	driver.drive(0,-0.8,0,0,1);
+	driver.drive(0,-1.6,0,0,1);
+	/*
+	driver.drive(0,-1.6,-0.8,0,1);
+	driver.drive(0,-1.6,-1.6,0,1);
+	driver.drive(0,-2.4,-1.6,0,1);
+	driver.drive(0,-2.4,-0.8,0,1);
+	driver.drive(0,-2.4,0,0,1);
+	driver.drive(0,-3.2,0,0,1);
+	driver.drive(0,-4,0,0,1);
+	*/
 	return 0;
 }
