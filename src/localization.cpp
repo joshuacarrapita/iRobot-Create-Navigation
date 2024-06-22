@@ -8,17 +8,18 @@
 #include "red_fundamentals/Row.h"
 #include "red_fundamentals/Cell.h"
 #include "red_fundamentals/Pose.h"
-// #include "red_fundamentals/WallsAlt.h"
 #include "red_fundamentals/WallsCombined.h"
 #include "paradriver.hpp"
 #include "moving.hpp"
 #include "song.hpp"
-#include "center.hpp"
+#include "red_fundamentals/Center.hpp"
 
 using namespace std;
 
 red_fundamentals::Grid map_cur;
 ros::Publisher pose_pub;
+ros::ServiceClient client_center;
+red_fundamentals::Center srv_center;
 
 bool need_change = false;
 
@@ -154,10 +155,8 @@ bool duplicate_check(){
 
 bool localization(red_fundamentals::Localization::Request &req,
                             red_fundamentals::Localization::Response &res) {
-    Center* c = new Center();
-    c->centering();  // center
-    delete c;
-        
+
+    client_center.call(srv_center);    
     ros::Duration(1.0).sleep();
        
 
@@ -441,6 +440,7 @@ int main(int argc, char **argv){
 
     // Get walls
     wallCallback();
+    client_center = n.serviceClient<red_fundamentals::Center>("center");
     ros::ServiceServer service = n.advertiseService("localization", localization);
     ROS_INFO("Ready to run localization");
     
