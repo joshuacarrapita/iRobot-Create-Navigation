@@ -10,21 +10,21 @@
 #define MAXTURNSPEED 8.0
 #define MINSPEED 0.5
 #define CORRECTIONMARGIN 3.0
-#define WHEELBASE 0.260		//m
-#define WHEELRADIUS 0.033	//m
+#define WHEELBASE 0.260			//m
+#define WHEELRADIUS 0.033		//m
 #define RADIANSPERROTATION 5.5
 #define DISTPERROTATION 0.1815	//m
 
 #define ACCELTIME 30
-#define THETACORRECTION 0.98
-#define DISTTOLERANCE 0.01	//m
-#define ANGLETOLERANCE 0.5	//deg
-#define ENCTOLERANCE 0.1	//rad
+#define THETACORRECTION 0.98	//correction factor for odometry theta calculation
+#define DISTTOLERANCE 0.01		//m
+#define ANGLETOLERANCE 0.5		//deg
+#define ENCTOLERANCE 0.1		//rad
 
-#define KPTURN 0.15
-#define KDTURN 0.01
-#define KP 0.20		//proportional gain factor
-#define KD 0.90		//derivative gain factor
+#define KPTURN 0.15				//proportional gain for turning
+#define KDTURN 0.01				//derivative gain for turning
+#define KP 0.20					//proportional gain factor for driving straight
+#define KD 0.90					//derivative gain factor for driving straight
 
 using namespace std;
 
@@ -44,7 +44,7 @@ DiffDriving::DiffDriving()
 
 bool stop_check(){
 
-	red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(0.2));
+	red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(0.1));
 
 	if (stop_message && stop_message->content == "STOP") return true;
 	return false;
@@ -70,6 +70,7 @@ void DiffDriving::resetOdometer()
 	this->ycord = 0;
 	this->theta = 0;
 	ROS_INFO("encoders reset");
+	return;
 }
 
 //initialise the odometer by making sure we get correct values
@@ -78,7 +79,6 @@ int DiffDriving::odomInit()
 	ROS_INFO("initialising odometer");
 	for (int i = 0; i < 10; i++) {
 		ros::spinOnce();
-		//ros::Duration(0.1).sleep();
 	}
 	this->odomReady = 1;
 	return 1;
@@ -110,8 +110,6 @@ double DiffDriving::calcRelDist(double x, double y)
 {
         return sqrt(x*x + y*y);
 }
-
-
 
 //returns distance in m
 double DiffDriving::encoderToDist(double encDiff)
@@ -152,6 +150,7 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 		this->encRight = msg->encoderRight;
 		this->clock = ros::Time::now().toSec();
 	}
+	return;
 }
 
 //Turn to specific absolute angle with PD-Control via odometer
@@ -163,29 +162,31 @@ void DiffDriving::turnAbs(double targetTheta)
 	double lasterr = err;
 	double dt;
 	double derr;
+	double derivative = 0;
 	//ROS_INFO("turning to heading %lf", targetTheta);
 	while (err > ANGLETOLERANCE) {
 		//ROS_INFO("err: %lf", err);
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
 		err = abs(targetTheta - theta);
-		derr = lasterr - err;
+		if (err != lasterr) {
+			derr = lasterr - err;
+			derivative = (derr/dt) * KDTURN;
+		}
 		lasterr = err;
-		speed = min(MAXSPEED, err * KP  + KD * (derr/dt)) + MINSPEED;
+		speed = min(MAXSPEED, err * KP  + derivative) + MINSPEED;
 		if (theta > targetTheta) {
-			//ROS_INFO("turning left");
 			this->pdsrv.request.left = -speed;
 			this->pdsrv.request.right = speed;
 		} else {
-			//ROS_INFO("turning right");
 			this->pdsrv.request.left = speed;
 			this->pdsrv.request.right = -speed;
 		}
 		diffDrive.call(pdsrv);
 	}
-	//ROS_INFO("stopping...");
-	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	this->stop();
+	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
+	return;
 }
 
 
@@ -196,10 +197,10 @@ void DiffDriving::turn(double targetTheta)
 	double goal = theta + targetTheta;
 	double err = abs(targetTheta);
 	double speed;
-	double lasterr = err + 0.00001;
+	double lasterr = err;
 	double dt;
 	double derr;
-	double derivative;
+	double derivative = 0;
 	double starttime = ros::Time::now().toSec();
 	while (err > ANGLETOLERANCE) {
 		//ROS_INFO("turning with err: %lf", err);
@@ -225,9 +226,9 @@ void DiffDriving::turn(double targetTheta)
 		}
 		diffDrive.call(pdsrv);
 	}
-	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
 	this->stop();
-	ROS_INFO("total time: %lf", ros::Time::now().toSec() - starttime);
+	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
+	return;
 }
 
 //PD-control func driving straight for certain distances
@@ -245,6 +246,8 @@ void DiffDriving::moveDistEnc(double dist)
 	double dt;
 	double derrL;
 	double derrR;
+	double derivativeL = 0;
+	double derivativeR = 0;
 	while (abs(errL) + abs(errL) > ENCTOLERANCE) {
 		/*
 		if (stop_check()) {
@@ -255,11 +258,17 @@ void DiffDriving::moveDistEnc(double dist)
 		ros::spinOnce();
 		errL = setpointL - this->encLeft;
 		errR = setpointR - this->encRight;
-		derrL = abs(lasterrL) - abs(errL);
-		derrR = abs(lasterrR) - abs(errR);
-		ROS_INFO("errL: %lf | errR: %lf | derrL: %lf | derrR: %lf",errL,errR,derrL,derrR);
-		speedL = errL * KP * 5 + KD * (derrL/dt) * 2;
-		speedR = errR * KP * 5 + KD * (derrR/dt) * 2;
+		if (errL != lasterrL) {
+			derrL = abs(lasterrL) - abs(errL);
+			derivativeL = (derrL/dt) * KD;
+		}
+		if (errR != lasterrR) {
+			derrR = abs(lasterrR) - abs(errR);
+			derivativeR = (derrR/dt) * KD;
+		}
+		//ROS_INFO("errL: %lf | errR: %lf | derrL: %lf | derrR: %lf",errL,errR,derrL,derrR);
+		speedL = errL * KP * 5 + derivativeL;
+		speedR = errR * KP * 5 + derivativeL;
 		if (errL < 0) {
 			speedL -= MINSPEED;
 		} else {
