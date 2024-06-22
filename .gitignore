@@ -1,2 +1,5 @@
 .svn
 *.swp
+build/
+.idea/
+.vscode/
