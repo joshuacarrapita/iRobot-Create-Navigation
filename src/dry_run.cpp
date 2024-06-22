@@ -1,7 +1,7 @@
 #include "ros/ros.h"
 #include "red_fundamentals/SimpleCall.h"
 #include "red_fundamentals/Localization.h"
-#include "red_fundamentals/ExecutePlanNew.h"
+#include "red_fundamentals/ExecutePlan.h"
 #include "red_fundamentals/Grid.h"
 #include "red_fundamentals/Row.h"
 #include "red_fundamentals/Cell.h"
@@ -16,7 +16,7 @@ Graph graph;
 ros::ServiceClient client_loc;
 red_fundamentals::Localization srv_loc;
 ros::ServiceClient client_ep;
-red_fundamentals::ExecutePlanNew srv_ep;
+red_fundamentals::ExecutePlan srv_ep;
 red_fundamentals::Pose pose_cur;
 bool need_localization = true;
 
@@ -225,7 +225,7 @@ int main(int argc, char **argv)
     ros::NodeHandle n;
     mapCallback();
     client_loc = n.serviceClient<red_fundamentals::Localization>("localization");
-    client_ep = n.serviceClient<red_fundamentals::ExecutePlanNew>("execute_plan");
+    client_ep = n.serviceClient<red_fundamentals::ExecutePlan>("execute_plan");
     ros::ServiceServer service = n.advertiseService("dry_run", collect_golds);
     ROS_INFO("Ready to run dry run server");
     ros::spin();

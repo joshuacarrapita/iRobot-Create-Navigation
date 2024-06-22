@@ -16,7 +16,6 @@
 
 using namespace std;
 
-enum drive_direction { RIGHT = 0, UP = 1, LEFT = 2, DOWN = 3 };
 enum map_axis { ROW = 0, COL = 1 };
 
 ros::ServiceClient requestloc;
@@ -194,8 +193,7 @@ void publish_pose(){
 	ROS_INFO("Pose message published");
 }
 
-bool execute_plan(red_fundamentals::ExecutePlanNew::Request  &req,
-		red_fundamentals::ExecutePlanNew::Response &res)
+bool execute_plan(red_fundamentals::ExecutePlan::Request &req, red_fundamentals::ExecutePlan::Response &res)
 {
 	// initialize variables 
 	current_row = req.row;
@@ -222,7 +220,7 @@ bool execute_plan(red_fundamentals::ExecutePlanNew::Request  &req,
 		//drive
 		double global_x = cell_plan[i][COL] * 0.8;
 		double global_y = cell_plan[i][ROW] * -0.8;
-		int success = driver.drive(0, global_x, global_y, 0, 1)
+		int success = driver.drive(0, global_x, global_y, 0, 1);
 		if (!success) {
 			s.playLostSound();
 			ROS_INFO("Lost! We have to relocalize ourselves...");

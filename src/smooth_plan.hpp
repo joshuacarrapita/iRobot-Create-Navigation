@@ -7,7 +7,7 @@
 #include "red_fundamentals/Pose.h"
 #include "red_fundamentals/Walls.h"
 
-enum Direction { RIGHT = 0, UP = 1, LEFT = 2, DOWN = 3};
+enum drive_direction { RIGHT = 0, UP = 1, LEFT = 2, DOWN = 3};
 enum Movement { RIGHT_CURVE = 0, GO_STRAIGHT = 1, LEFT_CURVE = 2, ROTATE = 3};
 
 bool is_free(std::vector<int> walls, int direction);
