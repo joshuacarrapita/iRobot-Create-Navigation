@@ -10,7 +10,6 @@
 #include "red_fundamentals/Pose.h"
 #include "red_fundamentals/WallsCombined.h"
 #include "paradriver.hpp"
-#include "moving.hpp"
 #include "song.hpp"
 #include "red_fundamentals/Center.hpp"
 
@@ -164,7 +163,6 @@ bool localization(red_fundamentals::Localization::Request &req,
     // rotate so that we do not have a wall behind us
     // maybe we can put this part outside of this function
     wallCallback();
-    Moving mover;
     DiffDriving driver;
  
         // Rotate 180
@@ -405,22 +403,20 @@ bool localization(red_fundamentals::Localization::Request &req,
         switch (move_direction) { // relative to the direction the robot is heading
             case 0: // RIGHT
                 driver.turn(90);
-                mover.moveDist(0.8);
                 break;
             case 1: // UP
-                mover.moveDist(0.8);
+                
                 break;
             case 2: // LEFT
                 driver.turn(-90);
-                mover.moveDist(0.8);
                 break;
             case 3: // DOWN
                 driver.turn(180);
-                mover.moveDist(0.8);
                 break;
             default:
                 ROS_INFO("Wrong Direction");
         }
+        driver.moveDistEnc(0.8);
 
         // get walls
         wallCallback();
