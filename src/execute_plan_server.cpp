@@ -91,10 +91,10 @@ bool compareWalls(red_fundamentals::Cell cell, int orientation){
 	return true;
 }
 
-void set_pose(vector<int> cell){
-	current_row = cell[ROW];
-	current_column = cell[COL];
-	current_orientation = current_orientation; // TODO: implement orientation setting
+void set_pose(vector<int> destination_cell){
+	current_orientation = interpolate_orientation(destination_cell);
+	current_row = destination_cell[ROW];
+	current_column = destination_cell[COL];
 	ROS_INFO("current position:");
 	ROS_INFO("current_row: %d, current_column:%d, current_orientation:%d", current_row, current_column, current_orientation);
 }
@@ -191,6 +191,15 @@ void publish_pose(){
 	pose.orientation = current_orientation;
 	pose_pub.publish(pose);
 	ROS_INFO("Pose message published");
+}
+
+int interpolate_orientation(vector<int> destination_cell){
+	int row = destination_cell[ROW] - current_row;
+	int col = destination_cell[COL] - current_column;
+	if (row > 0) return 3;
+	if (row < 0) return 1;
+	if (col > 0) return 0;
+	if (col < 0) return 2;
 }
 
 bool execute_plan(red_fundamentals::ExecutePlan::Request &req, red_fundamentals::ExecutePlan::Response &res)
