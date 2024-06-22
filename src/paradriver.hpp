@@ -15,6 +15,7 @@ class DiffDriving
 		int odomInit();
 		double calcAngle(double x, double y);
 		double calcDist(double x, double y);
+		double calcRelDist(double x, double y);
 		double encoderToDist(double encDiff);
 		double centDist(double distLeft, double distRight);
 		double thetaDiff(double distLeft, double distRight);
@@ -25,6 +26,7 @@ class DiffDriving
 		void moveDist(double dist, dir direction);
 		void moveDistEnc(double dist);
 		int drive(int mode, double x, double y, double targetTheta, int stay);
+		void driveWithCorrection(double x, double y, double targetTheta);
 		void testdrive(double leftspeed, double rightspeed);
 		void moveDist(double dist);
 

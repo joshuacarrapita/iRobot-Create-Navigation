@@ -68,12 +68,12 @@ void correctDist()
 	//if too far away move forward
 	if (dist > 0.25) {
 		ROS_INFO("moving forward to correct distance");
-		driver.moveDistEnc(dist - 0.25);
+		driver.moveDistEnc(dist - 0.27);
 		return;
 	//if too close move back
 	} else if (dist < 0.25) {
 		ROS_INFO("moving backwards to correct distance");
-		driver.moveDistEnc(-(0.25 - dist));
+		driver.moveDistEnc(-(0.27 - dist));
 		return;
 	}
 	return;
@@ -205,6 +205,11 @@ void resetCentering()
 bool centering(red_fundamentals::Center::Request &req, red_fundamentals::Center::Response &res){
 	ROS_INFO("starting centering process");
 	res.centered = false;
+	while (ros::ok() && centeringPhase != CENTERED) {
+		updateWall();
+		center();
+	}
+	resetCentering();
 	while (ros::ok() && centeringPhase != CENTERED) {
 		updateWall();
 		center();
