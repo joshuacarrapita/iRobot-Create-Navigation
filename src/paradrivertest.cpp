@@ -5,6 +5,8 @@
 #include "red_fundamentals/StopMsg.h"
 #include <cstdlib>
 #include "paradrivertest.hpp"
+#include <Eigen/Dense>
+
 
 #define MAXSPEED 10.0				//max allowed speed for straight motion
 #define MAXTURNSPEED 8.0			//max allowed speed for rotational motion
@@ -87,7 +89,7 @@ int DiffDriving::odomInit()
 	return 1;
 }
 
-
+/*
 double DiffDriving::calcAngle(double x, double y)
 {
 	if (x == 0) {
@@ -101,6 +103,26 @@ double DiffDriving::calcAngle(double x, double y)
 	if (x < this->xcord) { signer = -1; }
 	return signer * (acos(y/sqrt(x*x+y*y)) * (180/M_PI));
 }
+*/
+double DiffDriving::calcAngle(double x, double y)
+{
+	Eigen::Vector2d yaxis;
+	yaxis(0) = 0;
+	yaxis(1) = 1;
+
+	Eigen::Vector2d rel_point;
+	rel_point(0) = x;
+	rel_point(1) = y;
+
+	yaxis.normalize();
+	rel_point.normalize();
+
+	double dotprod = yaxis.dot(rel_point);
+	int signer = 1;
+	if (x < 0) { signer = -1; }
+	return signer * (acos(dotprod) * (180/M_PI));
+}
+
 
 //calculate euclidian distance between current position and given point
 double DiffDriving::calcDist(double x, double y)
