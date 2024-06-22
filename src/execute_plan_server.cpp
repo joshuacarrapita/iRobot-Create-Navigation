@@ -188,7 +188,7 @@ bool lost_check(Song s){
 	wallCallback();	
 	if(!compareWalls(map_cur.rows[current_row].cells[current_column], current_orientation)){
 		s.playLostSound();
-		ROS_INFO("Lost! We have to relocalize ourselves...");
+		ROS_INFO("Walls are differnt. Lost! We have to relocalize ourselves...");
 		return true;
 	}
 	return false;
@@ -212,6 +212,8 @@ bool execute_plan(red_fundamentals::ExecutePlan::Request &req, red_fundamentals:
 	DiffDriving driver;
 	Song s;
 	set_driver_global_coords(driver);
+
+	ROS_INFO("ORIENTATION: %d, DRIVER THETA: %lf,\n POSE (row,col): (%d,%d),\n COORD (x,y): (%lf,%lf)\n",current_orientation, driver.theta, current_row, current_column, driver.xcord, driver.ycord);
 	vector<vector<int>> cell_plan = exec_plan_to_cell_plan(req.plan, current_row, current_column); 
 
 
@@ -229,6 +231,8 @@ bool execute_plan(red_fundamentals::ExecutePlan::Request &req, red_fundamentals:
 		//drive
 		double global_x = cell_plan[i][COL] * 0.8;
 		double global_y = cell_plan[i][ROW] * -0.8;
+		ROS_INFO("global_x: %f, global_y: %f", global_x, global_y);
+		ROS_INFO("driver.xcoord: %f, driver.ycoord:%f", driver.xcord, driver.ycord);
 		int success = driver.drive(0, global_x, global_y, 0, 1);
 		if (!success) {
 			s.playLostSound();
