@@ -11,7 +11,7 @@
 #include "red_fundamentals/WallsCombined.h"
 #include "paradriver.hpp"
 #include "song.hpp"
-#include "red_fundamentals/Center.hpp"
+#include "red_fundamentals/Center.h"
 
 using namespace std;
 
