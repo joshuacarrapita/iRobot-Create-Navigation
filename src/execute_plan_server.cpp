@@ -182,6 +182,7 @@ void set_driver_global_coords(DiffDriving* driver){
 
 void correct_odometry(DiffDriving* driver){
 	//TODO: correct_angle() based on global position and walls instead of center calculation;
+	driver->correct_odometry_angle_error_globally(current_orientation);
 	//TODO: correct_coordinates() based on center calculation;
 }
 
@@ -217,7 +218,7 @@ bool execute_plan(red_fundamentals::ExecutePlan::Request &req, red_fundamentals:
 	ROS_INFO("ORIENTATION: %d, DRIVER THETA: %lf,\n POSE (row,col): (%d,%d),\n COORD (x,y): (%lf,%lf)\n",current_orientation, driver.theta, current_row, current_column, driver.xcord, driver.ycord);
 	vector<vector<int>> cell_plan = exec_plan_to_cell_plan(req.plan, current_row, current_column); 
 
-
+	// check if plan is executable
 	if(!is_executable(current_row, current_column, req.plan, map_cur)) {
 		ROS_INFO("Plan not executable! Ready to run another one!");
 		return true;
@@ -228,7 +229,7 @@ bool execute_plan(red_fundamentals::ExecutePlan::Request &req, red_fundamentals:
 
 		if (lost_check(s)) return true;
 
-		//drive
+		// drive
 		double global_x = cell_plan[i][COL] * 0.8;
 		double global_y = cell_plan[i][ROW] * -0.8;
 		ROS_INFO("global_x: %f, global_y: %f", global_x, global_y);

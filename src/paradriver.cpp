@@ -3,6 +3,7 @@
 #include "create_fundamentals/SensorPacket.h"
 #include "create_fundamentals/ResetEncoders.h"
 #include "red_fundamentals/StopMsg.h"
+#include "red_fundamentals/WallsCombined.h"
 #include <cstdlib>
 #include "paradriver.hpp"
 #include <Eigen/Dense>
@@ -32,6 +33,9 @@
 #define KD 0.01					//derivative gain factor for driving straight
 
 using namespace std;
+
+enum CoordinateAxis { X = 0, Y = 1, Z = 2};
+enum drive_direction { RIGHT = 0, UP = 1, LEFT = 2, DOWN = 3};
 
 DiffDriving::DiffDriving()
 {
@@ -102,12 +106,12 @@ double DiffDriving::calcAngle(double x, double y)
 	}
 	*/
 	Eigen::Vector2d yaxis;
-	yaxis(0) = 0;
-	yaxis(1) = 1;
+	yaxis(X) = 0;
+	yaxis(Y) = 1;
 
 	Eigen::Vector2d rel_point;
-	rel_point(0) = x;
-	rel_point(1) = y;
+	rel_point(X) = x;
+	rel_point(Y) = y;
 
 	yaxis.normalize();
 	rel_point.normalize();
@@ -380,6 +384,59 @@ void DiffDriving::correct_odometry_location_error(double x_dest, double y_dest, 
 	}
 	if(y_center_rel_act != 0.0) {
 		this->ycord = y_dest - y_center_rel_act;
+	}
+}
+
+void DiffDriving::correct_odometry_angle_error_globally(int orientation){
+	const red_fundamentals::WallsCombined::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::WallsCombined>("walls_combined_topic", ros::Duration(0.1));
+	if(msg != nullptr) {
+		Eigen::Vector2d dirvec;
+		Eigen::Matrix2d rotate_cc_ninety;
+		rotate_cc_ninety << 0, -1,
+						 	1, 0;
+		int wall_dir = -1;
+		if (msg->walls[UP]){
+			dirvec(X) = msg->F_B[X]-msg->F_A[X];
+			dirvec(Y) = msg->F_B[Y]-msg->F_A[Y];
+			wall_dir = UP;
+		} else if (msg->walls[LEFT]) {
+			dirvec(X) = msg->L_B[X]-msg->L_A[X];
+			dirvec(Y) = msg->L_B[Y]-msg->L_A[Y];
+			wall_dir = LEFT;
+		} else if (msg->walls[RIGHT]) {
+			dirvec(X) = msg->R_B[X]-msg->R_A[X];
+			dirvec(Y) = msg->R_B[Y]-msg->R_A[Y];
+			wall_dir = RIGHT;
+		} else{
+			return;
+		}
+
+		dirvec.normalize();
+		dirvec = rotate_cc_ninety * dirvec;
+		double theta = -1 * calcAngle(dirvec[X],dirvec[Y]); // We have to inver the sign because we enter the wall directional vector and compare it to the robots Y axis so when the robot is +10° calcAngle will output -10° and vice versa
+
+		// adjust angle depending on which wall was used
+		switch(wall_dir) {
+			case LEFT:
+				theta -= 90;
+			case RIGHT: 
+				theta += 90;
+		}
+
+		// adjust angle depending on which wall was used
+		switch(orientation) {
+			case LEFT:
+				theta -= 90;
+			case RIGHT: 
+				theta += 90;
+			case DOWN:
+				theta += 180;
+		}
+
+		this->theta = theta;
+
+	} else {
+		ROS_INFO("Could not correct angle globally, wall info not found!");
 	}
 }
 

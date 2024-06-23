@@ -26,6 +26,7 @@ class DiffDriving
 		int drive(int mode, double x, double y, double targetTheta, int stay);
 		void driveWithCorrection(double x, double y, double targetTheta);
 
+		void correct_odometry_angle_error_globally(int orientation);
 		void correct_odometry_location_error(double x_dest, double y_dest, double x_center_rel_act, double y_center_rel_act);
 		void correct_odometry_angle_error(double x_dest, double y_dest, double x_center_rel_act, double y_center_rel_act);
 
