@@ -113,9 +113,10 @@ vector<vector<int>> exec_plan_to_cell_plan(vector<int> exec_plan, int row, int c
 	vector<vector<int>> cell_plan;
 	vector<int> start = {row,col};
 
-	for (int i = 0; i < exec_plan.size(); i++){
+	/*for (int i = 0; i < exec_plan.size(); i++){
 		ROS_INFO("Plan [%d] = %d", i, exec_plan[i]);
-	}
+	}*/
+
 	for (int i = 0; i < exec_plan.size(); i++){
 
 		switch (exec_plan[i])
@@ -153,11 +154,12 @@ vector<vector<int>> exec_plan_to_cell_plan(vector<int> exec_plan, int row, int c
 		}
 
 		cell_plan.push_back(start);
-		for (int i = 0; i < cell_plan.size(); i++){
-			ROS_INFO("Cell Plan [%d] (y,x) = (%d,%d)", i, cell_plan[i][ROW], cell_plan[i][COL]);
-		}
 
 	}
+
+	/*for (int i = 0; i < cell_plan.size(); i++){
+		ROS_INFO("Cell Plan [%d] (y,x) = (%d,%d)", i, cell_plan[i][ROW], cell_plan[i][COL]);
+	}*/
 
 	return cell_plan;
 }
@@ -197,7 +199,7 @@ bool lost_check(Song s){
 	wallCallback();	
 	if(!compareWalls(map_cur.rows[current_row].cells[current_column], current_orientation)){
 		s.playLostSound();
-		ROS_INFO("Walls are differnt. Lost! We have to relocalize ourselves...");
+		ROS_INFO("Walls are different. Lost! We have to relocalize ourselves...");
 		return true;
 	}
 	return false;
