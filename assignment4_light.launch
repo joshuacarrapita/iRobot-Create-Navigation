@@ -5,6 +5,8 @@
 	</node>
 	<node pkg="red_fundamentals" type="localization" name="localization" >
 	</node>
+	<node pkg="red_fundamentals" type="execute_plan_server" name="execute_plan_server" >
+	</node>
 	<node pkg="red_fundamentals" type="stopper" name="stopper" >
 	</node>
 	<node pkg="red_fundamentals" type="calculate_center_service" name="calculate_center_service" >
