@@ -26,7 +26,7 @@
 #define ANGLETOLERANCEREL 0.5			//deg
 #define ENCTOLERANCE 0.05			//rad
 
-#define KPTURN 0.6				//proportional gain for turning
+#define KPTURN 0.5				//proportional gain for turning
 #define KDTURN 0.03				//derivative gain for turning
 #define KP 1.50					//proportional gain factor for driving straight
 #define KD 0.01					//derivative gain factor for driving straight
@@ -204,12 +204,12 @@ void DiffDriving::turnAbs(double targetTheta)
 		} else {
 			lastspeeds++;
 		}
-		if (lastspeeds == 100) {
+		if (lastspeeds > 100) {
 			break;
 		}
 		ROS_INFO("err: %lf | derr/dt: %lf | err*KPTURN: %lf  Derivative: %lf", err, derr/dt, err*KPTURN, derivative);
 		lasterr = err;
-		speed = min(MAXTURNSPEED, err * KPTURN + derivative);
+		speed = min(MAXTURNSPEED, err * KPTURN + derivative + MINSPEED);
 		//if (speed < 0.1) { break; }
 		if (theta > targetTheta) {
 			this->pdsrv.request.left = -speed;
@@ -237,6 +237,7 @@ void DiffDriving::turn(double targetTheta)
 	double dt;
 	double derr;
 	double derivative = 0;
+	int lastspeeds = 0;
 	double starttime = ros::Time::now().toSec();
 	while (err > ANGLETOLERANCE) {
 		//ROS_INFO("turning with err: %lf", err);
@@ -244,13 +245,19 @@ void DiffDriving::turn(double targetTheta)
 		ros::spinOnce();
 		err = abs(goal - theta);
 		if (err != lasterr) {
+			lastspeeds = 0;
 			derr = err - lasterr;
 			derivative = (derr/dt) * KDTURN;
+		} else {
+			lastspeeds++;
+		}
+		if (lastspeeds > 100) {
+			break;
 		}
 		ROS_INFO("err: %lf | derr/dt: %lf | err*KPTURN: %lf  Derivative: %lf", err, derr/dt, err*KPTURN, derivative);
 		lasterr = err;
 		//ROS_INFO("Differential component: %lf with derr: %lf and dt: %lf\n lasterr: %lf | err: %lf", KD * (derr/dt), derr, dt, lasterr, err);
-		speed =  min(MAXTURNSPEED, err * KPTURN + derivative);
+		speed =  min(MAXTURNSPEED, err * KPTURN + derivative + MINSPEED);
 		//if (speed < 0.1) { break; }
 		if (theta > goal) {
 			//turn left
@@ -419,7 +426,7 @@ int main(int argc, char **argv)
 	ros::Duration(5.0).sleep();
 	for (int i = 1; i <= 4; i++) {
 		//driver.turnAbs(90*i);
-		driver.turn(90);
+		driver.turn(+90);
 		//driver.moveDistEnc(0.25);
 		ros::Duration(0.3).sleep();
 		//driver.moveDistEnc(0.4);
