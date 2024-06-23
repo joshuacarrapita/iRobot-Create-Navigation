@@ -407,7 +407,7 @@ void DiffDriving::correct_odometry_location_error(double x_dest, double y_dest, 
 }
 
 void DiffDriving::correct_odometry_angle_error_globally(int orientation){
-	const red_fundamentals::WallsCombined::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::WallsCombined>("walls_combined_topic", ros::Duration(0.1));
+	const red_fundamentals::WallsCombined::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::WallsCombined>("walls_combined_topic", ros::Duration(1));
 	if(msg != nullptr) {
 		Eigen::Vector2d dirvec;
 		Eigen::Matrix2d rotate_cc_ninety;
@@ -433,26 +433,37 @@ void DiffDriving::correct_odometry_angle_error_globally(int orientation){
 		dirvec.normalize();
 		dirvec = rotate_cc_ninety * dirvec;
 		double theta = -1 * calcAngle(dirvec[X],dirvec[Y]); // We have to inver the sign because we enter the wall directional vector and compare it to the robots Y axis so when the robot is +10° calcAngle will output -10° and vice versa
+		// ROS_INFO("Theta calcAngle in correction: %lf", theta);
 
 		// adjust angle depending on which wall was used
 		switch(wall_dir) {
 			case LEFT:
 				theta -= 90;
+				break;
 			case RIGHT: 
 				theta += 90;
+				break;
+			default:
+				break;
 		}
 
 		// adjust angle depending on which wall was used
 		switch(orientation) {
 			case LEFT:
 				theta -= 90;
+				break;
 			case RIGHT: 
 				theta += 90;
+				break;
 			case DOWN:
 				theta += 180;
+				break;
+			default:
+				break;
 		}
 
 		this->theta = theta;
+		// ROS_INFO("Final theta in correction: %lf", theta);
 
 	} else {
 		ROS_INFO("Could not correct angle globally, wall info not found!");

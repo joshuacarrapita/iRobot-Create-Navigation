@@ -4,21 +4,18 @@
 #include <cstdlib>
 
 #define LARRSIZE 726
-#define LARRRIGHTEND 272
-#define LARRFRONTEND 498
 #define LARROFFSET 44
 #define LARRACTSIZE 682
 #define ANGLESTEP 0.351906
-#define LARRUSED 512
-#define LARRUSEDOFFSET 85
 #define ANGLESTEPUSED 0.351563
-#define TOTALOFFSET 129
 
 using namespace std;
 
 double errThresh = 0.02;
 int candidateDist = 5;
 int winnerThresh = 70;
+double cur_front_thresh = 0.45;
+double cur_side_thresh = 0.0;
 
 ros::Publisher pub;
 red_fundamentals::WallsCombined wall;
@@ -47,7 +44,7 @@ coords polToCart(coords polar)
 double calcSensAngle(int index)
 {
 	//return((index * ANGLESTEP/240)* ((double) M_PI));
-	return((-30.0 + ((index * 240)/682)) * ((double) M_PI /180));
+	return((-30.0 + ((index * 240)/LARRACTSIZE)) * ((double) M_PI /180));
 }
 
 //calculates distance between point and line given through 2 points
@@ -106,6 +103,21 @@ void resetMSG()
 	return;
 }
 
+bool curFront(const sensor_msgs::LaserScan::ConstPtr& msg)
+{
+	double minDist = 10;
+	for (int i = 425; i < 435; i++) {
+		if (!isnan(msg->ranges[i]) && msg->ranges[i] < minDist) {
+			minDist = msg->ranges[i];
+		}
+	}
+	ROS_INFO("minDist front: %lf",minDist);
+	if (minDist < cur_front_thresh) {
+		return true;
+	}
+	return false;
+}
+
 //simplified RANSAC making use of environment constraints
 void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
@@ -132,7 +144,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 
 	vector<coords> outliers;		//buffer outliers of current outliers to update winneroutliers whenever new better winner found
 	outliers.reserve(683);
-	vector<coords> winneroutliers;	//outliers from winner wall will be new candidates for next iteration
+	vector<coords> winneroutliers;		//outliers from winner wall will be new candidates for next iteration
 	winneroutliers.reserve(683);
 	vector<coords> inliers;			//track inliers to get outer most inliers for center calculation
 	inliers.reserve(683);
@@ -193,7 +205,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			//ROS_INFO("Wall %d has angle: %lf",i,ang);
 			if (ang > 120) {
 				//ROS_INFO("Left wall found");
-				if (winners[i][0].y < 0.09) {
+				if (winners[i][0].y < cur_side_thresh) {
 					wall.walls[2] = true;
 				}
 				wall.L_A[0] = winners[i][0].x;
@@ -202,7 +214,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 				wall.L_B[1] = winners[i][1].y;
 			} else if (ang < 60) {
 				//ROS_INFO("Right wall found");
-				if (winners[i][1].y < 0.09) {
+				if (winners[i][1].y < cur_side_thresh) {
 					wall.walls[0] = true;
 				}
 				wall.R_A[0] = winners[i][0].x;
@@ -211,7 +223,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 				wall.R_B[1] = winners[i][1].y;
 			} else {
 				//ROS_INFO("Front wall found");
-				if (winners[i][0].y < 0.5) {
+				if (curFront(msg)) {
 					wall.walls[1] = true;
 				}
 				wall.F_A[0] = winners[i][0].x;
@@ -222,7 +234,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 
 		}
 	}
-	//publish dist/angle to best wall for centering 
+	//publish dist/angle to best wall for centering
 	if (winners[0][0].x) {
 		wall.dist = calcDist(bestwinnercand_a, bestwinnercand_b, robotpos);
 		wall.angle = calcAngle(bestwinnercand_a, bestwinnercand_b);
@@ -234,13 +246,15 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 
 int main(int argc, char **argv)
 {
-	if (argc != 4) {
-		ROS_ERROR("Usage: walls <candidateDist> <errThresh> <winnerThresh>");
+	if (argc != 6) {
+		ROS_ERROR("Usage: walls <candidateDist> <errThresh> <winnerThresh> <cur_side_thresh> <cur_front_thresh> <cur_winnerThresh>");
 		ROS_INFO("Setting default values...");
 	} else {
 		candidateDist = atoi(argv[1]);
 		errThresh = atof(argv[2]);
 		winnerThresh = atoi(argv[3]);
+		cur_side_thresh = atof(argv[4]);
+		cur_front_thresh = atof(argv[5]);
 	}
 	ros::init(argc, argv, "walls_combined");
 	ros::NodeHandle n;
