@@ -14,7 +14,7 @@ using namespace std;
 double errThresh = 0.02;
 int candidateDist = 5;
 int winnerThresh = 70;
-double cur_front_thresh = 0.5;
+double cur_front_thresh = 0.65;
 double cur_side_thresh = 0.0;
 
 ros::Publisher pub;
