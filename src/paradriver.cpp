@@ -198,11 +198,11 @@ void DiffDriving::turnAbs(double targetTheta)
 		ros::spinOnce();
 		err = abs(targetTheta - theta);
 		if (err != lasterr) {
-			derr = lasterr - err;
+			derr = err - lasterr;
 			derivative = (derr/dt) * KDTURN;
 		}
 		lasterr = err;
-		speed = min(MAXSPEED, err * KPTURN  + derivative) + MINSPEED;
+		speed = min(MAXSPEED, err * KPTURN + derivative) + MINSPEED;
 		if (theta > targetTheta) {
 			this->pdsrv.request.left = -speed;
 			this->pdsrv.request.right = speed;
@@ -236,7 +236,7 @@ void DiffDriving::turn(double targetTheta)
 		ros::spinOnce();
 		err = abs(goal - theta);
 		if (err != lasterr) {
-			derr = lasterr - err;
+			derr = err - lasterr;
 			derivative = (derr/dt) * KDTURN;
 		}
 		//ROS_INFO("err: %lf Derivative: %lf", err, derivative);
@@ -292,7 +292,7 @@ void DiffDriving::moveDistEnc(double dist)
 		}
 		/*
 		if (errR != lasterrR) {
-			derrR = abs(lasterrR) - abs(errR);
+			derrR = abs(errR) - abs(lasterrR);
 			derivativeR = (derrR/dt) * KD;
 		}
 		*/
