@@ -287,7 +287,7 @@ void DiffDriving::moveDistEnc(double dist)
 		errL = setpointL - this->encLeft;
 		//errR = setpointR - this->encRight;
 		if (errL != lasterrL) {
-			derrL = abs(lasterrL) - abs(errL);
+			derrL = abs(errL) - abs(lasterrL);
 			derivativeL = (derrL/dt) * KD;
 		}
 		/*
