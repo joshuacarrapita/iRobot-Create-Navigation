@@ -14,7 +14,7 @@ using namespace std;
 double errThresh = 0.02;
 int candidateDist = 5;
 int winnerThresh = 70;
-double cur_front_thresh = 0.45;
+double cur_front_thresh = 0.5;
 double cur_side_thresh = 0.0;
 
 ros::Publisher pub;
@@ -107,7 +107,7 @@ void resetMSG()
 bool curFront(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	double minDist = 10;
-	for (int i = 420; i < 430; i++) {
+	for (int i = 353; i < 373; i++) {
 		if (!isnan(msg->ranges[i]) && msg->ranges[i] < minDist) {
 			minDist = msg->ranges[i];
 		}
@@ -123,7 +123,7 @@ bool curFront(const sensor_msgs::LaserScan::ConstPtr& msg)
 bool curLeft(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	double minDist = 10;
-	for (int i = 607; i < 617; i++) {
+	for (int i = 602; i < 622; i++) {
 		if (!isnan(msg->ranges[i]) && msg->ranges[i] < minDist) {
 			minDist = msg->ranges[i];
 		}
@@ -139,7 +139,7 @@ bool curLeft(const sensor_msgs::LaserScan::ConstPtr& msg)
 bool curRight(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	double minDist = 10;
-	for (int i = 153; i < 163; i++) {
+	for (int i = 140; i < 160; i++) {
 		if (!isnan(msg->ranges[i]) && msg->ranges[i] < minDist) {
 			minDist = msg->ranges[i];
 		}
