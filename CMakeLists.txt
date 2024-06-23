@@ -161,3 +161,8 @@ add_dependencies(move_to_position_server create_fundamentals_generate_messages_c
 add_executable(dry_run src/dry_run.cpp)
 target_link_libraries(dry_run graph song ${catkin_LIBRARIES})
 add_dependencies(dry_run create_fundamentals_generate_messages_cpp)
+
+add_executable(paradrivertest src/paradrivertest.cpp)
+target_link_libraries(paradrivertest ${catkin_LIBRARIES})
+add_dependencies(paradrivertest create_fundamentals_generate_messages_cpp)
+
