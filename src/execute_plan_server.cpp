@@ -156,30 +156,30 @@ vector<vector<int>> exec_plan_to_cell_plan(vector<int> exec_plan, int row, int c
 }
 
 //set odometry according to current pose
-void set_driver_global_coords(DiffDriving driver){
+void set_driver_global_coords(DiffDriving* driver){
 	switch (current_orientation)
 	{
 		case RIGHT:
-			driver.theta = 90;
+			driver->theta = 90;
 			break;
 		case UP:
-			driver.theta = 0;
+			driver->theta = 0;
 			break;
 		case LEFT:
-			driver.theta = -90;
+			driver->theta = -90;
 			break;
 		case DOWN:
-			driver.theta = 180;
+			driver->theta = 180;
 			break;
 		default:
 			break;
 	}
-	driver.xcord = current_column * 0.8;
-	driver.ycord = current_row * (-0.8);
-	ROS_INFO("ORIENTATION: %d, DRIVER THETA: %lf,\n POSE (row,col): (%d,%d),\n COORD (x,y): (%lf,%lf)\n",current_orientation, driver.theta, current_row, current_column, driver.xcord, driver.ycord);
+	driver->xcord = current_column * 0.8;
+	driver->ycord = current_row * (-0.8);
+	ROS_INFO("ORIENTATION: %d, DRIVER THETA: %lf,\n POSE (row,col): (%d,%d),\n COORD (x,y): (%lf,%lf)\n",current_orientation, driver->theta, current_row, current_column, driver->xcord, driver->ycord);
 }
 
-void correct_odometry(DiffDriving driver){
+void correct_odometry(DiffDriving* driver){
 	//TODO: correct_angle() based on global position and walls instead of center calculation;
 	//TODO: correct_coordinates() based on center calculation;
 }
@@ -211,7 +211,7 @@ bool execute_plan(red_fundamentals::ExecutePlan::Request &req, red_fundamentals:
 	res.success = false;
 	DiffDriving driver;
 	Song s;
-	set_driver_global_coords(driver);
+	set_driver_global_coords(&driver);
 
 	ROS_INFO("ORIENTATION: %d, DRIVER THETA: %lf,\n POSE (row,col): (%d,%d),\n COORD (x,y): (%lf,%lf)\n",current_orientation, driver.theta, current_row, current_column, driver.xcord, driver.ycord);
 	vector<vector<int>> cell_plan = exec_plan_to_cell_plan(req.plan, current_row, current_column); 
@@ -223,8 +223,7 @@ bool execute_plan(red_fundamentals::ExecutePlan::Request &req, red_fundamentals:
 	}
 
 	for(size_t i = 0; i < cell_plan.size(); i++){
-
-		correct_odometry(driver);
+		correct_odometry(&driver);
 
 		if (lost_check(s)) return true;
 
