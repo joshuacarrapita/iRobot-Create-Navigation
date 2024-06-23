@@ -311,44 +311,46 @@ void calculate_center_coord() {
 bool calculate_center_callback(red_fundamentals::CalculateCenterService::Request &req, red_fundamentals::CalculateCenterService::Response &res){
 
 	const red_fundamentals::WallsCombined::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::WallsCombined>("walls_combined_topic", ros::Duration(1));
-	if (!msg) return false;
+	if(msg != nullptr) {
+		// Just parses the wall message content into an array for further processing
+		amt_walls = 0;
+		res_center_coord.x = 0.0;
+		res_center_coord.y = 0.0;
 
-	// Just parses the wall message content into an array for further processing
-	amt_walls = 0;
-	res_center_coord.x = 0.0;
-	res_center_coord.y = 0.0;
+		for (int dir = LEFT; dir < BACK; dir++) exists_wall[dir] = true;
 
-	for (int dir = LEFT; dir < BACK; dir++) exists_wall[dir] = true;
+		if((wall_points[LEFT][A][X] = msg->L_A[X]) == 0) exists_wall[LEFT] = false;
+		if((wall_points[LEFT][A][Y] = msg->L_A[Y]+OFFSET) == 0) exists_wall[LEFT] = false;
+		if((wall_points[LEFT][B][X] = msg->L_B[X]) == 0) exists_wall[LEFT] = false;
+		if((wall_points[LEFT][B][Y] = msg->L_B[Y]+OFFSET) == 0) exists_wall[LEFT] = false;
+		if((wall_points[FRONT][A][X] = msg->F_A[X]) == 0) exists_wall[FRONT] = false;
+		if((wall_points[FRONT][A][Y] = msg->F_A[Y]+OFFSET) == 0) exists_wall[FRONT] = false;
+		if((wall_points[FRONT][B][X] = msg->F_B[X]) == 0) exists_wall[FRONT] = false;
+		if((wall_points[FRONT][B][Y] = msg->F_B[Y]+OFFSET) == 0) exists_wall[FRONT] = false;
+		if((wall_points[RIGHT][A][X] = msg->R_A[X]) == 0) exists_wall[RIGHT] = false;
+		if((wall_points[RIGHT][A][Y] = msg->R_A[Y]+OFFSET) == 0) exists_wall[RIGHT] = false;
+		if((wall_points[RIGHT][B][X] = msg->R_B[X]) == 0) exists_wall[RIGHT] = false;
+		if((wall_points[RIGHT][B][Y] = msg->R_B[Y]+OFFSET) == 0) exists_wall[RIGHT] = false;
 
-	if((wall_points[LEFT][A][X] = msg->L_A[X]) == 0) exists_wall[LEFT] = false;
-	if((wall_points[LEFT][A][Y] = msg->L_A[Y]+OFFSET) == 0) exists_wall[LEFT] = false;
-	if((wall_points[LEFT][B][X] = msg->L_B[X]) == 0) exists_wall[LEFT] = false;
-	if((wall_points[LEFT][B][Y] = msg->L_B[Y]+OFFSET) == 0) exists_wall[LEFT] = false;
-	if((wall_points[FRONT][A][X] = msg->F_A[X]) == 0) exists_wall[FRONT] = false;
-	if((wall_points[FRONT][A][Y] = msg->F_A[Y]+OFFSET) == 0) exists_wall[FRONT] = false;
-	if((wall_points[FRONT][B][X] = msg->F_B[X]) == 0) exists_wall[FRONT] = false;
-	if((wall_points[FRONT][B][Y] = msg->F_B[Y]+OFFSET) == 0) exists_wall[FRONT] = false;
-	if((wall_points[RIGHT][A][X] = msg->R_A[X]) == 0) exists_wall[RIGHT] = false;
-	if((wall_points[RIGHT][A][Y] = msg->R_A[Y]+OFFSET) == 0) exists_wall[RIGHT] = false;
-	if((wall_points[RIGHT][B][X] = msg->R_B[X]) == 0) exists_wall[RIGHT] = false;
-	if((wall_points[RIGHT][B][Y] = msg->R_B[Y]+OFFSET) == 0) exists_wall[RIGHT] = false;
+		if (req.conservative) {
+			exists_wall[FRONT] = msg->walls[1];
+			exists_wall[LEFT] = msg->walls[2];
+			exists_wall[RIGHT] = msg->walls[0];
+		}
 
-	if (req.conservative) {
-		exists_wall[FRONT] = msg->walls[1];
-		exists_wall[LEFT] = msg->walls[2];
-		exists_wall[RIGHT] = msg->walls[0];
+		for (int dir = LEFT; dir < BACK; dir++) if (exists_wall[dir]) amt_walls++;
+
+		//ROS_INFO("AMT_WALLS: %d", amt_walls);
+		calculate_center_coord();
+
+		res.x = res_center_coord.x;
+		res.y = res_center_coord.y;
+
+		return true;
+	} else {
+		ROS_INFO("Could not calculate center, wall info not found!");
+		return false;
 	}
-
-	for (int dir = LEFT; dir < BACK; dir++) if (exists_wall[dir]) amt_walls++;
-
-	//ROS_INFO("AMT_WALLS: %d", amt_walls);
-	calculate_center_coord();
-
-	res.x = res_center_coord.x;
-	res.y = res_center_coord.y;
-
-	return true;
-
 }
 
 void parse_args(int argc, char**argv){

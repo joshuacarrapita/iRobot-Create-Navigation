@@ -40,7 +40,7 @@ enum drive_direction { RIGHT = 0, UP = 1, LEFT = 2, DOWN = 3};
 DiffDriving::DiffDriving()
 {
 	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
-	CalculateCenterClient = n.serviceClient<red_fundamentals::CalculateCenterService>("calculate_center");
+	CalculateCenterClient = n.serviceClient<red_fundamentals::CalculateCenterService>("calculate_center_service");
 	pdsub = n.subscribe("sensor_packet", 1, &DiffDriving::odometer, this);
 	encLeft = 0;
 	encRight = 0;
@@ -395,6 +395,8 @@ void DiffDriving::correct_odometry_location_error_globally(int cell_row, int cel
 		double y_pre_correction = this->ycord;
 		correct_odometry_location_error(x_dest,y_dest,rel_center(X),rel_center(Y));
 		ROS_INFO("Corrected odometry location (x,y): (%lf,%lf) -> (%lf,%lf)\n", x_pre_correction, y_pre_correction, this->xcord, this->ycord);
+	} else {
+		ROS_INFO("CalculateCenterService call failed.");
 	}
 }
 
