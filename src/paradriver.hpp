@@ -5,6 +5,7 @@
 #include "create_fundamentals/DiffDrive.h"
 #include "create_fundamentals/SensorPacket.h"
 #include "red_fundamentals/CalculateCenterService.h"
+#include "red_fundamentals/WallsCombined.h"
 
 enum dir {dr = 0, du = 1, dl = 2, dd = 3};
 

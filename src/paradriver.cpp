@@ -211,7 +211,7 @@ void DiffDriving::turnAbs(double targetTheta)
 		if (lastspeeds > 100) {
 			break;
 		}
-		ROS_INFO("err: %lf | derr/dt: %lf | err*KPTURN: %lf  Derivative: %lf", err, derr/dt, err*KPTURN, derivative);
+		// ROS_INFO("err: %lf | derr/dt: %lf | err*KPTURN: %lf  Derivative: %lf", err, derr/dt, err*KPTURN, derivative);
 		lasterr = err;
 		speed = min(MAXTURNSPEED, err * KPTURN + derivative + MINSPEED);
 		//if (speed < 0.1) { break; }
@@ -258,7 +258,7 @@ void DiffDriving::turn(double targetTheta)
 		if (lastspeeds > 100) {
 			break;
 		}
-		ROS_INFO("err: %lf | derr/dt: %lf | err*KPTURN: %lf  Derivative: %lf", err, derr/dt, err*KPTURN, derivative);
+		// ROS_INFO("err: %lf | derr/dt: %lf | err*KPTURN: %lf  Derivative: %lf", err, derr/dt, err*KPTURN, derivative);
 		lasterr = err;
 		//ROS_INFO("Differential component: %lf with derr: %lf and dt: %lf\n lasterr: %lf | err: %lf", KD * (derr/dt), derr, dt, lasterr, err);
 		speed =  min(MAXTURNSPEED, err * KPTURN + derivative + MINSPEED);
@@ -297,9 +297,9 @@ void DiffDriving::moveDistEnc(double dist)
 	double derivativeL = 0;
 	double derivativeR = 0;
 	while (abs(errL) > ENCTOLERANCE) {
-		if (stop_check()) {
+		/*if (stop_check()) {
 			break;
-		}
+		}*/
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
 		errL = setpointL - this->encLeft;
