@@ -13,6 +13,4 @@
 	</node>
 	<node pkg="red_fundamentals" type="move_to_position_server" name="move_to_position_server" >
 	</node>
-	<node pkg="red_fundamentals" type="smooth_server" name="smooth_server" args="true" >
-	</node>
 </launch>
