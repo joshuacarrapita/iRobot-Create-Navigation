@@ -12,7 +12,7 @@ bool should_pause = false;
 double stop_dist = 0.21;
 double call_frequency = -1.0;
 const int laser_msg_offset = 44;
-StopMode stop_mode = MSGDD;
+StopMode stop_mode = MSGONLY;
 
 void should_stop_check(){
 
