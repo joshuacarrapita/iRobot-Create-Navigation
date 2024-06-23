@@ -164,7 +164,7 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 		this->encRight = msg->encoderRight;
 		// ROS_INFO("encoderLeft: %lf encoderRight: %lf", msg->encoderLeft, msg->encoderRight);
 	} else {
-		if (!msg->bumpLeft | !msg->bumpRight) {
+		if (msg->bumpLeft || msg->bumpRight) {
 			this->collision = 1;
 		} else {
 			this->collision = 0;
