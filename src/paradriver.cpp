@@ -3,6 +3,7 @@
 #include "create_fundamentals/SensorPacket.h"
 #include "create_fundamentals/ResetEncoders.h"
 #include "red_fundamentals/StopMsg.h"
+#include "red_fundamentals/WallsCombined.h"
 #include <cstdlib>
 #include "paradriver.hpp"
 #include <Eigen/Dense>
@@ -46,6 +47,7 @@ DiffDriving::DiffDriving()
 	xcord = 0;
 	ycord = 0;
 	theta = 0;
+	collision = 0;
 	clock = ros::Time::now().toSec();
 	this->resetOdometer();
 	this->odomInit();
@@ -160,8 +162,13 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 	if (!odomReady) {
 		this->encLeft = msg->encoderLeft;
 		this->encRight = msg->encoderRight;
-		ROS_INFO("encoderLeft: %lf encoderRight: %lf", msg->encoderLeft, msg->encoderRight);
+		// ROS_INFO("encoderLeft: %lf encoderRight: %lf", msg->encoderLeft, msg->encoderRight);
 	} else {
+		if (!msg->bumpLeft | !msg->bumpRight) {
+			this->collision = 1;
+		} else {
+			this->collision = 0;
+		}
 		double distL = encoderToDist(msg->encoderLeft - encLeft);
 		double distR = encoderToDist(msg->encoderRight - encRight);
 
@@ -211,7 +218,7 @@ void DiffDriving::turnAbs(double targetTheta)
 		if (lastspeeds > 100) {
 			break;
 		}
-		ROS_INFO("err: %lf | derr/dt: %lf | err*KPTURN: %lf  Derivative: %lf", err, derr/dt, err*KPTURN, derivative);
+		// ROS_INFO("err: %lf | derr/dt: %lf | err*KPTURN: %lf  Derivative: %lf", err, derr/dt, err*KPTURN, derivative);
 		lasterr = err;
 		speed = min(MAXTURNSPEED, err * KPTURN + derivative + MINSPEED);
 		//if (speed < 0.1) { break; }
@@ -258,7 +265,7 @@ void DiffDriving::turn(double targetTheta)
 		if (lastspeeds > 100) {
 			break;
 		}
-		ROS_INFO("err: %lf | derr/dt: %lf | err*KPTURN: %lf  Derivative: %lf", err, derr/dt, err*KPTURN, derivative);
+		// ROS_INFO("err: %lf | derr/dt: %lf | err*KPTURN: %lf  Derivative: %lf", err, derr/dt, err*KPTURN, derivative);
 		lasterr = err;
 		//ROS_INFO("Differential component: %lf with derr: %lf and dt: %lf\n lasterr: %lf | err: %lf", KD * (derr/dt), derr, dt, lasterr, err);
 		speed =  min(MAXTURNSPEED, err * KPTURN + derivative + MINSPEED);
@@ -280,7 +287,7 @@ void DiffDriving::turn(double targetTheta)
 }
 
 //PD-control func driving straight for certain distances
-void DiffDriving::moveDistEnc(double dist)
+int DiffDriving::moveDistEnc(double dist)
 {
 	ros::spinOnce();
 	double speedL;
@@ -297,9 +304,11 @@ void DiffDriving::moveDistEnc(double dist)
 	double derivativeL = 0;
 	double derivativeR = 0;
 	while (abs(errL) > ENCTOLERANCE) {
-		if (stop_check()) {
-			break;
+		
+		if (stop_check() | this->collision) {
+			return 0;
 		}
+		
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
 		errL = setpointL - this->encLeft;
@@ -337,7 +346,7 @@ void DiffDriving::moveDistEnc(double dist)
 	}
 	this->stop();
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
-	return;
+	return 1;
 }
 
 /*Idea:
@@ -354,7 +363,9 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			double speed;
 			turnAbs(calcAngle(x - this->xcord, y - this->ycord));
 			double err = calcDist(x, y);
-			this->moveDistEnc(err);	//only calculate euclidean distance once then drive straight for that amount of distance
+			if (this->moveDistEnc(err) == 0) {
+				return 0;
+			}					//only calculate euclidean distance once then drive straight for that amount of distance
 			if (stay) { return 1; }
 			this->turnAbs(targetTheta);
 			return 1;
@@ -363,7 +374,9 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			double speed;
 			turn(calcAngle(x, y));
 			double err = calcRelDist(x, y);
-			this->moveDistEnc(err);
+			if (this->moveDistEnc(err) == 0) {
+				return 0;
+			}
 			if (stay) { return 1; }
 			this->turnAbs(targetTheta);
 			return 1;

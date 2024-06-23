@@ -23,7 +23,7 @@ class DiffDriving
 		void odometer(const create_fundamentals::SensorPacket::ConstPtr& msg);
 		void turnAbs(double targetTheta);
 		void turn(double targetTheta);
-		void moveDistEnc(double dist);
+		int moveDistEnc(double dist);
 		int drive(int mode, double x, double y, double targetTheta, int stay);
 		void driveWithCorrection(double x, double y, double targetTheta);
 
@@ -39,6 +39,7 @@ class DiffDriving
 		create_fundamentals::DiffDrive pdsrv;
 		ros::Subscriber pdsub;
 		int odomReady;
+		int collision;
 		double encLeft;
 		double encRight;
 		double xcord;
