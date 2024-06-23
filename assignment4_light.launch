@@ -1,0 +1,18 @@
+<launch>
+	<node pkg="red_fundamentals" type="walls_combined" name="walls_combined" args="" >
+	</node>
+	<node pkg="red_fundamentals" type="center_service" name="center_service" >
+	</node>
+	<node pkg="red_fundamentals" type="localization" name="localization" >
+	</node>
+	<node pkg="red_fundamentals" type="stopper" name="stopper" >
+	</node>
+	<node pkg="red_fundamentals" type="calculate_center" name="calculate_center" >
+	</node>
+	<node pkg="red_fundamentals" type="publish_map" name="publish_map" >
+	</node>
+	<node pkg="red_fundamentals" type="move_to_position_server" name="move_to_position_server" >
+	</node>
+	<node pkg="red_fundamentals" type="smooth_server" name="smooth_server" args="true" >
+	</node>
+</launch>
