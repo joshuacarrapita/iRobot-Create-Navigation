@@ -26,8 +26,8 @@
 #define ANGLETOLERANCEREL 0.5			//deg
 #define ENCTOLERANCE 0.05			//rad
 
-#define KPTURN 0.85				//proportional gain for turning
-#define KDTURN 0.17				//derivative gain for turning
+#define KPTURN 0.6				//proportional gain for turning
+#define KDTURN 0.05				//derivative gain for turning
 #define KP 1.50					//proportional gain factor for driving straight
 #define KD 0.01					//derivative gain factor for driving straight
 
