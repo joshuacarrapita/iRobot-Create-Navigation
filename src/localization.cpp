@@ -19,6 +19,8 @@ red_fundamentals::Grid map_cur;
 ros::Publisher pose_pub;
 ros::ServiceClient client_center;
 red_fundamentals::Center srv_center;
+ros::ServiceClient CalculateCenterClient;
+red_fundamentals::CalculateCenterService centersrv;
 
 bool need_change = false;
 
@@ -416,7 +418,16 @@ bool localization(red_fundamentals::Localization::Request &req,
             default:
                 ROS_INFO("Wrong Direction");
         }
-        driver.moveDistEnc(0.8);
+
+		centersrv.request.conservative = 0;
+		if(CalculateCenterClient.call(centersrv)){
+			double rel_dest_x = centersrv.response.x;
+			double rel_dest_y = centersrv.response.y;
+			if (rel_dest_y <= 0.0) rel_dest_y = 0.8;
+			driver.drive(1,rel_dest_x,rel_dest_y,0,1);
+		} else {
+        	driver.moveDistEnc(0.8);
+		}
 
         // get walls
         wallCallback();
@@ -437,10 +448,10 @@ int main(int argc, char **argv){
     // Get walls
     wallCallback();
     client_center = n.serviceClient<red_fundamentals::Center>("center");
+    CalculateCenterClient = n.serviceClient<red_fundamentals::CalculateCenterService>("calculate_center_service");
     ros::ServiceServer service = n.advertiseService("localization", localization);
     ROS_INFO("Ready to run localization");
     
     ros::spin();
     return 0;
-
 }

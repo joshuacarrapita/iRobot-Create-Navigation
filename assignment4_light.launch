@@ -7,7 +7,7 @@
 	</node>
 	<node pkg="red_fundamentals" type="stopper" name="stopper" >
 	</node>
-	<node pkg="red_fundamentals" type="calculate_center" name="calculate_center" >
+	<node pkg="red_fundamentals" type="calculate_center_service" name="calculate_center_service" >
 	</node>
 	<node pkg="red_fundamentals" type="publish_map.py" name="publish_map" >
 	</node>
