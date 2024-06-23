@@ -98,6 +98,7 @@ int interpolate_orientation(vector<int> destination_cell){
 	if (row < 0) return 1;
 	if (col > 0) return 0;
 	if (col < 0) return 2;
+	return -1;
 }
 
 void set_pose(vector<int> destination_cell){

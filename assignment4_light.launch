@@ -9,7 +9,7 @@
 	</node>
 	<node pkg="red_fundamentals" type="calculate_center" name="calculate_center" >
 	</node>
-	<node pkg="red_fundamentals" type="publish_map" name="publish_map" >
+	<node pkg="red_fundamentals" type="publish_map.py" name="publish_map" >
 	</node>
 	<node pkg="red_fundamentals" type="move_to_position_server" name="move_to_position_server" >
 	</node>
