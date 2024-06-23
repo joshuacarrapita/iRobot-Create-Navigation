@@ -306,6 +306,7 @@ int DiffDriving::moveDistEnc(double dist)
 	while (abs(errL) > ENCTOLERANCE) {
 		
 		if (stop_check() | this->collision) {
+			this->stop();
 			return 0;
 		}
 		
