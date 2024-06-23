@@ -3,14 +3,13 @@
 #include "create_fundamentals/SensorPacket.h"
 #include "create_fundamentals/ResetEncoders.h"
 #include "red_fundamentals/StopMsg.h"
-#include "red_fundamentals/WallsCombined.h"
 #include <cstdlib>
 #include "paradriver.hpp"
 #include <Eigen/Dense>
 
 
 #define MAXSPEED 15.0				//max allowed speed for straight motion
-#define MAXTURNSPEED 8.0			//max allowed speed for rotational motion
+#define MAXTURNSPEED 10.0			//max allowed speed for rotational motion
 #define MINSPEED 0.4				//min speed to facilitate actual robot movement
 #define CORRECTIONMARGIN 3.0
 #define WHEELBASE 0.260				//m
@@ -21,14 +20,14 @@
 
 #define ACCELTIME 30
 #define DISTCORRECTION 0.95
-#define THETACORRECTION 0.96			//correction factor for odometry theta calculation
+#define THETACORRECTION 1.0			//correction factor for odometry theta calculation
 #define DISTTOLERANCE 0.03			//m
-#define ANGLETOLERANCE 0.5			//deg
+#define ANGLETOLERANCE 1.0			//deg
 #define ANGLETOLERANCEREL 0.5			//deg
 #define ENCTOLERANCE 0.05			//rad
 
-#define KPTURN 0.20				//proportional gain for turning
-#define KDTURN 0.01				//derivative gain for turning
+#define KPTURN 0.5				//proportional gain for turning
+#define KDTURN 0.03				//derivative gain for turning
 #define KP 1.50					//proportional gain factor for driving straight
 #define KD 0.01					//derivative gain factor for driving straight
 
@@ -196,18 +195,26 @@ void DiffDriving::turnAbs(double targetTheta)
 	double dt;
 	double derr;
 	double derivative = 0;
+	double lastspeeds = 0;
 	//ROS_INFO("turning to heading %lf", targetTheta);
 	while (err > ANGLETOLERANCE) {
-		//ROS_INFO("err: %lf", err);
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
 		err = abs(targetTheta - theta);
 		if (err != lasterr) {
-			derr = lasterr - err;
+			lastspeeds = 0;
+			derr = err - lasterr;
 			derivative = (derr/dt) * KDTURN;
+		} else {
+			lastspeeds++;
 		}
+		if (lastspeeds > 100) {
+			break;
+		}
+		ROS_INFO("err: %lf | derr/dt: %lf | err*KPTURN: %lf  Derivative: %lf", err, derr/dt, err*KPTURN, derivative);
 		lasterr = err;
-		speed = min(MAXSPEED, err * KPTURN  + derivative) + MINSPEED;
+		speed = min(MAXTURNSPEED, err * KPTURN + derivative + MINSPEED);
+		//if (speed < 0.1) { break; }
 		if (theta > targetTheta) {
 			this->pdsrv.request.left = -speed;
 			this->pdsrv.request.right = speed;
@@ -234,20 +241,28 @@ void DiffDriving::turn(double targetTheta)
 	double dt;
 	double derr;
 	double derivative = 0;
+	int lastspeeds = 0;
 	double starttime = ros::Time::now().toSec();
-	while (err > ANGLETOLERANCEREL) {
+	while (err > ANGLETOLERANCE) {
 		//ROS_INFO("turning with err: %lf", err);
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
 		err = abs(goal - theta);
 		if (err != lasterr) {
-			derr = lasterr - err;
+			lastspeeds = 0;
+			derr = err - lasterr;
 			derivative = (derr/dt) * KDTURN;
+		} else {
+			lastspeeds++;
 		}
-		//ROS_INFO("err: %lf Derivative: %lf", err, derivative);
+		if (lastspeeds > 100) {
+			break;
+		}
+		ROS_INFO("err: %lf | derr/dt: %lf | err*KPTURN: %lf  Derivative: %lf", err, derr/dt, err*KPTURN, derivative);
 		lasterr = err;
 		//ROS_INFO("Differential component: %lf with derr: %lf and dt: %lf\n lasterr: %lf | err: %lf", KD * (derr/dt), derr, dt, lasterr, err);
-		speed = min(MAXTURNSPEED, err * KPTURN + derivative) + MINSPEED;
+		speed =  min(MAXTURNSPEED, err * KPTURN + derivative + MINSPEED);
+		//if (speed < 0.1) { break; }
 		if (theta > goal) {
 			//turn left
 			this->pdsrv.request.left = -speed;
@@ -282,22 +297,20 @@ void DiffDriving::moveDistEnc(double dist)
 	double derivativeL = 0;
 	double derivativeR = 0;
 	while (abs(errL) > ENCTOLERANCE) {
-		/*
 		if (stop_check()) {
 			break;
 		}
-		*/
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
 		errL = setpointL - this->encLeft;
 		//errR = setpointR - this->encRight;
 		if (errL != lasterrL) {
-			derrL = abs(lasterrL) - abs(errL);
+			derrL = abs(errL) - abs(lasterrL);
 			derivativeL = (derrL/dt) * KD;
 		}
 		/*
 		if (errR != lasterrR) {
-			derrR = abs(lasterrR) - abs(errR);
+			derrR = abs(errR) - abs(lasterrR);
 			derivativeR = (derrR/dt) * KD;
 		}
 		*/
@@ -492,15 +505,23 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "diffdriving");
 	DiffDriving driver;
 	dir di;
-	/*
-	for (int i = 1; i <= 16; i++) {
-		//driver.turnAbs(-90*i);
-		driver.turn(90);
+	
+	for (int i = 1; i <= 4; i++) {
+		driver.turnAbs(driver.theta + 90);
+		//driver.turn(90);
 		//driver.moveDistEnc(0.25);
-		ros::Duration(2.3).sleep();
+		ros::Duration(0.3).sleep();
 		//driver.moveDistEnc(0.4);
 	}
-	*/
+	ros::Duration(5.0).sleep();
+	for (int i = 1; i <= 4; i++) {
+		//driver.turnAbs(90*i);
+		driver.turn(+90);
+		//driver.moveDistEnc(0.25);
+		ros::Duration(0.3).sleep();
+		//driver.moveDistEnc(0.4);
+	}
+	
 	/*
 	driver.drive(0,0,-0.8,0,1);
 	driver.drive(0,-0.8,-0.8,0,1);
@@ -527,6 +548,7 @@ int main(int argc, char **argv)
 	driver.drive(0,0,-3.2,0,1);
 	driver.drive(0,0,-4.0,0,1);
 	*/
+	/*
 	driver.drive(0,-0.8,0,0,1);
 	driver.drive(0,-1.6,0,0,1);
 	driver.drive(0,-1.6,0.8,0,1);
@@ -535,7 +557,7 @@ int main(int argc, char **argv)
 	driver.drive(0,-3.2,0,0,1);
 	driver.drive(0,-3.2,-0.8,0,1);
 	driver.drive(0,-4.0,-0.8,0,1);
-
+	*/
 
 	/*
 	driver.turnAbs(180);
