@@ -47,6 +47,7 @@ add_service_files(FILES
 	Localization.srv
 	MoveToPosition.srv
 	Center.srv
+	CalculateCenterService.srv
 )
 
 #common commands for building c++ executables and libraries
@@ -161,3 +162,7 @@ add_dependencies(move_to_position_server create_fundamentals_generate_messages_c
 add_executable(dry_run src/dry_run.cpp)
 target_link_libraries(dry_run graph song ${catkin_LIBRARIES})
 add_dependencies(dry_run create_fundamentals_generate_messages_cpp)
+
+add_executable(calculate_center_service src/calculate_center_service.cpp)
+target_link_libraries(calculate_center_service ${catkin_LIBRARIES})
+add_dependencies(calculate_center_service create_fundamentals_generate_messages_cpp)
