@@ -40,6 +40,7 @@ enum drive_direction { RIGHT = 0, UP = 1, LEFT = 2, DOWN = 3};
 DiffDriving::DiffDriving()
 {
 	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
+	CalculateCenterClient = n.serviceClient<red_fundamentals::CalculateCenterService>("calculate_center");
 	pdsub = n.subscribe("sensor_packet", 1, &DiffDriving::odometer, this);
 	encLeft = 0;
 	encRight = 0;
@@ -373,6 +374,24 @@ void driveWithCorrection(double x, double y, double targetTheta)
 {
 	for (int i = 1; i < 6; i++) {
 		i = i;
+	}
+}
+
+void DiffDriving::correct_odometry_location_error_globally(int cell_row, int cell_col){
+	double x_dest = cell_col * 0.8;
+	double y_dest = cell_row * -0.8;
+
+	centersrv.request.conservative = 1;
+	if (CalculateCenterClient.call(centersrv)){
+		Eigen::Vector2d rel_center;
+		Eigen::Matrix2d rotate_cc;
+		double theta_rad = theta * M_PI/180;
+		rotate_cc << cos(theta_rad), -sin(theta_rad),
+						 sin(theta_rad), cos(theta_rad);
+		rel_center(X) = centersrv.response.x;
+		rel_center(Y) = centersrv.response.y;
+		rel_center = rotate_cc * rel_center;
+		correct_odometry_location_error(x_dest,y_dest,rel_center(X),rel_center(Y));
 	}
 }
 

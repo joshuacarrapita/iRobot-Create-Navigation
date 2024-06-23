@@ -184,6 +184,7 @@ void correct_odometry(DiffDriving* driver){
 	//TODO: correct_angle() based on global position and walls instead of center calculation;
 	driver->correct_odometry_angle_error_globally(current_orientation);
 	//TODO: correct_coordinates() based on center calculation;
+	driver->correct_odometry_location_error_globally(current_row, current_column);
 }
 
 bool lost_check(Song s){

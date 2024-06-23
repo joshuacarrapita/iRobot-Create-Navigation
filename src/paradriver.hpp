@@ -4,6 +4,7 @@
 #include "ros/ros.h"
 #include "create_fundamentals/DiffDrive.h"
 #include "create_fundamentals/SensorPacket.h"
+#include "red_fundamentals/CalculateCenterService.h"
 
 enum dir {dr = 0, du = 1, dl = 2, dd = 3};
 
@@ -27,11 +28,14 @@ class DiffDriving
 		void driveWithCorrection(double x, double y, double targetTheta);
 
 		void correct_odometry_angle_error_globally(int orientation);
+		void correct_odometry_location_error_globally(int cell_row, int cell_col);
 		void correct_odometry_location_error(double x_dest, double y_dest, double x_center_rel_act, double y_center_rel_act);
 		void correct_odometry_angle_error(double x_dest, double y_dest, double x_center_rel_act, double y_center_rel_act);
 
 		ros::NodeHandle n;
 		ros::ServiceClient diffDrive;
+		ros::ServiceClient CalculateCenterClient;
+		red_fundamentals::CalculateCenterService centersrv;
 		create_fundamentals::DiffDrive pdsrv;
 		ros::Subscriber pdsub;
 		int odomReady;
