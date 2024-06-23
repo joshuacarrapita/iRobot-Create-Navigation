@@ -114,32 +114,35 @@ vector<vector<int>> exec_plan_to_cell_plan(vector<int> exec_plan, int row, int c
 	vector<int> start = {row,col};
 
 	for (int i = 0; i < exec_plan.size(); i++){
+		ROS_INFO("Plan [%d] = %d", i, exec_plan[i]);
+	}
+	for (int i = 0; i < exec_plan.size(); i++){
 
 		switch (exec_plan[i])
 		{
 			case RIGHT:
-				while(exec_plan[i] == 0){
+				while(exec_plan[i] == 0 && i < exec_plan.size()){
 					start[COL] += 1;
 					i++;
 				}
 				i--;
 				break;
 			case UP:
-				while(exec_plan[i] == 1){
+				while(exec_plan[i] == 1 && i < exec_plan.size()){
 					start[ROW] -= 1;
 					i++;
 				}
 				i--;
 				break;
 			case LEFT:
-				while(exec_plan[i] == 2){
+				while(exec_plan[i] == 2 && i < exec_plan.size()){
 					start[COL] -= 1;
 					i++;
 				}
 				i--;
 				break;
 			case DOWN:
-				while(exec_plan[i] == 3){
+				while(exec_plan[i] == 3 && i < exec_plan.size()){
 					start[ROW] += 1;
 					i++;
 				}
@@ -150,6 +153,9 @@ vector<vector<int>> exec_plan_to_cell_plan(vector<int> exec_plan, int row, int c
 		}
 
 		cell_plan.push_back(start);
+		for (int i = 0; i < cell_plan.size(); i++){
+			ROS_INFO("Cell Plan [%d] (y,x) = (%d,%d)", i, cell_plan[i][ROW], cell_plan[i][COL]);
+		}
 
 	}
 
