@@ -14,7 +14,7 @@ using namespace std;
 double errThresh = 0.02;
 int candidateDist = 5;
 int winnerThresh = 70;
-double cur_front_thresh = 0.45;
+double cur_front_thresh = 0.5;
 double cur_side_thresh = 0.0;
 
 ros::Publisher pub;
@@ -103,15 +103,48 @@ void resetMSG()
 	return;
 }
 
+//check 10 range values in the front
 bool curFront(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	double minDist = 10;
-	for (int i = 425; i < 435; i++) {
+	for (int i = 353; i < 373; i++) {
 		if (!isnan(msg->ranges[i]) && msg->ranges[i] < minDist) {
 			minDist = msg->ranges[i];
 		}
 	}
-	ROS_INFO("minDist front: %lf",minDist);
+	//ROS_INFO("minDist front: %lf",minDist);
+	if (minDist < cur_front_thresh) {
+		return true;
+	}
+	return false;
+}
+
+//check 10 range values to left
+bool curLeft(const sensor_msgs::LaserScan::ConstPtr& msg)
+{
+	double minDist = 10;
+	for (int i = 602; i < 622; i++) {
+		if (!isnan(msg->ranges[i]) && msg->ranges[i] < minDist) {
+			minDist = msg->ranges[i];
+		}
+	}
+	//ROS_INFO("minDist left: %lf",minDist);
+	if (minDist < cur_front_thresh) {
+		return true;
+	}
+	return false;
+}
+
+//check 10 range values to right
+bool curRight(const sensor_msgs::LaserScan::ConstPtr& msg)
+{
+	double minDist = 10;
+	for (int i = 140; i < 160; i++) {
+		if (!isnan(msg->ranges[i]) && msg->ranges[i] < minDist) {
+			minDist = msg->ranges[i];
+		}
+	}
+	//ROS_INFO("minDist right: %lf",minDist);
 	if (minDist < cur_front_thresh) {
 		return true;
 	}
@@ -205,7 +238,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 			//ROS_INFO("Wall %d has angle: %lf",i,ang);
 			if (ang > 120) {
 				//ROS_INFO("Left wall found");
-				if (winners[i][0].y < cur_side_thresh) {
+				if (winners[i][0].y < cur_side_thresh && curLeft(msg)) {
 					wall.walls[2] = true;
 				}
 				wall.L_A[0] = winners[i][0].x;
@@ -214,7 +247,7 @@ void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
 				wall.L_B[1] = winners[i][1].y;
 			} else if (ang < 60) {
 				//ROS_INFO("Right wall found");
-				if (winners[i][1].y < cur_side_thresh) {
+				if (winners[i][1].y < cur_side_thresh && curRight(msg)) {
 					wall.walls[0] = true;
 				}
 				wall.R_A[0] = winners[i][0].x;
