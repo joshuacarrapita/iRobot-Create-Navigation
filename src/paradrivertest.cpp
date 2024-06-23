@@ -20,14 +20,14 @@
 
 #define ACCELTIME 30
 #define DISTCORRECTION 0.95
-#define THETACORRECTION 0.98			//correction factor for odometry theta calculation
+#define THETACORRECTION 1.0			//correction factor for odometry theta calculation
 #define DISTTOLERANCE 0.03			//m
 #define ANGLETOLERANCE 1.0			//deg
 #define ANGLETOLERANCEREL 0.5			//deg
 #define ENCTOLERANCE 0.05			//rad
 
 #define KPTURN 0.6				//proportional gain for turning
-#define KDTURN 0.05				//derivative gain for turning
+#define KDTURN 0.03				//derivative gain for turning
 #define KP 1.50					//proportional gain factor for driving straight
 #define KD 0.01					//derivative gain factor for driving straight
 
@@ -191,18 +191,26 @@ void DiffDriving::turnAbs(double targetTheta)
 	double dt;
 	double derr;
 	double derivative = 0;
+	double lastspeeds = 0;
 	//ROS_INFO("turning to heading %lf", targetTheta);
 	while (err > ANGLETOLERANCE) {
-		ROS_INFO("err: %lf", err);
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
 		err = abs(targetTheta - theta);
 		if (err != lasterr) {
+			lastspeeds = 0;
 			derr = err - lasterr;
 			derivative = (derr/dt) * KDTURN;
+		} else {
+			lastspeeds++;
 		}
+		if (lastspeeds == 100) {
+			break;
+		}
+		ROS_INFO("err: %lf | derr/dt: %lf | err*KPTURN: %lf  Derivative: %lf", err, derr/dt, err*KPTURN, derivative);
 		lasterr = err;
 		speed = min(MAXTURNSPEED, err * KPTURN + derivative);
+		//if (speed < 0.1) { break; }
 		if (theta > targetTheta) {
 			this->pdsrv.request.left = -speed;
 			this->pdsrv.request.right = speed;
@@ -239,10 +247,11 @@ void DiffDriving::turn(double targetTheta)
 			derr = err - lasterr;
 			derivative = (derr/dt) * KDTURN;
 		}
-		ROS_INFO("err: %lf Derivative: %lf", err, derivative);
+		ROS_INFO("err: %lf | derr/dt: %lf | err*KPTURN: %lf  Derivative: %lf", err, derr/dt, err*KPTURN, derivative);
 		lasterr = err;
 		//ROS_INFO("Differential component: %lf with derr: %lf and dt: %lf\n lasterr: %lf | err: %lf", KD * (derr/dt), derr, dt, lasterr, err);
 		speed =  min(MAXTURNSPEED, err * KPTURN + derivative);
+		//if (speed < 0.1) { break; }
 		if (theta > goal) {
 			//turn left
 			this->pdsrv.request.left = -speed;
@@ -401,7 +410,7 @@ int main(int argc, char **argv)
 	dir di;
 	
 	for (int i = 1; i <= 4; i++) {
-		driver.turnAbs(90*i);
+		driver.turnAbs(driver.theta + 90);
 		//driver.turn(90);
 		//driver.moveDistEnc(0.25);
 		ros::Duration(0.3).sleep();
