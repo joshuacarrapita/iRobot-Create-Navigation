@@ -4,6 +4,7 @@
 #include "create_fundamentals/DiffDrive.h"
 #include "red_fundamentals/WallsCombined.h"
 #include "red_fundamentals/Center.h"
+#include "red_fundamentals/StopSrv.h"
 #include "paradriver.hpp"
 
 enum Centphs
@@ -28,6 +29,8 @@ double tolerance = 0.3;
 Centphs centeringPhase = LOOKINGFORFIRSTWALL;
 
 ros::ServiceClient diffDrive;
+ros::ServiceClient StopClient;
+red_fundamentals::StopSrv stopsrv;
 create_fundamentals::DiffDrive srv;
 
 void updateWall()
@@ -204,6 +207,8 @@ void resetCentering()
 bool centering(red_fundamentals::Center::Request &req, red_fundamentals::Center::Response &res){
 	ROS_INFO("starting centering process");
 	res.centered = false;
+	stopsrv.request.plead = "PAUSE";
+	StopClient.call(stopsrv);
 	while (ros::ok() && centeringPhase != CENTERED) {
 		updateWall();
 		center();
@@ -213,6 +218,8 @@ bool centering(red_fundamentals::Center::Request &req, red_fundamentals::Center:
 		updateWall();
 		center();
 	}
+	stopsrv.request.plead = "FINE";
+	StopClient.call(stopsrv);
 	ROS_INFO("centering finished");
 	res.centered = true;
 	resetCentering();
@@ -224,7 +231,9 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "center_service");
 	ros::NodeHandle n;
 	diffDrive =  n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
+	StopClient = n.serviceClient<red_fundamentals::StopSrv>("stop_service");
 	ros::ServiceServer service = n.advertiseService("center", centering);
+
 
 	ROS_INFO("Ready to center on demand");
 	ros::spin();
