@@ -391,7 +391,10 @@ void DiffDriving::correct_odometry_location_error_globally(int cell_row, int cel
 		rel_center(X) = centersrv.response.x;
 		rel_center(Y) = centersrv.response.y;
 		rel_center = rotate_cc * rel_center;
+		double x_pre_correction = this->xcord;
+		double y_pre_correction = this->ycord;
 		correct_odometry_location_error(x_dest,y_dest,rel_center(X),rel_center(Y));
+		ROS_INFO("Corrected odometry location (x,y): (%lf,%lf) -> (%lf,%lf)\n", x_pre_correction, y_pre_correction, this->xcord, this->ycord);
 	}
 }
 
@@ -414,6 +417,7 @@ void DiffDriving::correct_odometry_angle_error_globally(int orientation){
 		rotate_cc_ninety << 0, -1,
 						 	1, 0;
 		int wall_dir = -1;
+		double theta_pre_correction = this->theta;
 		if (msg->walls[UP]){
 			dirvec(X) = msg->F_B[X]-msg->F_A[X];
 			dirvec(Y) = msg->F_B[Y]-msg->F_A[Y];
@@ -463,7 +467,7 @@ void DiffDriving::correct_odometry_angle_error_globally(int orientation){
 		}
 
 		this->theta = theta;
-		// ROS_INFO("Final theta in correction: %lf", theta);
+		ROS_INFO("Corrected theta: %lf -> %lf", theta_pre_correction, theta);
 
 	} else {
 		ROS_INFO("Could not correct angle globally, wall info not found!");
