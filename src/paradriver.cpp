@@ -43,6 +43,8 @@ DiffDriving::DiffDriving()
 	pdsub = n.subscribe("sensor_packet", 1, &DiffDriving::odometer, this);
 	encLeft = 0;
 	encRight = 0;
+	bumperLeft = 0;
+	bumperRight = 0;
 	xcord = 0;
 	ycord = 0;
 	theta = 0;
@@ -291,7 +293,8 @@ int DiffDriving::moveDistEnc(double dist)
 	double derrL;
 	double derivativeL = 0;
 	while (abs(errL) > ENCTOLERANCE) {
-		if (this->bumperLeft || this->bumperRight) {
+		if (this->bumperLeft || this->bumperRight /* || stop_check() */) {
+			this->stop();
 			ROS_INFO("Couldn't complete move because an obstacle was in the way");
 			return 0;
 		}
