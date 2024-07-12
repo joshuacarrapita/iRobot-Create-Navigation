@@ -51,15 +51,15 @@ DiffDriving::DiffDriving()
 	this->odomInit();
 }
 
-bool stop_check(){
-
+//check content of Stopper message and return true if robot should stop
+bool stop_check()
+{
 	red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(0.1));
 
 	if (stop_message && stop_message->content == "STOP") return true;
 	return false;
 
 }
-
 
 //stop motors
 void DiffDriving::stop()
@@ -172,6 +172,8 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 		this->theta += deltaTheta * 180/M_PI * THETACORRECTION;
 		this->encLeft = msg->encoderLeft;
 		this->encRight = msg->encoderRight;
+		this->bumperLeft = msg->bumpLeft;
+		this->bumperRight = msg->bumpRight;
 		this->clock = ros::Time::now().toSec();
 	}
 	return;
@@ -196,7 +198,6 @@ void DiffDriving::turnAbs(double targetTheta)
 	double derr;
 	double derivative = 0;
 	double lastspeeds = 0;
-	//ROS_INFO("turning to heading %lf", targetTheta);
 	while (err > ANGLETOLERANCE) {
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
@@ -214,7 +215,6 @@ void DiffDriving::turnAbs(double targetTheta)
 		// ROS_INFO("err: %lf | derr/dt: %lf | err*KPTURN: %lf  Derivative: %lf", err, derr/dt, err*KPTURN, derivative);
 		lasterr = err;
 		speed = min(MAXTURNSPEED, err * KPTURN + derivative + MINSPEED);
-		//if (speed < 0.1) { break; }
 		if (theta > targetTheta) {
 			this->pdsrv.request.left = -speed;
 			this->pdsrv.request.right = speed;
@@ -258,11 +258,8 @@ void DiffDriving::turn(double targetTheta)
 		if (lastspeeds > 100) {
 			break;
 		}
-		// ROS_INFO("err: %lf | derr/dt: %lf | err*KPTURN: %lf  Derivative: %lf", err, derr/dt, err*KPTURN, derivative);
 		lasterr = err;
-		//ROS_INFO("Differential component: %lf with derr: %lf and dt: %lf\n lasterr: %lf | err: %lf", KD * (derr/dt), derr, dt, lasterr, err);
 		speed =  min(MAXTURNSPEED, err * KPTURN + derivative + MINSPEED);
-		//if (speed < 0.1) { break; }
 		if (theta > goal) {
 			//turn left
 			this->pdsrv.request.left = -speed;
@@ -280,7 +277,7 @@ void DiffDriving::turn(double targetTheta)
 }
 
 //PD-control func driving straight for certain distances
-void DiffDriving::moveDistEnc(double dist)
+int DiffDriving::moveDistEnc(double dist)
 {
 	ros::spinOnce();
 	double speedL;
@@ -290,16 +287,14 @@ void DiffDriving::moveDistEnc(double dist)
 	double errL = setpointL - this->encLeft;
 	double errR = setpointR - this->encRight;
 	double lasterrL = errL;
-	double lasterrR = errR;
 	double dt;
 	double derrL;
-	double derrR;
 	double derivativeL = 0;
-	double derivativeR = 0;
 	while (abs(errL) > ENCTOLERANCE) {
-		/*if (stop_check()) {
-			break;
-		}*/
+		if (this->bumperLeft || this->bumperRight) {
+			ROS_INFO("Couldn't complete move because an obstacle was in the way");
+			return 0;
+		}
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
 		errL = setpointL - this->encLeft;
@@ -308,36 +303,21 @@ void DiffDriving::moveDistEnc(double dist)
 			derrL = abs(errL) - abs(lasterrL);
 			derivativeL = (derrL/dt) * KD;
 		}
-		/*
-		if (errR != lasterrR) {
-			derrR = abs(errR) - abs(lasterrR);
-			derivativeR = (derrR/dt) * KD;
-		}
-		*/
 		//ROS_INFO("errL: %lf | errR: %lf | derrL: %lf | derrR: %lf",errL,errR,derrL,derrR);
-		speedL = errL * KP;
-		//speedR = errR * KP;
+		speedL = err * KP;
 		if (errL < 0) {
 			speedL -= (MINSPEED + derivativeL);
 		} else {
 			speedL += (MINSPEED + derivativeL);
 		}
-		/*
-		if (errR < 0) {
-			speedR -= (MINSPEED + derivativeR);
-		} else {
-			speedR += (MINSPEED + derivativeR);
-		}
-		*/
 		pdsrv.request.left = speedL;
 		pdsrv.request.right = speedL;
 		lasterrL = errL;
-		//lasterrR = errR;
 		diffDrive.call(pdsrv);
 	}
 	this->stop();
 	ROS_INFO("\nxcord: %lf\nycord: %lf\ntheta: %lf\nencLeft: %lf\nencRight: %lf", xcord, ycord, theta, encLeft, encRight);
-	return;
+	return 1;
 }
 
 /*Idea:

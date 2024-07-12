@@ -42,6 +42,8 @@ class DiffDriving
 		int odomReady;
 		double encLeft;
 		double encRight;
+		bool bumperLeft;
+		bool bumperRight;
 		double xcord;
 		double ycord;
 		double theta;

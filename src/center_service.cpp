@@ -130,7 +130,7 @@ void center()
 		return;
 	}
 	//find second wall and move to phase 2
-	if (centeringPhase == DISTANCEDTOFIRSTWALL | centeringPhase == LOOKINGFORSECONDWALL | centeringPhase == PERPENDICULARTOSECONDWALL) {
+	if (centeringPhase == DISTANCEDTOFIRSTWALL || centeringPhase == LOOKINGFORSECONDWALL || centeringPhase == PERPENDICULARTOSECONDWALL) {
 		//after finished adjusting robot to first wall turn right by 90° and look for wall in front
 		if (heading == 0) {
 			ROS_INFO("turning right to find second wall");
