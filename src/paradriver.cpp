@@ -304,7 +304,7 @@ int DiffDriving::moveDistEnc(double dist)
 			derivativeL = (derrL/dt) * KD;
 		}
 		//ROS_INFO("errL: %lf | errR: %lf | derrL: %lf | derrR: %lf",errL,errR,derrL,derrR);
-		speedL = err * KP;
+		speedL = errL * KP;
 		if (errL < 0) {
 			speedL -= (MINSPEED + derivativeL);
 		} else {
@@ -485,7 +485,8 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "diffdriving");
 	DiffDriving driver;
 	dir di;
-	
+	driver.moveDistEnc(2.0);
+	/*
 	for (int i = 1; i <= 4; i++) {
 		driver.turnAbs(driver.theta + 90);
 		//driver.turn(90);
@@ -501,7 +502,7 @@ int main(int argc, char **argv)
 		ros::Duration(0.3).sleep();
 		//driver.moveDistEnc(0.4);
 	}
-	
+	*/
 	/*
 	driver.drive(0,0,-0.8,0,1);
 	driver.drive(0,-0.8,-0.8,0,1);
