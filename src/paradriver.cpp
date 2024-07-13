@@ -56,7 +56,7 @@ DiffDriving::DiffDriving()
 //check content of Stopper message and return true if robot should stop
 bool stop_check()
 {
-	red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(0.1));
+	red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(0.2));
 
 	if (stop_message && stop_message->content == "STOP") return true;
 	return false;
@@ -337,7 +337,7 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			double speed;
 			turnAbs(calcAngle(x - this->xcord, y - this->ycord));
 			double err = calcDist(x, y);
-			this->moveDistEnc(err);	//only calculate euclidean distance once then drive straight for that amount of distance
+			if (!this->moveDistEnc(err)) { return 0; }	//only calculate euclidean distance once then drive straight for that amount of distance
 			if (stay) { return 1; }
 			this->turnAbs(targetTheta);
 			return 1;
@@ -346,7 +346,7 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			double speed;
 			turn(calcAngle(x, y));
 			double err = calcRelDist(x, y);
-			this->moveDistEnc(err);
+			if (!this->moveDistEnc(err)) { return 0; };
 			if (stay) { return 1; }
 			this->turnAbs(targetTheta);
 			return 1;
