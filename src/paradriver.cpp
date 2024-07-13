@@ -293,7 +293,7 @@ int DiffDriving::moveDistEnc(double dist)
 	double derrL;
 	double derivativeL = 0;
 	while (abs(errL) > ENCTOLERANCE) {
-		if (this->bumperLeft || this->bumperRight /* || stop_check() */) {
+		if (this->bumperLeft || this->bumperRight  || stop_check()) {
 			this->stop();
 			ROS_INFO("Couldn't complete move because an obstacle was in the way");
 			return 0;
@@ -366,12 +366,6 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 	return 0;
 }
 
-void driveWithCorrection(double x, double y, double targetTheta)
-{
-	for (int i = 1; i < 6; i++) {
-		i = i;
-	}
-}
 
 void DiffDriving::correct_odometry_location_error_globally(int cell_row, int cell_col){
 	double x_dest = cell_col * 0.8;
@@ -442,7 +436,7 @@ void DiffDriving::correct_odometry_angle_error_globally(int orientation){
 			case LEFT:
 				theta -= 90;
 				break;
-			case RIGHT: 
+			case RIGHT:
 				theta += 90;
 				break;
 			default:
@@ -454,7 +448,7 @@ void DiffDriving::correct_odometry_angle_error_globally(int orientation){
 			case LEFT:
 				theta -= 90;
 				break;
-			case RIGHT: 
+			case RIGHT:
 				theta += 90;
 				break;
 			case DOWN:

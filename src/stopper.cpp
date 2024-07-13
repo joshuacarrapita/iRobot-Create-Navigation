@@ -9,7 +9,7 @@ enum StopMode { MSGDD = 0, MSGONLY = 1, SHUTDOWN = 2};
 
 bool should_stop = false;
 bool should_pause = false;
-double stop_dist = 0.21;
+double stop_dist = 0.10;
 double call_frequency = -1.0;
 const int laser_msg_offset = 44;
 StopMode stop_mode = MSGONLY;
