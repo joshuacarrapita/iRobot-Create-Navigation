@@ -226,7 +226,6 @@ int main(int argc, char **argv)
 	diffDrive =  n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
 
 	DiffDriving driver;
-	driver.moveDistEnc(1.0);
 	ros::ServiceServer service = n.advertiseService("center", centering);
 
 	ROS_INFO("Ready to center on demand");

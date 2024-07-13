@@ -33,7 +33,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 add_message_files(FILES
 	WallsCombined.msg
 	StopMsg.msg
-	Cell.msg 
+	Cell.msg
 	Grid.msg
 	Pose.msg
 	Row.msg
@@ -97,25 +97,15 @@ add_executable(wanderer src/wanderer.cpp)
 target_link_libraries(wanderer ${catkin_LIBRARIES})
 add_dependencies(wanderer create_fundamentals_generate_messages_cpp)
 
-#add_executable(centering src/centering.cpp)
-#target_link_libraries(centering ${catkin_LIBRARIES})
-#add_dependencies(centering create_fundamentals_generate_messages_cpp)
-
-add_executable(walls src/walls.cpp)
-target_link_libraries(walls ${catkin_LIBRARIES})
-add_dependencies(walls create_fundamentals_generate_messages_cpp)
-
 add_executable(stopper src/stopper.cpp)
 target_link_libraries(stopper ${catkin_LIBRARIES})
 add_dependencies(stopper create_fundamentals_generate_messages_cpp)
 
 add_executable(execute_plan_server src/execute_plan_server.cpp)
-add_library(moving src/moving.cpp)
 add_library(paradriver src/paradriver.cpp)
 add_library(song src/song.cpp)
-add_library(center src/center.cpp)
 add_library(smooth_plan src/smooth_plan.cpp)
-target_link_libraries(execute_plan_server smooth_plan moving paradriver song center ${catkin_LIBRARIES})
+target_link_libraries(execute_plan_server smooth_plan paradriver song ${catkin_LIBRARIES})
 add_dependencies(execute_plan_server create_fundamentals_generate_messages_cpp)
 
 #add_executable(corridor src/corridor.cpp)
@@ -126,21 +116,17 @@ add_dependencies(execute_plan_server create_fundamentals_generate_messages_cpp)
 #target_link_libraries(pd_control moving ${catkin_LIBRARIES})
 #add_dependencies(pd_control create_fundamentals_generate_messages_cpp)
 
-add_executable(smooth_server src/smooth_server.cpp)
-target_link_libraries(smooth_server moving smooth_plan ${catkin_LIBRARIES})
-add_dependencies(smooth_server create_fundamentals_generate_messages_cpp)
-
 #add_executable(paradriver src/paradriver.cpp)
 #target_link_libraries(paradriver ${catkin_LIBRARIES})
 #add_dependencies(paradriver create_fundamentals_generate_messages_cpp)
 
 add_executable(localization src/localization.cpp)
-target_link_libraries(localization moving paradriver center song ${catkin_LIBRARIES})
+target_link_libraries(localization paradriver song ${catkin_LIBRARIES})
 add_dependencies(localization create_fundamentals_generate_messages_cpp)
 
-add_executable(calculate_center src/calculate_center.cpp)             
-target_link_libraries(calculate_center ${catkin_LIBRARIES})           
-add_dependencies(calculate_center create_fundamentals_generate_messages_cpp) 
+add_executable(calculate_center src/calculate_center.cpp)
+target_link_libraries(calculate_center ${catkin_LIBRARIES})
+add_dependencies(calculate_center create_fundamentals_generate_messages_cpp)
 
 add_executable(walls_combined src/walls_combined.cpp)
 target_link_libraries(walls_combined ${catkin_LIBRARIES})
