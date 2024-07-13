@@ -103,7 +103,7 @@ void resetMSG()
 	return;
 }
 
-//check 10 range values in the front
+//check 20 range values in the front
 bool curFront(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	double minDist = 10;
@@ -119,7 +119,7 @@ bool curFront(const sensor_msgs::LaserScan::ConstPtr& msg)
 	return false;
 }
 
-//check 10 range values to left
+//check 20 range values to left
 bool curLeft(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	double minDist = 10;
@@ -135,7 +135,7 @@ bool curLeft(const sensor_msgs::LaserScan::ConstPtr& msg)
 	return false;
 }
 
-//check 10 range values to right
+//check 20 range values to right
 bool curRight(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	double minDist = 10;
@@ -152,7 +152,7 @@ bool curRight(const sensor_msgs::LaserScan::ConstPtr& msg)
 }
 
 //simplified RANSAC making use of environment constraints
-void extendedSransac(const sensor_msgs::LaserScan::ConstPtr& msg)
+void NSAC(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	//reset walls msg contents
 	resetMSG();
@@ -291,7 +291,7 @@ int main(int argc, char **argv)
 	}
 	ros::init(argc, argv, "walls_combined");
 	ros::NodeHandle n;
-	ros::Subscriber sub = n.subscribe("scan_filtered", 1, extendedSransac);
+	ros::Subscriber sub = n.subscribe("scan_filtered", 1, NSAC);
 	pub = n.advertise<red_fundamentals::WallsCombined>("walls_combined_topic", 1);
 	ROS_INFO("start detecting walls");
 	while(ros::ok()) {
