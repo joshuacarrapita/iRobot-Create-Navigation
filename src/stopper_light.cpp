@@ -3,18 +3,19 @@
 #include "sensor_msgs/LaserScan.h"
 #include "red_fundamentals/StopMsg.h"
 
-#DEFINE LARRSIZE 726
-#DEFINE LARROFFSET 44
-#DEFINE LARRCTR (LARRSIZE/2)
-#DEFINE LARRTHIRDSTA (LARRSIZE/3)
-#DEFINE LARRTHIRDEND ((LARRSIZE/3) * 2)
+#define LARRSIZE 726
+#define LARROFFSET 44
+#define LARRCTR (LARRSIZE/2)
+#define LARRTHIRDSTA ((LARRSIZE/7) * 3)
+#define LARRTHIRDEND ((LARRSIZE/7) * 4)
 
 
 bool should_stop = false;
-double stop_dist = 0.10;
+double stop_dist = 0.17;
 double call_frequency = -1.0;
 
 red_fundamentals::StopMsg stop_msg;
+ros::Publisher pub;
 
 void stoppah(const sensor_msgs::LaserScan::ConstPtr& laser_msg){
 	double minDist = 10.0;
@@ -24,14 +25,14 @@ void stoppah(const sensor_msgs::LaserScan::ConstPtr& laser_msg){
 			minDist = laser_msg->ranges[i];
 		}
 	}
-	ROS_INFO("Wall at dist %f.\n", dist);
+	//ROS_INFO("Wall at dist %f.\n", minDist);
 	if  (minDist >= stop_dist || minDist < laser_msg->range_min) {
-		stop_msg.content = "STOP";
-		ROS_INFO("Publishing STOP");
+		stop_msg.content = "FINE";
+		//ROS_INFO("Publishing FINE");
 		pub.publish(stop_msg);
 	} else {
-		stop_msg.content = "FINE";
-		ROS_INFO("Publishing FINE");
+		stop_msg.content = "STOP";
+		//ROS_INFO("Publishing STOP");
 		pub.publish(stop_msg);
 	}
 	return;
@@ -52,9 +53,9 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "stopper");
 	ros::NodeHandle n;
 	ros::Subscriber sub = n.subscribe("scan_filtered", 1, stoppah);
-	ros::Publisher pub = n.advertise<red_fundamentals::StopMsg>("stop_topic", 1);
+	pub = n.advertise<red_fundamentals::StopMsg>("stop_topic", 1);
 
-	while (ros::ok()) { ros::spin(); }
+	while (ros::ok()) { ros::spinOnce(); }
 	ros::shutdown();
 	return 0;
 

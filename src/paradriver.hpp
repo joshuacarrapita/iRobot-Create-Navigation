@@ -15,6 +15,7 @@ class DiffDriving
 		void stop();
 		void resetOdometer();
 		int odomInit();
+		//bool stop_check();
 		double calcAngle(double x, double y);
 		double calcDist(double x, double y);
 		double calcRelDist(double x, double y);
@@ -38,6 +39,7 @@ class DiffDriving
 		red_fundamentals::CalculateCenterService centersrv;
 		create_fundamentals::DiffDrive pdsrv;
 		ros::Subscriber pdsub;
+		ros::Subscriber stopsub;
 		int odomReady;
 		double encLeft;
 		double encRight;

@@ -41,6 +41,7 @@ DiffDriving::DiffDriving()
 	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
 	CalculateCenterClient = n.serviceClient<red_fundamentals::CalculateCenterService>("calculate_center_service");
 	pdsub = n.subscribe("sensor_packet", 1, &DiffDriving::odometer, this);
+	//stopsub = n.subscribe("stop_topic", 1, &DiffDriving::stop_check, this);
 	encLeft = 0;
 	encRight = 0;
 	bumperLeft = 0;
@@ -56,7 +57,7 @@ DiffDriving::DiffDriving()
 //check content of Stopper message and return true if robot should stop
 bool stop_check()
 {
-	red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(0.2));
+	red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(0.15));
 
 	if (stop_message && stop_message->content == "STOP") return true;
 	return false;
@@ -293,13 +294,13 @@ int DiffDriving::moveDistEnc(double dist)
 	double derrL;
 	double derivativeL = 0;
 	while (abs(errL) > ENCTOLERANCE) {
-		if (this->bumperLeft || this->bumperRight  || stop_check()) {
+		dt = ros::Time::now().toSec() - this->clock;
+		ros::spinOnce();
+		if (stop_check() || this->bumperLeft || this->bumperRight) {
 			this->stop();
 			ROS_INFO("Couldn't complete move because an obstacle was in the way");
 			return 0;
 		}
-		dt = ros::Time::now().toSec() - this->clock;
-		ros::spinOnce();
 		errL = setpointL - this->encLeft;
 		//errR = setpointR - this->encRight;
 		if (errL != lasterrL) {
