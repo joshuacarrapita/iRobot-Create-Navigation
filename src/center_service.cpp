@@ -83,7 +83,7 @@ void center()
 {
 	DiffDriving driver;
 	ROS_INFO("wall is %lf away at angle %lf", dist, angle);
-	
+
 	//when looking for new first wall make sure it is a new one
 	if(centeringPhase == NOPERPENDICULARSECONDWALL) {
 		if(dist < 0.8 && angle > 75 && angle < 105) {
@@ -105,8 +105,8 @@ void center()
 		//if after turning still no wall move forwards until wall found
 		} else {
 			ROS_INFO("moving to find first wall");
-			srv.request.left = 10;
-			srv.request.right = 10;
+			srv.request.left = 7;
+			srv.request.right = 7;
 			diffDrive.call(srv);
 			return;
 		}
@@ -186,7 +186,6 @@ void center()
 			ROS_INFO("Centering phase: %d", centeringPhase);
 			return;
 		}
-		
 	}
 	return;
 }
