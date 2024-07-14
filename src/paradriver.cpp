@@ -374,8 +374,8 @@ void DiffDriving::correct_odometry_location_error_globally(int cell_row, int cel
 		Eigen::Vector2d rel_center;
 		Eigen::Matrix2d rotate_cc;
 		double theta_rad = theta * M_PI/180;
-		rotate_cc << cos(theta_rad), -sin(theta_rad),
-						 sin(theta_rad), cos(theta_rad);
+		rotate_cc << cos(theta_rad), sin(theta_rad),
+						 -sin(theta_rad), cos(theta_rad);
 		rel_center(X) = centersrv.response.x;
 		rel_center(Y) = centersrv.response.y;
 		rel_center = rotate_cc * rel_center;
