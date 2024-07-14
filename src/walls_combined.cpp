@@ -1,6 +1,7 @@
 #include "ros/ros.h"
 #include "sensor_msgs/LaserScan.h"
 #include "red_fundamentals/WallsCombined.h"
+#include <Eigen/Dense>
 #include <cstdlib>
 
 #define LARRSIZE 726
@@ -231,6 +232,23 @@ void NSAC(const sensor_msgs::LaserScan::ConstPtr& msg)
 		}
 		coordinates = winneroutliers;
 	}
+
+	// remove "walls" that are actually robots
+	for (int i = 0; i < 3; i++){
+		Eigen::Vector2d left;
+		Eigen::Vector2d right;
+		Eigen::Vector2d wall;
+		left(0) = winners[i][0].x;
+		left(1) = winners[i][0].y;
+		right(0) = winners[i][1].x;
+		right(1) = winners[i][1].y;
+		wall = right-left;
+		double wall_len = sqrt(wall.dot(wall));
+		if (wall_len < 0.3) { 
+			winnerInliers[i] = 0;
+		}
+	}
+
 	//classify walls
 	for (int i = 0; i < 3; i++) {
 		if (winnerInliers[i]) {
