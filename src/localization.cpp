@@ -425,21 +425,25 @@ bool localization(red_fundamentals::Localization::Request &req,
 			double rel_dest_y = centersrv.response.y;
 			if (rel_dest_y <= 0.0) rel_dest_y = 0.8;
 			if (!driver.drive(1,rel_dest_x,rel_dest_y,0,1,1)) {
+				
             			red_fundamentals::Pose failpose;
 			        failpose.row = -2;
 			        failpose.column = -2;
 			        failpose.orientation = -2;
 				res.pose = failpose;
 				return true;
+				
 			}
 		} else {
         		if(!driver.moveDistEnc(0.8, 1)) {
+				
             			red_fundamentals::Pose failpose;
 				failpose.row = -2;
 				failpose.column = -2;
 				failpose.orientation = -2;
 				res.pose = failpose;
 				return true;
+				
 			}
 		}
 

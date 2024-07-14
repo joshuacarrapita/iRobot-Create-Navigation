@@ -243,7 +243,7 @@ bool execute_plan(red_fundamentals::ExecutePlan::Request &req, red_fundamentals:
 		double global_y = cell_plan[i][ROW] * -0.8;
 		ROS_INFO("global_x: %f, global_y: %f", global_x, global_y);
 		ROS_INFO("driver.xcoord: %f, driver.ycoord:%f", driver.xcord, driver.ycord);
-		int success = driver.drive(0, global_x, global_y, 0, 1);
+		int success = driver.drive(0, global_x, global_y, 0.0, 1,1);
 		if (!success) {
 			s.playLostSound();
 			ROS_INFO("Lost! We have to relocalize ourselves...");

@@ -26,8 +26,8 @@ class DiffDriving
 		void odometer(const create_fundamentals::SensorPacket::ConstPtr& msg);
 		void turnAbs(double targetTheta);
 		void turn(double targetTheta);
-		int  moveDistEnc(double dist);
-		int drive(int mode, double x, double y, double targetTheta, int stay);
+		int moveDistEnc(double dist, int centeringMode);
+		int drive(int mode, double x, double y, double targetTheta, int stay, int localisationMode);
 
 		void correct_odometry_angle_error_globally(int orientation);
 		void correct_odometry_location_error_globally(int cell_row, int cell_col);
