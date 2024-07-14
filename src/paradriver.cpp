@@ -182,15 +182,16 @@ void DiffDriving::odometer(const create_fundamentals::SensorPacket::ConstPtr& ms
 //Turn to specific absolute angle with PD-Control via odometer
 void DiffDriving::turnAbs(double targetTheta)
 {
+	ROS_INFO("Target theta: %lf", targetTheta);
 	ros::spinOnce();
 	double err = targetTheta - theta;
-	if (err > 180) {
+	/*if (err > 180) {
 		err -= 180;
 		this->theta += 360;
 	} else if (err < -180) {
 		err += 180;
 		this->theta -= 360;
-	}
+	}*/
 	err = abs(err);
 	double speed;
 	double lasterr = err;
@@ -333,6 +334,7 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 	{
 		case 0: {
 			double speed;
+			ROS_INFO("Pre turn theta: %lf", this->theta);
 			turnAbs(calcAngle(x - this->xcord, y - this->ycord));
 			double err = calcDist(x, y);
 			if (!this->moveDistEnc(err)) { return 0; }	//only calculate euclidean distance once then drive straight for that amount of distance

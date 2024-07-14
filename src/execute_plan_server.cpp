@@ -113,9 +113,9 @@ vector<vector<int>> exec_plan_to_cell_plan(vector<int> exec_plan, int row, int c
 	vector<vector<int>> cell_plan;
 	vector<int> start = {row,col};
 
-	/*for (int i = 0; i < exec_plan.size(); i++){
+	for (int i = 0; i < exec_plan.size(); i++){
 		ROS_INFO("Plan [%d] = %d", i, exec_plan[i]);
-	}*/
+	}
 
 	for (int i = 0; i < exec_plan.size(); i++){
 
@@ -157,9 +157,9 @@ vector<vector<int>> exec_plan_to_cell_plan(vector<int> exec_plan, int row, int c
 
 	}
 
-	/*for (int i = 0; i < cell_plan.size(); i++){
+	for (int i = 0; i < cell_plan.size(); i++){
 		ROS_INFO("Cell Plan [%d] (y,x) = (%d,%d)", i, cell_plan[i][ROW], cell_plan[i][COL]);
-	}*/
+	}
 
 	return cell_plan;
 }

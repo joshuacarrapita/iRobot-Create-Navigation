@@ -233,22 +233,6 @@ void NSAC(const sensor_msgs::LaserScan::ConstPtr& msg)
 		coordinates = winneroutliers;
 	}
 
-	// remove "walls" that are actually robots
-	for (int i = 0; i < 3; i++){
-		Eigen::Vector2d left;
-		Eigen::Vector2d right;
-		Eigen::Vector2d wall;
-		left(0) = winners[i][0].x;
-		left(1) = winners[i][0].y;
-		right(0) = winners[i][1].x;
-		right(1) = winners[i][1].y;
-		wall = right-left;
-		double wall_len = sqrt(wall.dot(wall));
-		if (wall_len < 0.3) { 
-			winnerInliers[i] = 0;
-		}
-	}
-
 	//classify walls
 	for (int i = 0; i < 3; i++) {
 		if (winnerInliers[i]) {
@@ -285,6 +269,27 @@ void NSAC(const sensor_msgs::LaserScan::ConstPtr& msg)
 
 		}
 	}
+
+	// remove "walls" that are actually robots
+	if (wall.walls[1]){
+		Eigen::Vector2d left;
+		Eigen::Vector2d right;
+		Eigen::Vector2d p_wall;
+		left(0) = wall.F_A[0];
+		left(1) = wall.F_A[1];
+		right(0) = wall.F_B[0];
+		right(1) = wall.F_B[1];
+		p_wall = right-left;
+		double wall_len = sqrt(p_wall.dot(p_wall));
+		if (wall_len < 0.3) { 
+			wall.walls[1] = false;
+			wall.F_A[0] = 0.0;
+			wall.F_A[1] = 0.0;
+			wall.F_B[0] = 0.0;
+			wall.F_B[1] = 0.0;
+		}
+	}
+
 	//publish dist/angle to best wall for centering
 	if (winners[0][0].x) {
 		wall.dist = calcDist(bestwinnercand_a, bestwinnercand_b, robotpos);
