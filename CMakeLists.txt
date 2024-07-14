@@ -33,6 +33,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 add_message_files(FILES
 	WallsCombined.msg
 	StopMsg.msg
+	Light.msg
 	Cell.msg
 	Grid.msg
 	Pose.msg

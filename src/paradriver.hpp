@@ -4,6 +4,7 @@
 #include "ros/ros.h"
 #include "create_fundamentals/DiffDrive.h"
 #include "create_fundamentals/SensorPacket.h"
+#include "red_fundamentals/Light.h"
 #include "red_fundamentals/CalculateCenterService.h"
 #include "red_fundamentals/WallsCombined.h"
 
@@ -15,7 +16,7 @@ class DiffDriving
 		void stop();
 		void resetOdometer();
 		int odomInit();
-		bool stop_check();
+		void stop_check(const red_fundamentals::Light::ConstPtr& stopmsg);
 		double calcAngle(double x, double y);
 		double calcDist(double x, double y);
 		double calcRelDist(double x, double y);

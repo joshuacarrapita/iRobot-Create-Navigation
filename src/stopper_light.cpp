@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include "ros/ros.h"
 #include "sensor_msgs/LaserScan.h"
-#include "red_fundamentals/StopMsgLight.h"
+#include "red_fundamentals/Light.h"
 
 #define LARRSIZE 726
 #define LARROFFSET 44
@@ -14,7 +14,7 @@ bool should_stop = false;
 double stop_dist = 0.17;
 double call_frequency = -1.0;
 
-red_fundamentals::StopMsgLight stop_msg;
+red_fundamentals::Light stop_msg;
 ros::Publisher pub;
 
 void stoppah(const sensor_msgs::LaserScan::ConstPtr& laser_msg){
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "stopper");
 	ros::NodeHandle n;
 	ros::Subscriber sub = n.subscribe("scan_filtered", 1, stoppah);
-	pub = n.advertise<red_fundamentals::StopMsg>("stop_topic", 1);
+	pub = n.advertise<red_fundamentals::Light>("stop_topic", 1);
 
 	while (ros::ok()) { ros::spinOnce(); }
 	ros::shutdown();

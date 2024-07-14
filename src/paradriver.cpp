@@ -2,7 +2,7 @@
 #include "create_fundamentals/DiffDrive.h"
 #include "create_fundamentals/SensorPacket.h"
 #include "create_fundamentals/ResetEncoders.h"
-#include "red_fundamentals/StopMsgLight.h"
+#include "red_fundamentals/Light.h"
 #include <cstdlib>
 #include "paradriver.hpp"
 #include <Eigen/Dense>
@@ -56,7 +56,7 @@ DiffDriving::DiffDriving()
 }
 
 //check content of Stopper message and return true if robot should stop
-bool stop_check(const red_fundamentals::StopMsgLight::ConstPtr& stopmsg)
+void DiffDriving::stop_check(const red_fundamentals::Light::ConstPtr& stopmsg)
 {
 	this->shouldStop = stopmsg->content;
 }
@@ -293,7 +293,7 @@ int DiffDriving::moveDistEnc(double dist)
 	while (abs(errL) > ENCTOLERANCE) {
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
-		if (stop_check() || this->bumperLeft || this->bumperRight) {
+		if (shouldStop || this->bumperLeft || this->bumperRight) {
 			this->stop();
 			ROS_INFO("Couldn't complete move because an obstacle was in the way");
 			return 0;
