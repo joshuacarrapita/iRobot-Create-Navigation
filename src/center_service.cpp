@@ -67,12 +67,12 @@ void correctDist()
 	//if too far away move forward
 	if (dist > 0.25) {
 		ROS_INFO("moving forward to correct distance");
-		driver.moveDistEnc(dist - 0.27);
+		driver.moveDistEnc(dist - 0.27, 1);
 		return;
 	//if too close move back
 	} else if (dist < 0.25) {
 		ROS_INFO("moving backwards to correct distance");
-		driver.moveDistEnc(-(0.27 - dist));
+		driver.moveDistEnc(-(0.27 - dist), 1);
 		return;
 	}
 	return;

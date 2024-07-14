@@ -277,7 +277,7 @@ void DiffDriving::turn(double targetTheta)
 }
 
 //PD-control func driving straight for certain distances
-int DiffDriving::moveDistEnc(double dist)
+int DiffDriving::moveDistEnc(double dist, int centeringMode = 0)
 {
 	ros::spinOnce();
 	double speedL;
@@ -293,10 +293,18 @@ int DiffDriving::moveDistEnc(double dist)
 	while (abs(errL) > ENCTOLERANCE) {
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
-		if (shouldStop || this->bumperLeft || this->bumperRight) {
-			this->stop();
-			ROS_INFO("Couldn't complete move because an obstacle was in the way");
-			return 0;
+		if (!centeringMode) {
+			if (shouldStop || this->bumperLeft || this->bumperRight) {
+				this->stop();
+				ROS_INFO("Couldn't complete move because an obstacle was in the way");
+				return 0;
+			}
+		} else {
+			if (this->bumperLeft || this->bumperRight) {
+				this->stop();
+				ROS_INFO("Couldn't complete move because an obstacle was in the way");
+				return 0;
+			}
 		}
 		errL = setpointL - this->encLeft;
 		//errR = setpointR - this->encRight;
@@ -326,7 +334,7 @@ int DiffDriving::moveDistEnc(double dist)
  *mode 1: Turn to face relative goalpoint, drive until reached, turn to meet targetTheta
  *mode 2: Do a smooth turn until goalpoint is hit, adjust theta to meet targetTheta
 */
-int DiffDriving::drive(int mode, double x, double y, double targetTheta, int stay)
+int DiffDriving::drive(int mode, double x, double y, double targetTheta, int stay, int localisationMode = 0)
 {
 	ros::spinOnce();
 	switch(mode)
@@ -335,7 +343,7 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			double speed;
 			turnAbs(calcAngle(x - this->xcord, y - this->ycord));
 			double err = calcDist(x, y);
-			if (!this->moveDistEnc(err)) { return 0; }	//only calculate euclidean distance once then drive straight for that amount of distance
+			if (!this->moveDistEnc(err) , localisationMode) { return 0; }	//only calculate euclidean distance once then drive straight for that amount of distance
 			if (stay) { return 1; }
 			this->turnAbs(targetTheta);
 			return 1;
@@ -344,7 +352,7 @@ int DiffDriving::drive(int mode, double x, double y, double targetTheta, int sta
 			double speed;
 			turn(calcAngle(x, y));
 			double err = calcRelDist(x, y);
-			if (!this->moveDistEnc(err)) { return 0; };
+			if (!this->moveDistEnc(err, localisationMode)) { return 0; };
 			if (stay) { return 1; }
 			this->turnAbs(targetTheta);
 			return 1;
