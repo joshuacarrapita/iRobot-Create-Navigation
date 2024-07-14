@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include "ros/ros.h"
 #include "sensor_msgs/LaserScan.h"
-#include "red_fundamentals/StopMsg.h"
+#include "red_fundamentals/StopMsgLight.h"
 
 #define LARRSIZE 726
 #define LARROFFSET 44
@@ -14,7 +14,7 @@ bool should_stop = false;
 double stop_dist = 0.17;
 double call_frequency = -1.0;
 
-red_fundamentals::StopMsg stop_msg;
+red_fundamentals::StopMsgLight stop_msg;
 ros::Publisher pub;
 
 void stoppah(const sensor_msgs::LaserScan::ConstPtr& laser_msg){
@@ -27,11 +27,11 @@ void stoppah(const sensor_msgs::LaserScan::ConstPtr& laser_msg){
 	}
 	//ROS_INFO("Wall at dist %f.\n", minDist);
 	if  (minDist >= stop_dist || minDist < laser_msg->range_min) {
-		stop_msg.content = "FINE";
+		stop_msg.content = 0;
 		//ROS_INFO("Publishing FINE");
 		pub.publish(stop_msg);
 	} else {
-		stop_msg.content = "STOP";
+		stop_msg.content = 1;
 		//ROS_INFO("Publishing STOP");
 		pub.publish(stop_msg);
 	}

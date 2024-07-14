@@ -2,7 +2,7 @@
 #include "create_fundamentals/DiffDrive.h"
 #include "create_fundamentals/SensorPacket.h"
 #include "create_fundamentals/ResetEncoders.h"
-#include "red_fundamentals/StopMsg.h"
+#include "red_fundamentals/StopMsgLight.h"
 #include <cstdlib>
 #include "paradriver.hpp"
 #include <Eigen/Dense>
@@ -14,22 +14,22 @@
 #define CORRECTIONMARGIN 3.0
 #define WHEELBASE 0.260				//m
 #define WHEELRADIUS 0.033			//m
-#define RADIANSPERROTATION 5.5			//rad
-#define DISTPERROTATION 0.1815			//m
-#define ENCPM 31.95				//change in enc values per meter driven
+#define RADIANSPERROTATION 5.5		//rad
+#define DISTPERROTATION 0.1815		//m
+#define ENCPM 31.95					//change in enc values per meter driven
 
 #define ACCELTIME 30
 #define DISTCORRECTION 0.95
 #define THETACORRECTION 1.0			//correction factor for odometry theta calculation
 #define DISTTOLERANCE 0.03			//m
 #define ANGLETOLERANCE 1.0			//deg
-#define ANGLETOLERANCEREL 0.5			//deg
+#define ANGLETOLERANCEREL 0.5		//deg
 #define ENCTOLERANCE 0.05			//rad
 
-#define KPTURN 0.5				//proportional gain for turning
-#define KDTURN 0.03				//derivative gain for turning
-#define KP 1.50					//proportional gain factor for driving straight
-#define KD 0.01					//derivative gain factor for driving straight
+#define KPTURN 0.5					//proportional gain for turning
+#define KDTURN 0.03					//derivative gain for turning
+#define KP 1.50						//proportional gain factor for driving straight
+#define KD 0.01						//derivative gain factor for driving straight
 
 using namespace std;
 
@@ -41,11 +41,12 @@ DiffDriving::DiffDriving()
 	diffDrive = n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
 	CalculateCenterClient = n.serviceClient<red_fundamentals::CalculateCenterService>("calculate_center_service");
 	pdsub = n.subscribe("sensor_packet", 1, &DiffDriving::odometer, this);
-	//stopsub = n.subscribe("stop_topic", 1, &DiffDriving::stop_check, this);
+	stopsub = n.subscribe("stop_topic", 1, &DiffDriving::stop_check, this);
 	encLeft = 0;
 	encRight = 0;
 	bumperLeft = 0;
 	bumperRight = 0;
+	shouldStop = 0;
 	xcord = 0;
 	ycord = 0;
 	theta = 0;
@@ -55,13 +56,9 @@ DiffDriving::DiffDriving()
 }
 
 //check content of Stopper message and return true if robot should stop
-bool stop_check()
+bool stop_check(const red_fundamentals::StopMsgLight::ConstPtr& stopmsg)
 {
-	red_fundamentals::StopMsg::ConstPtr stop_message = ros::topic::waitForMessage<red_fundamentals::StopMsg>("stop_topic", ros::Duration(0.15));
-
-	if (stop_message && stop_message->content == "STOP") return true;
-	return false;
-
+	this->shouldStop = stopmsg->content;
 }
 
 //stop motors

@@ -15,7 +15,7 @@ class DiffDriving
 		void stop();
 		void resetOdometer();
 		int odomInit();
-		//bool stop_check();
+		bool stop_check();
 		double calcAngle(double x, double y);
 		double calcDist(double x, double y);
 		double calcRelDist(double x, double y);
@@ -45,6 +45,7 @@ class DiffDriving
 		double encRight;
 		bool bumperLeft;
 		bool bumperRight;
+		bool shouldStop;
 		double xcord;
 		double ycord;
 		double theta;
