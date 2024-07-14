@@ -104,23 +104,34 @@ void Song::playSuccessSound(){
 }
 
 void Song::opentheChest(unsigned int num){
-    ROS_INFO("Open the chest no. %d", num);
-
-    // Define note constants
-    unsigned int c4 = 60;
-
-    // Define note durations
-    unsigned int Q = 160 / 4;
-    unsigned int H = Q * 2; 
-    unsigned int E = Q / 2;
-    unsigned int S = Q / 4;   
-
-    // Upload the song 
-    this->uploadSong(0, {c4 + num, Q, c4 + num, E, c4 + num, Q, c4 + num, E, c4 + num, Q, c4 + num, E, c4 + num, Q, c4 + num, E});
-
-    // Play the song 
-    double duration = 5;
-    this->playSong(0, duration);
+	// Define note constants                
+	unsigned int e5 = 76;                   
+	unsigned int f5 = 77;                   
+	unsigned int fis5 = 78;                 
+	unsigned int g5 = 79;     
+	unsigned int gis5 = 80;  
+	unsigned int a5 = 81;     
+	unsigned int ais5 = 82;   
+	unsigned int b5 = 83;     
+	unsigned int c5 = 84;     
+	unsigned int cis5 = 85; 
+	unsigned int d5 = 86; 
+	unsigned int dis5 = 87; 
+	unsigned int e6 = 88; 
+	 
+	 
+	// Define note durations 
+	unsigned int Q = 160 / 4; 
+	unsigned int H = Q * 2; 
+	unsigned int E = Q / 2; 
+	unsigned int S = Q / 4; 
+	 
+	// Upload the song  
+	this->uploadSong(0, {e5,S,f5,S,g5,E,e5,E,b5,E,e5,S,f5,S,g5,E,b5,E,b5,        Q,b5,S,c5,S,b5,S,a5,S,g5,E,g5,S,f5,S,e5,Q,30,Q,e5,S,f5,S}); 
+	 
+	// Play the song  
+	double duration = 5; 
+	this->playSong(0, duration); 
 }
 
 void Song::playPickupSound(){
