@@ -32,7 +32,7 @@ create_fundamentals::DiffDrive srv;
 
 void updateWall()
 {
-	red_fundamentals::WallsCombined::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::WallsCombined>("walls_combined_topic", ros::Duration(0.3));
+	red_fundamentals::WallsCombined::ConstPtr msg = ros::topic::waitForMessage<red_fundamentals::WallsCombined>("walls_combined_topic", ros::Duration(1.0));
 	dist = msg->dist;
 	angle = msg->angle;
 	return;
@@ -67,12 +67,12 @@ void correctDist()
 	//if too far away move forward
 	if (dist > 0.25) {
 		ROS_INFO("moving forward to correct distance");
-		driver.moveDistEnc(dist - 0.27);
+		driver.moveDistEnc(dist - 0.27, 1);
 		return;
 	//if too close move back
 	} else if (dist < 0.25) {
 		ROS_INFO("moving backwards to correct distance");
-		driver.moveDistEnc(-(0.27 - dist));
+		driver.moveDistEnc(-(0.27 - dist), 1);
 		return;
 	}
 	return;
@@ -105,9 +105,18 @@ void center()
 		//if after turning still no wall move forwards until wall found
 		} else {
 			ROS_INFO("moving to find first wall");
+			
 			srv.request.left = 7;
 			srv.request.right = 7;
 			diffDrive.call(srv);
+			/*
+			ros::Duration(0.5).sleep();
+			srv.request.left = 0;
+			srv.request.right = 0;
+			diffDrive.call(srv);
+			*/
+			//driver.stop();
+			//driver.moveDistEnc(0.1);
 			return;
 		}
 	}
@@ -177,9 +186,23 @@ void center()
 		} else {
 			//if no suitable walls found directly connected to first wall, move forward with first wall left of robot and look for wall in front
 			ROS_INFO("no second wall found looking for new first wall in adjacent cell");
+			/*
 			srv.request.left = 10;
 			srv.request.right = 10;
 			diffDrive.call(srv);
+			*/
+			
+			srv.request.left = 7;
+			srv.request.right = 7;
+			diffDrive.call(srv);
+			/*
+			ros::Duration(0.5).sleep();
+			srv.request.left = 0;
+			srv.request.right = 0;
+			diffDrive.call(srv);
+			*/
+			//driver.stop();
+			//driver.moveDistEnc(0.1);
 			centeringPhase = NOPERPENDICULARSECONDWALL;
 			turnCtr = 0;
 			heading = 0;
@@ -207,11 +230,13 @@ bool centering(red_fundamentals::Center::Request &req, red_fundamentals::Center:
 		updateWall();
 		center();
 	}
+	/*
 	resetCentering();
 	while (ros::ok() && centeringPhase != CENTERED) {
 		updateWall();
 		center();
 	}
+	*/
 	ROS_INFO("centering finished");
 	res.centered = true;
 	resetCentering();
@@ -225,7 +250,7 @@ int main(int argc, char **argv)
 	diffDrive =  n.serviceClient<create_fundamentals::DiffDrive>("diff_drive");
 	/*
 	DiffDriving driver;
-	driver.moveDistEnc(1.0);
+	driver.drive(0,0.0,1.0,0.0,1);
 	*/
 	ros::ServiceServer service = n.advertiseService("center", centering);
 

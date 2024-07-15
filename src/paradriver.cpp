@@ -184,6 +184,7 @@ void DiffDriving::turnAbs(double targetTheta)
 {
 	ros::spinOnce();
 	double err = targetTheta - theta;
+	/*
 	if (err > 180) {
 		err -= 180;
 		this->theta += 360;
@@ -191,6 +192,7 @@ void DiffDriving::turnAbs(double targetTheta)
 		err += 180;
 		this->theta -= 360;
 	}
+	*/
 	err = abs(err);
 	double speed;
 	double lasterr = err;
@@ -277,7 +279,7 @@ void DiffDriving::turn(double targetTheta)
 }
 
 //PD-control func driving straight for certain distances
-int DiffDriving::moveDistEnc(double dist)
+int DiffDriving::moveDistEnc(double dist, int centeringMode)
 {
 	ros::spinOnce();
 	double speedL;
@@ -293,10 +295,18 @@ int DiffDriving::moveDistEnc(double dist)
 	while (abs(errL) > ENCTOLERANCE) {
 		dt = ros::Time::now().toSec() - this->clock;
 		ros::spinOnce();
-		if (shouldStop || this->bumperLeft || this->bumperRight) {
-			this->stop();
-			ROS_INFO("Couldn't complete move because an obstacle was in the way");
-			return 0;
+		if (!centeringMode) {
+			if (shouldStop || this->bumperLeft || this->bumperRight) {
+				this->stop();
+				ROS_INFO("Couldn't complete move because an obstacle was in the way");
+				return 0;
+			}
+		} else {
+			if (this->bumperLeft || this->bumperRight) {
+				this->stop();
+				ROS_INFO("Couldn't complete move because an obstacle was in the way");
+				return 0;
+			}
 		}
 		errL = setpointL - this->encLeft;
 		//errR = setpointR - this->encRight;

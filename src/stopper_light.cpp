@@ -11,7 +11,7 @@
 
 
 bool should_stop = false;
-double stop_dist = 0.17;
+double stop_dist = 0.15;
 double call_frequency = -1.0;
 
 red_fundamentals::Light stop_msg;
@@ -27,11 +27,11 @@ void stoppah(const sensor_msgs::LaserScan::ConstPtr& laser_msg){
 	}
 	//ROS_INFO("Wall at dist %f.\n", minDist);
 	if  (minDist >= stop_dist || minDist < laser_msg->range_min) {
-		stop_msg.content = 0;
+		stop_msg.content = false;
 		//ROS_INFO("Publishing FINE");
 		pub.publish(stop_msg);
 	} else {
-		stop_msg.content = 1;
+		stop_msg.content = true;
 		//ROS_INFO("Publishing STOP");
 		pub.publish(stop_msg);
 	}
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "stopper");
 	ros::NodeHandle n;
 	ros::Subscriber sub = n.subscribe("scan_filtered", 1, stoppah);
-	pub = n.advertise<red_fundamentals::Light>("stop_topic", 1);
+	pub = n.advertise<red_fundamentals::Light>("stop_topic", 2);
 
 	while (ros::ok()) { ros::spinOnce(); }
 	ros::shutdown();

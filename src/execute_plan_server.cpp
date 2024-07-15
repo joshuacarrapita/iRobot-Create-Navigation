@@ -118,32 +118,33 @@ vector<vector<int>> exec_plan_to_cell_plan(vector<int> exec_plan, int row, int c
 	}*/
 
 	for (int i = 0; i < exec_plan.size(); i++){
+		int longest_plan = i+2;
 
 		switch (exec_plan[i])
 		{
 			case RIGHT:
-				while(exec_plan[i] == 0 && i < exec_plan.size()){
+				while(exec_plan[i] == 0 && i < exec_plan.size() && i < longest_plan){
 					start[COL] += 1;
 					i++;
 				}
 				i--;
 				break;
 			case UP:
-				while(exec_plan[i] == 1 && i < exec_plan.size()){
+				while(exec_plan[i] == 1 && i < exec_plan.size() && i < longest_plan){
 					start[ROW] -= 1;
 					i++;
 				}
 				i--;
 				break;
 			case LEFT:
-				while(exec_plan[i] == 2 && i < exec_plan.size()){
+				while(exec_plan[i] == 2 && i < exec_plan.size() && i < longest_plan){
 					start[COL] -= 1;
 					i++;
 				}
 				i--;
 				break;
 			case DOWN:
-				while(exec_plan[i] == 3 && i < exec_plan.size()){
+				while(exec_plan[i] == 3 && i < exec_plan.size() && i < longest_plan){
 					start[ROW] += 1;
 					i++;
 				}
